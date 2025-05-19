@@ -48,6 +48,28 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# Copy the example appscript configuration file
+if [ -f "appsscript.json" ]; then
+  read -p "appsscript.json already exists. Do you want to overwrite it? (y/n): " OVERWRITE_CHOICE
+  if [[ "$OVERWRITE_CHOICE" =~ ^[Yy]$ ]]; then
+    echo "Copying appscript.example.json to appscript.json..."
+    cp appsscript.example.json appsscript.json
+    if [ $? -ne 0 ]; then
+      echo "Failed to copy the appscript configuration file."
+      exit 1
+    fi
+  else
+    echo "Keeping existing appsscript.json file."
+  fi
+else
+  echo "Copying appscript.example.json to appscript.json..."
+  cp appsscript.example.json appsscript.json
+  if [ $? -ne 0 ]; then
+    echo "Failed to copy the appscript configuration file."
+    exit 1
+  fi
+fi
+
 # Push the code to the new project
 clasp push
 if [ $? -ne 0 ]; then
