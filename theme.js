@@ -50,17 +50,23 @@ function applyThemeToCurrentPresentation() {
 
       // 2. Append the first slide from the source to the target presentation
       // This will automatically copy the theme (master slides and layouts)
-      const copiedSlide = targetPresentation.appendSlide(sourceSlides[0]);
+      const copiedFirstSlide = targetPresentation.appendSlide(sourceSlides[0]);
+      
+      // Also copy the last slide from the source presentation
+      const lastSlideIndex = sourceSlides.length - 1;
+      const copiedLastSlide = targetPresentation.appendSlide(sourceSlides[lastSlideIndex]);
+      Logger.log('First and last slides copied successfully');
+      
       Logger.log('Theme slide copied successfully');
 
-      // 3. Update the title text box on the copied slide to match the current presentation's name
+      // 3. Update the title text box on the copied slides to match the current presentation's name
       try {
         // Get the current presentation name
         const presentationName = targetPresentation.getName();
         Logger.log('Current presentation name: ' + presentationName);
 
-        // Find the title shape on the copied slide
-        const shapes = copiedSlide.getShapes();
+        // Find the title shape on the first copied slide
+        const shapes = copiedFirstSlide.getShapes();
         for (let i = 0; i < shapes.length; i++) {
           const shape = shapes[i];
 
@@ -85,10 +91,10 @@ function applyThemeToCurrentPresentation() {
       // For new presentations, this is sufficient - the theme is now available
       // Any new slides created will use the new theme
 
-      // Delete the first slide (original slide page 1)
+      // Delete the original slides (keeping only the newly copied theme slides)
       try {
         const allSlides = targetPresentation.getSlides();
-        if (allSlides.length > 1) { // Make sure we have at least 2 slides before deleting
+        if (allSlides.length > 2) { // Make sure we have at least 3 slides before deleting
           // The first slide is at index 0
           allSlides[0].remove();
           Logger.log('First slide (original slide page 1) deleted successfully');
