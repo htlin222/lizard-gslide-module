@@ -64,12 +64,21 @@ A Google Apps Script project that enhances Google Slides with automated formatti
 
 7. In the Google Slides presentation, go to Extensions > Apps Script to enable the script
 
-8. The `onOpen` function might not run automatically. If you don't see the menu:
+   ![image](https://github.com/user-attachments/assets/fe774867-c791-4e6f-a948-b54dfc34c693)
+
+
+9. The `onOpen` function might not run automatically. If you don't see the menu:
    - In the Apps Script editor, open the `config.gs` file
    - Find the `onOpen()` function
    - Click the Run button (▶️) to manually create the menu
 
-9. You should now see the "🛠 工具選單" (Tools Menu) in your menu bar
+   ![image](https://github.com/user-attachments/assets/b068f4c2-8c36-406d-9753-c89787370fe3)
+
+
+10. You should now see the "🛠 工具選單" (Tools Menu) in your menu bar
+
+   ![image](https://github.com/user-attachments/assets/dab56975-9be1-494b-9509-1347d9dfa9d3)
+
 
 ## Manual Installation
 
