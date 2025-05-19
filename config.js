@@ -62,6 +62,7 @@ function createCustomMenu() {
     const beautifyMenu = ui.createMenu("🎨 單頁美化")
       .addItem("📅 更新日期", "updateDateInFirstSlide")
       .addItem("📏 加上網格", "toggleGrids")
+      .addItem("↙️ 加上一個大箭頭 ", "drawArrowOnCurrentSlide")
       .addItem("🔰 加上badge", "convertToBadges")
       .addItem("⇣ 兩者間加上垂直線", "insertVerticalDashedLineBetween")
       .addItem("⇢ 兩者間加上水平線", "insertHorizontalDashedLineBetween")
