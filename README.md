@@ -40,7 +40,7 @@ A Google Apps Script project that enhances Google Slides with automated formatti
 
 3. Clone this repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/htlin222/lizard-gslide-module.git
    cd lizard-gslide-module
    ```
 
@@ -54,13 +54,20 @@ A Google Apps Script project that enhances Google Slides with automated formatti
    clasp push
    ```
 
-6. Open the newly created presentation from your Google Drive
+6. Open the Google Slides presentation directly:
+   ```bash
+   clasp open-container
+   ```
+   This command opens the container (Google Slides presentation) directly in your browser
 
-7. Open the Apps Script editor (Extensions > Apps Script)
+7. In the Google Slides presentation, go to Extensions > Apps Script to enable the script
 
-8. Run the `onOpen` function to initialize the custom menu and apply the theme
+8. The `onOpen` function might not run automatically. If you don't see the menu:
+   - In the Apps Script editor, open the `config.gs` file
+   - Find the `onOpen()` function
+   - Click the Run button (▶️) to manually create the menu
 
-9. Return to your presentation and you should now see the "🛠 工具選單" (Tools Menu) in your menu bar
+9. You should now see the "🛠 工具選單" (Tools Menu) in your menu bar
 
 ## Manual Installation
 
