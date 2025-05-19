@@ -1,9 +1,9 @@
 // Configuration settings for the Google Slides module
 var main_color = '#3D6869';
-var main_font_family = 'Source Sans Pro'; 
+var main_font_family = 'Source Sans Pro';
 var water_mark_text = 'ⓒ Hsieh-Ting Lin';
 var label_font_size = 14
-const sourcePresentationId = '1qAZzq-uo5blLH1nqp9rbrGDlzz_Aj8eIp0XjDdmI220'; 
+const sourcePresentationId = '1qAZzq-uo5blLH1nqp9rbrGDlzz_Aj8eIp0XjDdmI220';
 const slideWidth = SlidesApp.getActivePresentation().getPageWidth();
 const slideHeight = SlidesApp.getActivePresentation().getPageHeight();
 
@@ -16,11 +16,11 @@ function onOpen() {
   try {
     // Try to create the menu using the simple trigger
     createCustomMenu();
-    
+
     // Check if this is a new presentation (no slides or just one empty slide)
     const presentation = SlidesApp.getActivePresentation();
     const slides = presentation.getSlides();
-    
+
     if (slides.length <= 1) {
       // This appears to be a new presentation, automatically apply the theme
       applyThemeToCurrentPresentation();
@@ -48,7 +48,7 @@ function createCustomMenu() {
   try {
     // Try to get the UI - this might fail in some contexts
     const ui = SlidesApp.getUi();
-    
+
     // Create the batch processing submenu
     const batchMenu = ui.createMenu("🗃️ 批次處理")
       .addItem("🛠 同時更新所有", "confirmRunAll")
@@ -63,22 +63,24 @@ function createCustomMenu() {
       .addItem("📅 更新日期", "updateDateInFirstSlide")
       .addItem("📏 加上網格", "toggleGrids")
       .addItem("🔰 加上badge", "convertToBadges")
+      .addItem("⇣ 兩者間加上垂直線", "insertVerticalDashedLineBetween")
+      .addItem("⇢ 兩者間加上水平線", "insertHorizontalDashedLineBetween")
       .addItem("🍡 貼上在同一處", "duplicateImageInPlace");
 
     // Create the add new content submenu
     const createMenu = ui.createMenu("🖖 新增")
       .addItem("👆 取得前一頁的標題", "copyPreviousTitleText")
       .addItem("👇 標題加到新的下頁", "createNextSlideWithCurrentTitle")
-      .addItem("🎨 套用主題", "applyThemeToCurrentPresentation");
 
     // Add all submenus to the main menu and add it to the UI
     ui.createMenu("🛠 工具選單")
       .addSubMenu(batchMenu)
       .addSubMenu(beautifyMenu)
       .addSubMenu(createMenu)
-      .addItem("🔁 點這手動更新", "showMenuManually")
+      .addItem("🔁 更新選單", "showMenuManually")
+      .addItem("🎨 套用主題", "applyThemeToCurrentPresentation");
       .addToUi();
-      
+
     return true; // Menu created successfully
   } catch (e) {
     // Log the error but don't halt execution
