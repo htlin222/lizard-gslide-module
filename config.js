@@ -71,14 +71,14 @@ function createCustomMenu() {
     const createMenu = ui.createMenu("🖖 新增")
       .addItem("👆 取得前一頁的標題", "copyPreviousTitleText")
       .addItem("👇 標題加到新的下頁", "createNextSlideWithCurrentTitle")
+      .addItem("🎨 套用主題", "applyThemeToCurrentPresentation");
 
     // Add all submenus to the main menu and add it to the UI
     ui.createMenu("🛠 工具選單")
       .addSubMenu(batchMenu)
       .addSubMenu(beautifyMenu)
       .addSubMenu(createMenu)
-      .addItem("🔁 更新選單", "showMenuManually")
-      .addItem("🎨 套用主題", "applyThemeToCurrentPresentation");
+      .addItem("🔁 點這手動更新", "showMenuManually")
       .addToUi();
 
     return true; // Menu created successfully
