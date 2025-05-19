@@ -2,6 +2,8 @@
 
 A Google Apps Script project that enhances Google Slides with automated formatting, styling, and content management features. This module provides a custom menu with various tools to improve slide design consistency and streamline presentation creation.
 
+![image](https://github.com/user-attachments/assets/b9930702-381d-4bc6-9458-8385bea9d7a7)
+
 ## Features
 
 ### Batch Processing
