@@ -20,6 +20,13 @@ function drawArrowOnCurrentSlide() {
   box3.setRotation(45);
   box3.getFill().setSolidFill(blueColor);
   box3.getBorder().getLineFill().setSolidFill(blueColor);
+  
+  // Group all three shapes together to form the arrow
+  const pageElements = [box1, box2, box3];
+  const groupedArrow = slide.group(pageElements);
+  
+  // Return the grouped arrow in case it needs to be used elsewhere
+  return groupedArrow;
 }
 
 function logSelectedItemGeometry() {

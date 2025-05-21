@@ -20,7 +20,7 @@ function fastStyleSelectedTable() {
   const black = "#000000";  
   // Default border settings
   const borderColor = main_color; // White border
-  const borderWidth = 0.5;     // 3pt width
+  const borderWidth = 0.3;     // 3pt width
 
   for (let r = 0; r < numRows; r++) {
     const isHeader = r === 0;

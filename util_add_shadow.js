@@ -14,11 +14,15 @@ function createOffsetBlueShape() {
 
   const blueShape = drawOffsetShape(currentPage, x, y, width, height, offset, main_color);
 
-  drawDecorativeTriangles(currentPage, x, y, width, height, offset, main_color);
+  const triangles = drawDecorativeTriangles(currentPage, x, y, width, height, offset, main_color);
 
-  applyBorderOrOverlay(currentPage, selectedElement, x, y, width, height, main_color);
+  const overlay = applyBorderOrOverlay(currentPage, selectedElement, x, y, width, height, main_color);
 
   selectedElement.bringToFront();
+  
+  // Group all four shapes together
+  const pageElements = [blueShape, ...triangles, overlay].filter(Boolean);
+  currentPage.group(pageElements);
 }
 
 // Utility Functions
@@ -69,8 +73,9 @@ function drawOffsetShape(page, x, y, width, height, offset, color) {
 }
 
 function drawDecorativeTriangles(page, x, y, width, height, offset, color) {
-  insertTriangle(page, x + width, y, offset, color, false);       // Right side triangle
-  insertTriangle(page, x + offset, y + height, offset, color, true); // Bottom-left mirrored triangle
+  const triangle1 = insertTriangle(page, x + width, y, offset, color, false);       // Right side triangle
+  const triangle2 = insertTriangle(page, x + offset, y + height, offset, color, true); // Bottom-left mirrored triangle
+  return [triangle1, triangle2];
 }
 
 function insertTriangle(page, x, y, size, color, isLeft) {
@@ -84,6 +89,8 @@ function insertTriangle(page, x, y, size, color, isLeft) {
   triangle.getFill().setSolidFill(color);
   triangle.getBorder().setWeight(1);
   triangle.getBorder().getLineFill().setSolidFill(color);
+  
+  return triangle;
 }
 
 function applyBorderOrOverlay(page, element, x, y, width, height, color) {
@@ -91,7 +98,7 @@ function applyBorderOrOverlay(page, element, x, y, width, height, color) {
     const border = element.getBorder();
     if (border) {
       border.getLineFill().setSolidFill(color);
-      return;
+      return null;
     }
   } catch (e) {
     // Element may not support border
@@ -101,4 +108,6 @@ function applyBorderOrOverlay(page, element, x, y, width, height, color) {
   overlay.getFill().setTransparent();
   overlay.getBorder().getLineFill().setSolidFill(color);
   overlay.bringToFront();
+  
+  return overlay;
 }
