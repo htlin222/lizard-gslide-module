@@ -16,13 +16,11 @@ function fastStyleSelectedTable() {
 
   const white = "#FFFFFF";
   const blue = main_color;
-  const gray = "#AAAAAA";
-  const black = "#000000";
-  const weight = 3;
-  
+  const gray = "#CCCCCC";
+  const black = "#000000";  
   // Default border settings
-  const borderColor = white; // White border
-  const borderWidth = 3;     // 3pt width
+  const borderColor = main_color; // White border
+  const borderWidth = 0.5;     // 3pt width
 
   for (let r = 0; r < numRows; r++) {
     const isHeader = r === 0;
@@ -32,25 +30,47 @@ function fastStyleSelectedTable() {
       const cell = table.getCell(r, c);
       if (!cell) continue;
 
-      // Set background color and text style based on row
-      const text = cell.getText();
-      const textStyle = text.getTextStyle();
-
+      // Set background color based on row
       if (isHeader) {
         cell.getFill().setSolidFill(blue);
-        textStyle.setForegroundColor(white).setBold(true);
       } else if (isEven) {
-        cell.getFill().setSolidFill(white);
-        textStyle.setForegroundColor(black).setBold(false);
-      } else {
         cell.getFill().setSolidFill(gray);
-        textStyle.setForegroundColor(black).setBold(false);
+      } else {
+        cell.getFill().setSolidFill(white);
+      }
+      
+      // Only set text style if there is text content
+      try {
+        const text = cell.getText();
+        if (text && text.asString().trim() !== "") {
+          const textStyle = text.getTextStyle();
+          if (isHeader) {
+            textStyle.setForegroundColor(white).setBold(true);
+          } else {
+            textStyle.setForegroundColor(black).setBold(false);
+          }
+        }
+        
+        // Set content alignment to center both horizontally and vertically
+        // MIDDLE only centers vertically, we need to set both horizontal and vertical alignment
+        cell.setContentAlignment(SlidesApp.ContentAlignment.MIDDLE);
+        
+        // We also need to set paragraph alignment for horizontal centering
+        try {
+          const textRange = cell.getText();
+          const paragraphStyle = textRange.getParagraphStyle();
+          paragraphStyle.setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
+        } catch (alignError) {
+          console.log("Could not set paragraph alignment for cell at row " + r + ", column " + c);
+        }
+      } catch (e) {
+        console.log("Skipping text styling for empty cell at row " + r + ", column " + c);
       }
     }
   }
   
-  // Apply borders using the Advanced Slides API
-  applyTableBorders(table, borderColor, borderWidth);
+  // Apply borders using the Advanced Slides API - different border for header row
+  applyTableBordersWithHeaderRow(table, white, borderColor, borderWidth);
 }
 
 /**
@@ -103,6 +123,191 @@ function applyTableBorders(table, borderColor, borderWeight) {
     console.log("Table borders applied successfully");
   } catch (e) {
     console.error("Error applying table borders: " + e.message);
+  }
+}
+
+/**
+ * Applies borders to a table with special styling for the header row
+ * @param {Table} table - The table to apply borders to
+ * @param {string} headerBorderColor - The border color for the header row in hex format
+ * @param {string} bodyBorderColor - The border color for the body rows in hex format
+ * @param {number} borderWeight - The border weight in points
+ */
+function applyTableBordersWithHeaderRow(table, headerBorderColor, bodyBorderColor, borderWeight) {
+  try {
+    const presentationId = SlidesApp.getActivePresentation().getId();
+    const tableId = table.getObjectId();
+    
+    // Log the table ID to verify we're targeting the right table
+    console.log("Applying borders to table ID: " + tableId);
+    
+    // Convert header border color to RGB
+    const hr = parseInt(headerBorderColor.substring(1, 3), 16) / 255;
+    const hg = parseInt(headerBorderColor.substring(3, 5), 16) / 255;
+    const hb = parseInt(headerBorderColor.substring(5, 7), 16) / 255;
+    
+    // Convert body border color to RGB
+    const br = parseInt(bodyBorderColor.substring(1, 3), 16) / 255;
+    const bg = parseInt(bodyBorderColor.substring(3, 5), 16) / 255;
+    const bb = parseInt(bodyBorderColor.substring(5, 7), 16) / 255;
+    
+    // Log the colors to verify conversion
+    console.log("Header border RGB: " + hr + ", " + hg + ", " + hb);
+    console.log("Body border RGB: " + br + ", " + bg + ", " + bb);
+    
+    // Try a simpler approach - just set all borders to the body color
+    const requests = [{
+      "updateTableBorderProperties": {
+        "objectId": tableId,
+        "borderPosition": "ALL",
+        "tableBorderProperties": {
+          "tableBorderFill": {
+            "solidFill": {
+              "color": {
+                "rgbColor": {
+                  "red": br,
+                  "green": bg,
+                  "blue": bb
+                }
+              }
+            }
+          },
+          "weight": {
+            "magnitude": borderWeight,
+            "unit": "PT"
+          },
+          "dashStyle": "SOLID"
+        },
+        "fields": "tableBorderFill,weight,dashStyle"
+      }
+    }];
+    
+    // Execute the batch update
+    const response = Slides.Presentations.batchUpdate({"requests": requests}, presentationId);
+    console.log("Table borders applied successfully");
+    console.log("API Response: " + JSON.stringify(response));
+    
+    // Now try a second approach for the header row - using a different method
+    // Instead of using tableRange which might not be working as expected,
+    // we'll try to directly style the first row using a different approach
+    
+    // First, get the current slide
+    const currentSlide = SlidesApp.getActivePresentation().getSelection().getCurrentPage();
+    if (!currentSlide) {
+      console.log("Could not get current slide");
+      return;
+    }
+    
+    // According to the API documentation, valid border positions are: ALL, BOTTOM, INNER, INNER_HORIZONTAL, INNER_VERTICAL, LEFT, OUTER, RIGHT, TOP
+    try {
+      // We only want to change the vertical borders of the header row to white
+      // Since the API doesn't allow targeting specific row borders directly,
+      // we'll use a simpler approach - just make the vertical borders white
+      
+      // Apply white color to all INNER_VERTICAL borders
+      const verticalRequests = [{
+        "updateTableBorderProperties": {
+          "objectId": tableId,
+          "borderPosition": "INNER_VERTICAL", // This affects all vertical borders between columns
+          "tableBorderProperties": {
+            "tableBorderFill": {
+              "solidFill": {
+                "color": {
+                  "rgbColor": {
+                    "red": 1.0,  // Pure white
+                    "green": 1.0,
+                    "blue": 1.0
+                  }
+                }
+              }
+            },
+            "weight": {
+              "magnitude": borderWeight * 1.5, // Slightly thicker for visibility
+              "unit": "PT"
+            },
+            "dashStyle": "SOLID"
+          },
+          "fields": "tableBorderFill,weight,dashStyle"
+        }
+      }];
+      
+      // Also apply white to LEFT and RIGHT borders for completeness
+      const leftRightRequests = [
+        {
+          "updateTableBorderProperties": {
+            "objectId": tableId,
+            "borderPosition": "LEFT",
+            "tableBorderProperties": {
+              "tableBorderFill": {
+                "solidFill": {
+                  "color": {
+                    "rgbColor": {
+                      "red": 1.0,
+                      "green": 1.0,
+                      "blue": 1.0
+                    }
+                  }
+                }
+              },
+              "weight": {
+                "magnitude": borderWeight * 1.5,
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "fields": "tableBorderFill,weight,dashStyle"
+          }
+        },
+        {
+          "updateTableBorderProperties": {
+            "objectId": tableId,
+            "borderPosition": "RIGHT",
+            "tableBorderProperties": {
+              "tableBorderFill": {
+                "solidFill": {
+                  "color": {
+                    "rgbColor": {
+                      "red": 1.0,
+                      "green": 1.0,
+                      "blue": 1.0
+                    }
+                  }
+                }
+              },
+              "weight": {
+                "magnitude": borderWeight * 1.5,
+                "unit": "PT"
+              },
+              "dashStyle": "SOLID"
+            },
+            "fields": "tableBorderFill,weight,dashStyle"
+          }
+        }
+      ];
+      
+      // Execute the requests
+      const verticalResponse = Slides.Presentations.batchUpdate({"requests": verticalRequests}, presentationId);
+      console.log("Vertical borders applied successfully");
+      
+      const leftRightResponse = Slides.Presentations.batchUpdate({"requests": leftRightRequests}, presentationId);
+      console.log("Left and right borders applied successfully");
+      
+      // Unfortunately, the API doesn't allow us to target just the vertical borders of the header row
+      // This approach changes all vertical borders to white, which should at least make them visible
+      // against the header background
+    } catch (headerError) {
+      console.error("Error applying header row borders: " + headerError.message);
+    }
+    
+  } catch (e) {
+    console.error("Error applying table borders with header styling: " + e.message);
+    // Try a fallback approach
+    try {
+      // Simple fallback - just apply a single border style to the whole table
+      applyTableBorders(table, bodyBorderColor, borderWeight);
+    } catch (fallbackError) {
+      console.error("Fallback border styling also failed: " + fallbackError.message);
+    }
   }
 }
 
