@@ -64,19 +64,19 @@ function createCustomMenu() {
 		// Create the beautify menu as a top-level menu
 		ui.createMenu("🎨 單頁美化")
 			.addItem("📅 更新日期", "updateDateInFirstSlide")
-			.addItem("📏 加上網格", "toggleGrids")
-			.addItem("❄ 加上影子", "createOffsetBlueShape")
-			.addItem("↙ 加上一個大箭頭 ", "drawArrowOnCurrentSlide")
-			.addItem("⇣ 兩者間加上垂直線", "insertVerticalDashedLineBetween")
-			.addItem("⇢ 兩者間加上水平線", "insertHorizontalDashedLineBetween")
-			.addItem("🔰 加上badge", "convertToBadges")
 			.addItem("🍡 貼上在同一處", "duplicateImageInPlace")
-			.addItem("🔢 加上數字圓圈", "addNextNumberCircle")
-			.addItem('📐 分割成網格', 'showSplitShapeDialog')
+			.addItem("❄ 加上影子", "createOffsetBlueShape")
 			.addToUi();
 
 		// Create the add new content menu as a top-level menu
 		ui.createMenu("🖖 新增")
+			.addItem("🔢 加上數字圓圈", "addNextNumberCircle")
+			.addItem("📏 加上網格", "toggleGrids")
+			.addItem('📐 分割成網格', 'showSplitShapeDialog')
+			.addItem("↙ 加上一個大箭頭 ", "drawArrowOnCurrentSlide")
+			.addItem("⇣ 兩者間加上垂直線", "insertVerticalDashedLineBetween")
+			.addItem("⇢ 兩者間加上水平線", "insertHorizontalDashedLineBetween")
+			.addItem("🔰 加上badge", "convertToBadges")
 			.addItem("👆 取得前一頁的標題", "copyPreviousTitleText")
 			.addItem("👇 標題加到新的下頁", "createNextSlideWithCurrentTitle")
 			.addToUi();
