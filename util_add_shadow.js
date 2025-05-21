@@ -21,7 +21,7 @@ function createOffsetBlueShape() {
   selectedElement.bringToFront();
   
   // Group all four shapes together
-  const pageElements = [blueShape, ...triangles, overlay].filter(Boolean);
+  const pageElements = [selectedElement, blueShape, ...triangles, overlay].filter(Boolean);
   currentPage.group(pageElements);
 }
 
