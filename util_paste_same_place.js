@@ -18,12 +18,6 @@ function duplicateImageInPlace() {
   newImage.setTop(imgY);
   newImage.setWidth(imgWidth);
   newImage.setHeight(imgHeight);
-
-  try {
-    newImage.getBorder().setWeight(2); // default border
-  } catch (e) {
-    // Silently ignore if unsupported
-  }
 } 
 
 
