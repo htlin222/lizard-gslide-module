@@ -69,7 +69,8 @@ function createCustomMenu() {
 			.addItem("🔰 加上badge", "convertToBadges")
 			.addItem("⇣ 兩者間加上垂直線", "insertVerticalDashedLineBetween")
 			.addItem("⇢ 兩者間加上水平線", "insertHorizontalDashedLineBetween")
-			.addItem("🍡 貼上在同一處", "duplicateImageInPlace");
+			.addItem("🍡 貼上在同一處", "duplicateImageInPlace")
+      .addItem('Split Shape into Grid', 'showSplitShapeDialog');
 
 		// Create the add new content submenu
 		const createMenu = ui

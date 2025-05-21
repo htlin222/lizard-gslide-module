@@ -362,16 +362,6 @@ function logCurrentPageProperties(selection) {
   }, null, 2));
 }
 
-/**
- * Creates a simple UI to run the property logger
- */
-function createPropertyLoggerMenu() {
-  const ui = SlidesApp.getUi();
-  ui.createMenu('Object Properties')
-    .addItem('Log Selected Object Properties', 'logSelectedObjectProperties')
-    .addItem('Log Table Structure', 'logSelectedTableStructure')
-    .addToUi();
-}
 
 /**
  * Specifically logs the structure of a selected table with more detail
@@ -435,16 +425,4 @@ function logSelectedTableStructure() {
   SlidesApp.getUi().alert("Please select a table first");
 }
 
-/**
- * Runs when the add-on is installed
- */
-function onInstall() {
-  onOpen();
-}
 
-/**
- * Runs when the document is opened
- */
-function onOpen() {
-  createPropertyLoggerMenu();
-}
