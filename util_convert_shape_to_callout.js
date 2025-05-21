@@ -41,11 +41,13 @@ function convertShapeToCallout() {
   
   // Style the main shape
   mainShape.getFill().setSolidFill('#FFFFFF'); // White fill
-  mainShape.getBorder().getLineFill().setSolidFill('#0000FF'); // Blue border
+  mainShape.getBorder().getLineFill().setSolidFill(main_color); // Blue border
   
-  // Set text color to black if there's text
+  // Set text color to black and alignment to left if there's text
   try {
-    mainShape.getText().getTextStyle().setForegroundColor('#000000');
+    const mainText = mainShape.getText();
+    mainText.getTextStyle().setForegroundColor('#000000');
+    mainText.getParagraphStyle().setParagraphAlignment(SlidesApp.ParagraphAlignment.START);
   } catch (e) {
     // No text in the shape, ignore
   }
@@ -61,8 +63,11 @@ function convertShapeToCallout() {
   );
   
   // Style the header shape
-  headerShape.getFill().setSolidFill('#0000FF'); // Blue fill
-  headerShape.getBorder().getLineFill().setSolidFill('#0000FF'); // Blue border
+  headerShape.getFill().setSolidFill(main_color); // Blue fill
+  headerShape.getBorder().getLineFill().setSolidFill(main_color); // Blue border
+  
+  // Add default text 'INFO' to the header shape
+  headerShape.getText().setText('INFO');
   
   // Set text style for header: white, bold, 12pt, centered
   const headerText = headerShape.getText();
@@ -70,7 +75,7 @@ function convertShapeToCallout() {
     .setForegroundColor('#FFFFFF') // White text
     .setBold(true) // Bold text
     .setFontSize(12); // 12pt font size
-  headerText.getParagraphStyle().setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
+  headerText.getParagraphStyle().setParagraphAlignment(SlidesApp.ParagraphAlignment.START);
   headerShape.setContentAlignment(SlidesApp.ContentAlignment.MIDDLE); // Vertically center text
   
   // Create the vertical bar (2nd shape)
@@ -85,8 +90,8 @@ function convertShapeToCallout() {
   );
   
   // Style the vertical bar
-  barShape.getFill().setSolidFill('#0000FF'); // Blue fill
-  barShape.getBorder().getLineFill().setSolidFill('#0000FF'); // Blue border
+  barShape.getFill().setSolidFill(main_color); // Blue fill
+  barShape.getBorder().getLineFill().setSolidFill(main_color); // Blue border
   
   // Group all three shapes together
   const pageElements = [barShape, headerShape, mainShape];
