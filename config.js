@@ -73,6 +73,7 @@ function createCustomMenu() {
 			.addItem("🍡 貼上在同一處", "duplicateImageInPlace")
 			.addItem("🔢 加上數字圓圈", "addNextNumberCircle")
 			.addItem('📐 分割成網格', 'showSplitShapeDialog')
+			.addItem('💬 轉換成標注框', 'convertShapeToCallout')
 			.addToUi();
 
 		// Create the add new content menu as a top-level menu
