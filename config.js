@@ -49,42 +49,36 @@ function createCustomMenu() {
 		// Try to get the UI - this might fail in some contexts
 		const ui = SlidesApp.getUi();
 
-		// Create the batch processing submenu
-		const batchMenu = ui
-			.createMenu("🗃 批次處理")
+		// Create the batch processing menu as a top-level menu
+		ui.createMenu("🗃 批次處理")
+			.addItem("🔁 點這手動更新", "showMenuManually")
 			.addItem("🛠 同時更新所有", "confirmRunAll")
+			.addItem("🎨 套用主題", "applyThemeToCurrentPresentation")
 			.addItem("🔄 更新進度條", "runUpdateProgressBars")
 			.addItem("📑 更新標籤頁", "runProcessTabs")
 			.addItem("📚 更新章節導覽", "runProcessSectionBoxes")
 			.addItem("🦶 更新 Footer", "runUpdateTitleFootnotes")
-			.addItem("💧 切換浮水印", "runToggleWaterMark");
+			.addItem("💧 切換浮水印", "runToggleWaterMark")
+			.addToUi();
 
-		// Create the beautify submenu
-		const beautifyMenu = ui
-			.createMenu("🎨 單頁美化")
+		// Create the beautify menu as a top-level menu
+		ui.createMenu("🎨 單頁美化")
 			.addItem("📅 更新日期", "updateDateInFirstSlide")
 			.addItem("📏 加上網格", "toggleGrids")
 			.addItem("❄ 加上影子", "createOffsetBlueShape")
 			.addItem("↙ 加上一個大箭頭 ", "drawArrowOnCurrentSlide")
-			.addItem("🔰 加上badge", "convertToBadges")
 			.addItem("⇣ 兩者間加上垂直線", "insertVerticalDashedLineBetween")
 			.addItem("⇢ 兩者間加上水平線", "insertHorizontalDashedLineBetween")
+			.addItem("🔰 加上badge", "convertToBadges")
 			.addItem("🍡 貼上在同一處", "duplicateImageInPlace")
-      .addItem('Split Shape into Grid', 'showSplitShapeDialog');
+			.addItem("🔢 加上數字圓圈", "addNextNumberCircle")
+			.addItem('📐 分割成網格', 'showSplitShapeDialog')
+			.addToUi();
 
-		// Create the add new content submenu
-		const createMenu = ui
-			.createMenu("🖖 新增")
+		// Create the add new content menu as a top-level menu
+		ui.createMenu("🖖 新增")
 			.addItem("👆 取得前一頁的標題", "copyPreviousTitleText")
-			.addItem("👇 標題加到新的下頁", "createNextSlideWithCurrentTitle");
-
-		// Add all submenus to the main menu and add it to the UI
-		ui.createMenu("🛠 工具選單")
-			.addSubMenu(batchMenu)
-			.addSubMenu(beautifyMenu)
-			.addSubMenu(createMenu)
-			.addItem("🔁 點這手動更新", "showMenuManually")
-			.addItem("🎨 套用主題", "applyThemeToCurrentPresentation")
+			.addItem("👇 標題加到新的下頁", "createNextSlideWithCurrentTitle")
 			.addToUi();
 
 		return true; // Menu created successfully

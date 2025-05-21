@@ -27,12 +27,13 @@ function addNextNumberCircle() {
   const newNumber = maxNum + 1;
 
   // Step 3: Insert circle
-  const shape = slide.insertShape(SlidesApp.ShapeType.ELLIPSE, 25, 25, 25, 25);
+  const shape = slide.insertShape(SlidesApp.ShapeType.ELLIPSE, 25, 25, 36, 36);
   shape.getText().setText(newNumber.toString());
 
   // Step 4: Styling
   shape.getFill().setSolidFill(main_color); // blue
   shape.getText().getTextStyle().setForegroundColor('#FFFFFF'); // white
+  shape.getText().getTextStyle().setFontSize(18); // set font size to 18
   shape.getText().getParagraphStyle().setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
   shape.setContentAlignment(SlidesApp.ContentAlignment.MIDDLE);
 
