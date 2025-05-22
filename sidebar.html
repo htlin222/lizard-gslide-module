@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <base target="_top">
+    <base target="_top" />
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -15,7 +15,8 @@
         margin-bottom: 5px;
         font-weight: bold;
       }
-      input, select {
+      input,
+      select {
         width: 100%;
         padding: 8px;
         box-sizing: border-box;
@@ -101,7 +102,7 @@
         pointer-events: none;
       }
       .loading::after {
-        content: '';
+        content: "";
         position: absolute;
         top: 50%;
         left: 50%;
@@ -114,227 +115,405 @@
         animation: spin 1s ease-in-out infinite;
       }
       @keyframes spin {
-        to { transform: rotate(360deg); }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Style button styles */
+      .style-button {
+        cursor: pointer;
+        text-align: center;
+        width: 30%;
+        padding: 5px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+      }
+      .style-button:hover {
+        background-color: #f5f5f5;
+      }
+      .style-preview {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 5px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+      }
+      .preview-text {
+        font-size: 18px;
+      }
+      .style-label {
+        font-size: 12px;
       }
     </style>
   </head>
   <body>
     <div class="header">Lizard Slides Configuration</div>
-    
+
     <div class="form-group">
       <label for="main-color">Main Color:</label>
-      <div style="display: flex; align-items: center;">
-        <input type="text" id="main-color" placeholder="#3D6869">
+      <div style="display: flex; align-items: center">
+        <input type="text" id="main-color" placeholder="#3D6869" />
         <div class="color-preview" id="color-preview"></div>
       </div>
     </div>
-    
+
     <div class="form-group">
       <label for="font-family">Font Family:</label>
       <select id="font-family">
         <!-- Will be populated dynamically with available fonts -->
       </select>
     </div>
-    
+
     <div class="form-group">
       <label for="watermark-text">Watermark Text:</label>
-      <input type="text" id="watermark-text" placeholder="ⓒ Hsieh-Ting Lin">
+      <input type="text" id="watermark-text" placeholder="ⓒ Hsieh-Ting Lin" />
     </div>
-    
+
     <div class="form-group">
       <label for="font-size">Label Font Size:</label>
-      <input type="number" id="font-size" min="8" max="36" step="1" placeholder="14">
+      <input
+        type="number"
+        id="font-size"
+        min="8"
+        max="36"
+        step="1"
+        placeholder="14"
+      />
     </div>
-    
+
     <div class="form-group">
       <label for="progress-bar-height">Progress Bar Height:</label>
-      <input type="number" id="progress-bar-height" min="1" max="20" step="1" placeholder="5">
+      <input
+        type="number"
+        id="progress-bar-height"
+        min="1"
+        max="20"
+        step="1"
+        placeholder="5"
+      />
     </div>
-    
+
+    <div class="form-group">
+      <label>Apply Styles:</label>
+      <div
+        style="display: flex; justify-content: space-between; margin-top: 10px"
+      >
+        <div
+          class="style-button"
+          id="style-button-1"
+          title="White fill, main color border and text"
+        >
+          <div class="style-preview" id="style-preview-1">
+            <div class="preview-text">A</div>
+          </div>
+          <div class="style-label">Style 1</div>
+        </div>
+        <div
+          class="style-button"
+          id="style-button-2"
+          title="Main color fill, white text"
+        >
+          <div class="style-preview" id="style-preview-2">
+            <div class="preview-text">A</div>
+          </div>
+          <div class="style-label">Style 2</div>
+        </div>
+        <div
+          class="style-button"
+          id="style-button-3"
+          title="Gray fill, main color border and text"
+        >
+          <div class="style-preview" id="style-preview-3">
+            <div class="preview-text">A</div>
+          </div>
+          <div class="style-label">Style 3</div>
+        </div>
+      </div>
+    </div>
+
     <button id="save-button">Save Configuration</button>
     <button id="apply-button">Save & Apply to Presentation</button>
-    
-    <div class="footer">
-      Lizard Slides Module - Configuration Panel
-    </div>
-    
+
+    <div class="footer">Lizard Slides Module - Configuration Panel</div>
+
     <script>
       // Initialize form with current values
       function onLoadSidebar() {
         google.script.run.withSuccessHandler(updateForm).getConfigValues();
-        
+
         // Update color preview when color input changes
-        document.getElementById('main-color').addEventListener('input', function() {
-          updateColorPreview(this.value);
-        });
-        
+        document
+          .getElementById("main-color")
+          .addEventListener("input", function () {
+            updateColorPreview(this.value);
+          });
+
         // Set up save button
-        document.getElementById('save-button').addEventListener('click', saveConfig);
-        
+        document
+          .getElementById("save-button")
+          .addEventListener("click", saveConfig);
+
         // Set up save and apply button
-        document.getElementById('apply-button').addEventListener('click', saveAndApplyConfig);
+        document
+          .getElementById("apply-button")
+          .addEventListener("click", saveAndApplyConfig);
       }
-      
+
       // Update form with values from server
       function updateForm(config) {
-        document.getElementById('main-color').value = config.mainColor || '';
-        document.getElementById('watermark-text').value = config.watermarkText || '';
-        document.getElementById('font-size').value = config.fontSize || '';
-        document.getElementById('progress-bar-height').value = config.progressBarHeight || '';
-        
+        document.getElementById("main-color").value = config.mainColor || "";
+        document.getElementById("watermark-text").value =
+          config.watermarkText || "";
+        document.getElementById("font-size").value = config.fontSize || "";
+        document.getElementById("progress-bar-height").value =
+          config.progressBarHeight || "";
+
         // Populate font dropdown with available fonts
-        const fontSelect = document.getElementById('font-family');
-        fontSelect.innerHTML = ''; // Clear existing options
-        
+        const fontSelect = document.getElementById("font-family");
+        fontSelect.innerHTML = ""; // Clear existing options
+
         // Add available fonts from Google Slides
         if (config.availableFonts && config.availableFonts.length > 0) {
-          config.availableFonts.forEach(function(fontFamily) {
-            const option = document.createElement('option');
+          config.availableFonts.forEach(function (fontFamily) {
+            const option = document.createElement("option");
             option.value = fontFamily;
             option.textContent = fontFamily;
             option.style.fontFamily = fontFamily; // Show the actual font in the dropdown
             fontSelect.appendChild(option);
           });
         }
-        
+
         // Set the selected font
         fontSelect.value = config.fontFamily;
-        
+
         // If the font isn't in the list, add it
         if (fontSelect.value !== config.fontFamily) {
-          const option = document.createElement('option');
+          const option = document.createElement("option");
           option.value = config.fontFamily;
-          option.textContent = config.fontFamily + ' (Custom)';
+          option.textContent = config.fontFamily + " (Custom)";
           option.style.fontFamily = config.fontFamily;
           fontSelect.appendChild(option);
           fontSelect.value = config.fontFamily;
         }
-        
+
         updateColorPreview(config.mainColor);
       }
-      
+
       // Update color preview
       function updateColorPreview(color) {
-        document.getElementById('color-preview').style.backgroundColor = color;
+        document.getElementById("color-preview").style.backgroundColor = color;
+
+        // Also update the style preview boxes
+        updateStylePreviews(color);
       }
-      
+
+      // Update style preview boxes
+      function updateStylePreviews(mainColor) {
+        // Style 1: White fill, main color border and text
+        const preview1 = document.getElementById("style-preview-1");
+        preview1.style.backgroundColor = "#FFFFFF";
+        preview1.style.border = "1px solid " + mainColor;
+        preview1.querySelector(".preview-text").style.color = mainColor;
+
+        // Style 2: Main color fill, white text
+        const preview2 = document.getElementById("style-preview-2");
+        preview2.style.backgroundColor = mainColor;
+        preview2.style.border = "1px solid " + mainColor;
+        preview2.querySelector(".preview-text").style.color = "#FFFFFF";
+
+        // Style 3: Gray fill, main color border and text
+        const preview3 = document.getElementById("style-preview-3");
+        preview3.style.backgroundColor = "#EEEEEE";
+        preview3.style.border = "1px solid " + mainColor;
+        preview3.querySelector(".preview-text").style.color = mainColor;
+      }
+
       // Save configuration
       function saveConfig() {
         const config = {
-          mainColor: document.getElementById('main-color').value,
-          fontFamily: document.getElementById('font-family').value,
-          watermarkText: document.getElementById('watermark-text').value,
-          fontSize: document.getElementById('font-size').value,
-          progressBarHeight: document.getElementById('progress-bar-height').value
+          mainColor: document.getElementById("main-color").value,
+          fontFamily: document.getElementById("font-family").value,
+          watermarkText: document.getElementById("watermark-text").value,
+          fontSize: document.getElementById("font-size").value,
+          progressBarHeight: document.getElementById("progress-bar-height")
+            .value,
         };
-        
+
         // Show loading animation
-        const saveButton = document.getElementById('save-button');
-        saveButton.classList.add('loading');
-        
+        const saveButton = document.getElementById("save-button");
+        saveButton.classList.add("loading");
+
         google.script.run
-          .withSuccessHandler(function(result) {
+          .withSuccessHandler(function (result) {
             // Hide loading animation
-            saveButton.classList.remove('loading');
+            saveButton.classList.remove("loading");
             onSaveSuccess(result);
           })
-          .withFailureHandler(function(error) {
+          .withFailureHandler(function (error) {
             // Hide loading animation
-            saveButton.classList.remove('loading');
+            saveButton.classList.remove("loading");
             onSaveFailure(error);
           })
           .saveConfigValues(config);
       }
-      
+
       // Save and apply configuration
       function saveAndApplyConfig() {
         const config = {
-          mainColor: document.getElementById('main-color').value,
-          fontFamily: document.getElementById('font-family').value,
-          watermarkText: document.getElementById('watermark-text').value,
-          fontSize: document.getElementById('font-size').value,
-          progressBarHeight: document.getElementById('progress-bar-height').value
+          mainColor: document.getElementById("main-color").value,
+          fontFamily: document.getElementById("font-family").value,
+          watermarkText: document.getElementById("watermark-text").value,
+          fontSize: document.getElementById("font-size").value,
+          progressBarHeight: document.getElementById("progress-bar-height")
+            .value,
         };
-        
+
         // Show loading animation
-        const applyButton = document.getElementById('apply-button');
-        applyButton.classList.add('loading');
-        
+        const applyButton = document.getElementById("apply-button");
+        applyButton.classList.add("loading");
+
         // Also show a status message that this might take a moment
-        showStatusMessage('Applying changes to presentation...', 'info');
-        
+        showStatusMessage("Applying changes to presentation...", "info");
+
         google.script.run
-          .withSuccessHandler(function(result) {
+          .withSuccessHandler(function (result) {
             // Hide loading animation
-            applyButton.classList.remove('loading');
+            applyButton.classList.remove("loading");
             onSaveAndApplySuccess(result);
           })
-          .withFailureHandler(function(error) {
+          .withFailureHandler(function (error) {
             // Hide loading animation
-            applyButton.classList.remove('loading');
+            applyButton.classList.remove("loading");
             onSaveFailure(error);
           })
           .saveAndApplyConfig(config);
       }
-      
+
       // Success handler for save
       function onSaveSuccess(result) {
         // Show a status message in the sidebar instead of a dialog
-        showStatusMessage('Configuration saved successfully!', 'success');
+        showStatusMessage("Configuration saved successfully!", "success");
       }
-      
+
       // Success handler for save and apply
       function onSaveAndApplySuccess(result) {
         // Show a status message in the sidebar instead of a dialog
-        showStatusMessage('Configuration saved and applied to the presentation!', 'success');
+        showStatusMessage(
+          "Configuration saved and applied to the presentation!",
+          "success"
+        );
       }
-      
+
       // Failure handler
       function onSaveFailure(error) {
         // Show a status message in the sidebar instead of a dialog
-        showStatusMessage('Error: ' + (error.message || 'Unknown error'), 'error');
+        showStatusMessage(
+          "Error: " + (error.message || "Unknown error"),
+          "error"
+        );
       }
-      
+
       // Show a status message in the sidebar
       function showStatusMessage(message, type) {
         // Create status message element if it doesn't exist
-        let statusEl = document.getElementById('status-message');
+        let statusEl = document.getElementById("status-message");
         if (!statusEl) {
-          statusEl = document.createElement('div');
-          statusEl.id = 'status-message';
-          document.querySelector('.footer').before(statusEl);
+          statusEl = document.createElement("div");
+          statusEl.id = "status-message";
+          document.querySelector(".footer").before(statusEl);
         }
-        
+
         // Clear previous content
-        statusEl.innerHTML = '';
-        
+        statusEl.innerHTML = "";
+
         // Set message and style
-        statusEl.className = 'status-message ' + (type || 'info');
-        
+        statusEl.className = "status-message " + (type || "info");
+
         // Add message text
         const messageText = document.createTextNode(message);
         statusEl.appendChild(messageText);
-        
+
         // Add close button
-        const closeBtn = document.createElement('span');
-        closeBtn.className = 'close-btn';
-        closeBtn.innerHTML = '&times;';
-        closeBtn.title = 'Close';
-        closeBtn.onclick = function() {
-          statusEl.style.opacity = '0';
-          setTimeout(function() {
-            statusEl.style.display = 'none';
+        const closeBtn = document.createElement("span");
+        closeBtn.className = "close-btn";
+        closeBtn.innerHTML = "&times;";
+        closeBtn.title = "Close";
+        closeBtn.onclick = function () {
+          statusEl.style.opacity = "0";
+          setTimeout(function () {
+            statusEl.style.display = "none";
           }, 500);
         };
         statusEl.appendChild(closeBtn);
-        
+
         // Show the message
-        statusEl.style.display = 'block';
-        statusEl.style.opacity = '1';
+        statusEl.style.display = "block";
+        statusEl.style.opacity = "1";
       }
-      
+
+      // Apply style functions with feedback
+      function applyStyle(styleNumber) {
+        // Get the button element
+        const styleButton = document.getElementById(
+          "style-button-" + styleNumber
+        );
+
+        // Add loading animation
+        styleButton.classList.add("loading");
+
+        // Call the appropriate function based on style number
+        const functionName = "applyStyle" + styleNumber;
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            // Remove loading animation
+            styleButton.classList.remove("loading");
+            // Show success message
+            showStatusMessage(
+              "Style " + styleNumber + " applied successfully!",
+              "success"
+            );
+          })
+          .withFailureHandler(function (error) {
+            // Remove loading animation
+            styleButton.classList.remove("loading");
+            // Show error message
+            showStatusMessage(
+              "Error applying style: " + error.message,
+              "error"
+            );
+          })
+          [functionName](); // Call the function dynamically
+      }
+
       // Run initialization when the page loads
-      window.onload = onLoadSidebar;
+      window.onload = function () {
+        // Initialize the sidebar
+        onLoadSidebar();
+
+        // Set up style button event listeners
+        document
+          .getElementById("style-button-1")
+          .addEventListener("click", function () {
+            applyStyle(1);
+          });
+
+        document
+          .getElementById("style-button-2")
+          .addEventListener("click", function () {
+            applyStyle(2);
+          });
+
+        document
+          .getElementById("style-button-3")
+          .addEventListener("click", function () {
+            applyStyle(3);
+          });
+      };
     </script>
   </body>
 </html>
