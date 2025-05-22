@@ -72,7 +72,7 @@ function convertShapeToCallout() {
   // Set text style for header: white, bold, 12pt, centered
   const headerText = headerShape.getText();
   headerText.getTextStyle()
-    .setForegroundColor('#FFFFFF') // White text
+    .setForegroundColor(main_color) // White text
     .setBold(true) // Bold text
     .setFontSize(12); // 12pt font size
   headerText.getParagraphStyle().setParagraphAlignment(SlidesApp.ParagraphAlignment.START);
