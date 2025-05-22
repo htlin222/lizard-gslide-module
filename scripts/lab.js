@@ -1,29 +1,26 @@
-// Laboratory data handling functions for Google Slides module
-function createCenteredGrayTextbox() {
-  // 取得目前簡報的第一張投影片
-  const slide = SlidesApp.getActivePresentation().getSlides()[0];
+function applyListToSelectedTextbox() {
+  const selection = SlidesApp.getActivePresentation().getSelection();
+  const selectedPageElements = selection.getPageElementRange().getPageElements();
 
-  // 插入一個文字方塊
-  const shape = slide.insertShape(SlidesApp.ShapeType.TEXT_BOX, 100, 100, 300, 100);
+  for (const element of selectedPageElements) {
+    if (element.getPageElementType() === SlidesApp.PageElementType.SHAPE) {
+      const shape = element.asShape();
+      const textRange = shape.getText();
+      const textString = textRange.asString();
 
-  // 設定文字內容
-  const textRange = shape.getText();
-  textRange.setText("Centered Text");
+      Logger.log("Text content: " + textString);
 
-  // 設定背景為灰色
-  shape.getFill().setSolidFill("#CCCCCC");
+      const paragraphs = textRange.getParagraphs();
+      Logger.log("Paragraph count: " + paragraphs.length);
 
-  // 水平置中對齊
-  const paragraphs = textRange.getParagraphs();
-  for (let i = 0; i < paragraphs.length; i++) {
-    paragraphs[i].getRange().getParagraphStyle().setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
+      // 嘗試套用清單樣式
+      try {
+        shape.getText().getListStyle()
+          .applyListPreset(SlidesApp.ListPreset.DISC_CIRCLE_SQUARE);
+        Logger.log("✅ 成功套用清單樣式");
+      } catch (e) {
+        Logger.log("❌ 套用失敗: " + e.message);
+      }
+    }
   }
-
-  // 垂直置中對齊
-  shape.setContentAlignment(SlidesApp.ContentAlignment.MIDDLE);
-}
-
-function addLineToSlide() {
-  const slide = SlidesApp.getActivePresentation().getSlides()[0];
-  slide.insertLine(SlidesApp.LineCategory.STRAIGHT, 100, 100, 300, 100); // x1, y1, x2, y2
 }
