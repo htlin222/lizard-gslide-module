@@ -3,6 +3,7 @@ var main_color = "#3D6869";
 var main_font_family = "Source Sans Pro";
 var water_mark_text = "ⓒ Hsieh-Ting Lin";
 var label_font_size = 14;
+var progressBarHeight = 5;
 const sourcePresentationId = "1qAZzq-uo5blLH1nqp9rbrGDlzz_Aj8eIp0XjDdmI220";
 const slideWidth = SlidesApp.getActivePresentation().getPageWidth();
 const slideHeight = SlidesApp.getActivePresentation().getPageHeight();
@@ -12,7 +13,8 @@ const CONFIG_KEYS = {
   MAIN_COLOR: 'main_color',
   FONT_FAMILY: 'main_font_family',
   WATERMARK_TEXT: 'water_mark_text',
-  FONT_SIZE: 'label_font_size'
+  FONT_SIZE: 'label_font_size',
+  PROGRESS_BAR_HEIGHT: 'progress_bar_height'
 };
 
 /**
@@ -195,12 +197,16 @@ function getConfigValues() {
   // Get available fonts
   const availableFonts = getAvailableFonts();
   
+  // Get saved progress bar height
+  const savedProgressBarHeight = userProperties.getProperty(CONFIG_KEYS.PROGRESS_BAR_HEIGHT);
+
   // Return current values (from Properties if available, otherwise from variables)
   return {
     mainColor: savedMainColor || main_color,
     fontFamily: savedFontFamily || main_font_family,
     watermarkText: savedWatermarkText || water_mark_text,
     fontSize: savedFontSize || label_font_size,
+    progressBarHeight: savedProgressBarHeight || progressBarHeight,
     availableFonts: availableFonts
   };
 }
@@ -258,7 +264,8 @@ function saveConfigValues(config) {
     [CONFIG_KEYS.MAIN_COLOR]: config.mainColor,
     [CONFIG_KEYS.FONT_FAMILY]: config.fontFamily,
     [CONFIG_KEYS.WATERMARK_TEXT]: config.watermarkText,
-    [CONFIG_KEYS.FONT_SIZE]: config.fontSize
+    [CONFIG_KEYS.FONT_SIZE]: config.fontSize,
+    [CONFIG_KEYS.PROGRESS_BAR_HEIGHT]: config.progressBarHeight
   });
   
   // Update the global variables
@@ -266,6 +273,7 @@ function saveConfigValues(config) {
   main_font_family = config.fontFamily;
   water_mark_text = config.watermarkText;
   label_font_size = parseInt(config.fontSize, 10);
+  progressBarHeight = parseInt(config.progressBarHeight, 10);
   
   return true;
 }
@@ -295,12 +303,14 @@ function loadSavedConfiguration() {
   const savedFontFamily = userProperties.getProperty(CONFIG_KEYS.FONT_FAMILY);
   const savedWatermarkText = userProperties.getProperty(CONFIG_KEYS.WATERMARK_TEXT);
   const savedFontSize = userProperties.getProperty(CONFIG_KEYS.FONT_SIZE);
+  const savedProgressBarHeight = userProperties.getProperty(CONFIG_KEYS.PROGRESS_BAR_HEIGHT);
   
   // Update the global variables if saved values exist
   if (savedMainColor) main_color = savedMainColor;
   if (savedFontFamily) main_font_family = savedFontFamily;
   if (savedWatermarkText) water_mark_text = savedWatermarkText;
   if (savedFontSize) label_font_size = parseInt(savedFontSize, 10);
+  if (savedProgressBarHeight) progressBarHeight = parseInt(savedProgressBarHeight, 10);
 }
 
 /**

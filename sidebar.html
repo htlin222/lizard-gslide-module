@@ -146,6 +146,11 @@
       <input type="number" id="font-size" min="8" max="36" step="1" placeholder="14">
     </div>
     
+    <div class="form-group">
+      <label for="progress-bar-height">Progress Bar Height:</label>
+      <input type="number" id="progress-bar-height" min="1" max="20" step="1" placeholder="5">
+    </div>
+    
     <button id="save-button">Save Configuration</button>
     <button id="apply-button">Save & Apply to Presentation</button>
     
@@ -172,9 +177,10 @@
       
       // Update form with values from server
       function updateForm(config) {
-        document.getElementById('main-color').value = config.mainColor;
-        document.getElementById('watermark-text').value = config.watermarkText;
-        document.getElementById('font-size').value = config.fontSize;
+        document.getElementById('main-color').value = config.mainColor || '';
+        document.getElementById('watermark-text').value = config.watermarkText || '';
+        document.getElementById('font-size').value = config.fontSize || '';
+        document.getElementById('progress-bar-height').value = config.progressBarHeight || '';
         
         // Populate font dropdown with available fonts
         const fontSelect = document.getElementById('font-family');
@@ -218,7 +224,8 @@
           mainColor: document.getElementById('main-color').value,
           fontFamily: document.getElementById('font-family').value,
           watermarkText: document.getElementById('watermark-text').value,
-          fontSize: document.getElementById('font-size').value
+          fontSize: document.getElementById('font-size').value,
+          progressBarHeight: document.getElementById('progress-bar-height').value
         };
         
         // Show loading animation
@@ -245,7 +252,8 @@
           mainColor: document.getElementById('main-color').value,
           fontFamily: document.getElementById('font-family').value,
           watermarkText: document.getElementById('watermark-text').value,
-          fontSize: document.getElementById('font-size').value
+          fontSize: document.getElementById('font-size').value,
+          progressBarHeight: document.getElementById('progress-bar-height').value
         };
         
         // Show loading animation
