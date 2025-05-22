@@ -63,8 +63,8 @@ function convertShapeToCallout() {
   );
   
   // Style the header shape
-  headerShape.getFill().setSolidFill(main_color); // Blue fill
-  headerShape.getBorder().getLineFill().setSolidFill("#d9d9d9"); // Blue border
+  headerShape.getFill().setSolidFill("#d9d9d9"); // Blue fill
+  headerShape.getBorder().getLineFill().setSolidFill(main_color); // Blue border
   
   // Add default text 'INFO' to the header shape
   headerShape.getText().setText('INFO');
