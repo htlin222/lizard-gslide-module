@@ -7,6 +7,14 @@ const sourcePresentationId = "1qAZzq-uo5blLH1nqp9rbrGDlzz_Aj8eIp0XjDdmI220";
 const slideWidth = SlidesApp.getActivePresentation().getPageWidth();
 const slideHeight = SlidesApp.getActivePresentation().getPageHeight();
 
+// Properties service keys for storing configuration
+const CONFIG_KEYS = {
+  MAIN_COLOR: 'main_color',
+  FONT_FAMILY: 'main_font_family',
+  WATERMARK_TEXT: 'water_mark_text',
+  FONT_SIZE: 'label_font_size'
+};
+
 /**
  * Runs automatically when the document is opened.
  * This is a simple trigger that has limited permissions.
@@ -14,6 +22,9 @@ const slideHeight = SlidesApp.getActivePresentation().getPageHeight();
  */
 function onOpen() {
 	try {
+		// Load saved configuration first
+		loadSavedConfiguration();
+		
 		// Try to create the menu using the simple trigger
 		createCustomMenu();
 
@@ -54,6 +65,7 @@ function createCustomMenu() {
 			.addItem("🔁 點這手動更新", "showMenuManually")
 			.addItem("🛠 同時更新所有", "confirmRunAll")
 			.addItem("🎨 套用主題", "applyThemeToCurrentPresentation")
+			.addItem("⚙️ 設定面板", "showConfigSidebar")
 			.addItem("🔄 更新進度條", "runUpdateProgressBars")
 			.addItem("📑 更新標籤頁", "runProcessTabs")
 			.addItem("📚 更新章節導覽", "runProcessSectionBoxes")
@@ -156,4 +168,91 @@ function confirmRunAll() {
 
 function runToggleWaterMark() {
 	runRequestProcessors(toggleWaterMark);
+}
+
+/**
+ * Shows the configuration sidebar.
+ */
+function showConfigSidebar() {
+  const html = HtmlService.createHtmlOutputFromFile('sidebar')
+      .setTitle('Lizard Slides Configuration')
+      .setWidth(300);
+  SlidesApp.getUi().showSidebar(html);
+}
+
+/**
+ * Gets the current configuration values for the sidebar.
+ * @return {Object} The current configuration values.
+ */
+function getConfigValues() {
+  // Try to load from Properties service first
+  const userProperties = PropertiesService.getUserProperties();
+  const savedMainColor = userProperties.getProperty(CONFIG_KEYS.MAIN_COLOR);
+  const savedFontFamily = userProperties.getProperty(CONFIG_KEYS.FONT_FAMILY);
+  const savedWatermarkText = userProperties.getProperty(CONFIG_KEYS.WATERMARK_TEXT);
+  const savedFontSize = userProperties.getProperty(CONFIG_KEYS.FONT_SIZE);
+  
+  // Return current values (from Properties if available, otherwise from variables)
+  return {
+    mainColor: savedMainColor || main_color,
+    fontFamily: savedFontFamily || main_font_family,
+    watermarkText: savedWatermarkText || water_mark_text,
+    fontSize: savedFontSize || label_font_size
+  };
+}
+
+/**
+ * Saves the configuration values from the sidebar.
+ * @param {Object} config The configuration values to save.
+ */
+function saveConfigValues(config) {
+  // Save to Properties service
+  const userProperties = PropertiesService.getUserProperties();
+  userProperties.setProperties({
+    [CONFIG_KEYS.MAIN_COLOR]: config.mainColor,
+    [CONFIG_KEYS.FONT_FAMILY]: config.fontFamily,
+    [CONFIG_KEYS.WATERMARK_TEXT]: config.watermarkText,
+    [CONFIG_KEYS.FONT_SIZE]: config.fontSize
+  });
+  
+  // Update the global variables
+  main_color = config.mainColor;
+  main_font_family = config.fontFamily;
+  water_mark_text = config.watermarkText;
+  label_font_size = parseInt(config.fontSize, 10);
+  
+  return true;
+}
+
+/**
+ * Saves the configuration values and applies them to the current presentation.
+ * @param {Object} config The configuration values to save.
+ */
+function saveAndApplyConfig(config) {
+  // Save the configuration first
+  saveConfigValues(config);
+  
+  // Apply changes to the current presentation
+  // This will update watermarks and other elements that use these settings
+  runAllFunctions();
+  
+  return true;
+}
+
+/**
+ * Loads configuration from Properties service when the script runs.
+ * This ensures we're using the saved values from previous sessions.
+ */
+function loadSavedConfiguration() {
+  const userProperties = PropertiesService.getUserProperties();
+  const savedMainColor = userProperties.getProperty(CONFIG_KEYS.MAIN_COLOR);
+  const savedFontFamily = userProperties.getProperty(CONFIG_KEYS.FONT_FAMILY);
+  const savedWatermarkText = userProperties.getProperty(CONFIG_KEYS.WATERMARK_TEXT);
+  const savedFontSize = userProperties.getProperty(CONFIG_KEYS.FONT_SIZE);
+  
+  // Update the global variables if saved values exist
+  if (savedMainColor) main_color = savedMainColor;
+  if (savedFontFamily) main_font_family = savedFontFamily;
+  if (savedWatermarkText) water_mark_text = savedWatermarkText;
+  if (savedFontSize) label_font_size = parseInt(savedFontSize, 10);
 }

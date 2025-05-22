@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 10px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input, select {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      button {
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 10px;
+        width: 100%;
+      }
+      button:hover {
+        background-color: #3367d6;
+      }
+      .color-preview {
+        width: 30px;
+        height: 30px;
+        display: inline-block;
+        border: 1px solid #ddd;
+        vertical-align: middle;
+        margin-left: 10px;
+      }
+      .header {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #4285f4;
+        text-align: center;
+      }
+      .footer {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #666;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">Lizard Slides Configuration</div>
+    
+    <div class="form-group">
+      <label for="main-color">Main Color:</label>
+      <div style="display: flex; align-items: center;">
+        <input type="text" id="main-color" placeholder="#3D6869">
+        <div class="color-preview" id="color-preview"></div>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label for="font-family">Font Family:</label>
+      <select id="font-family">
+        <option value="Source Sans Pro">Source Sans Pro</option>
+        <option value="Arial">Arial</option>
+        <option value="Roboto">Roboto</option>
+        <option value="Montserrat">Montserrat</option>
+        <option value="Open Sans">Open Sans</option>
+        <option value="Lato">Lato</option>
+        <option value="Noto Sans">Noto Sans</option>
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label for="watermark-text">Watermark Text:</label>
+      <input type="text" id="watermark-text" placeholder="ⓒ Hsieh-Ting Lin">
+    </div>
+    
+    <div class="form-group">
+      <label for="font-size">Label Font Size:</label>
+      <input type="number" id="font-size" min="8" max="36" step="1" placeholder="14">
+    </div>
+    
+    <button id="save-button">Save Configuration</button>
+    <button id="apply-button">Save & Apply to Presentation</button>
+    
+    <div class="footer">
+      Lizard Slides Module - Configuration Panel
+    </div>
+    
+    <script>
+      // Initialize form with current values
+      function onLoadSidebar() {
+        google.script.run.withSuccessHandler(updateForm).getConfigValues();
+        
+        // Update color preview when color input changes
+        document.getElementById('main-color').addEventListener('input', function() {
+          updateColorPreview(this.value);
+        });
+        
+        // Set up save button
+        document.getElementById('save-button').addEventListener('click', saveConfig);
+        
+        // Set up save and apply button
+        document.getElementById('apply-button').addEventListener('click', saveAndApplyConfig);
+      }
+      
+      // Update form with values from server
+      function updateForm(config) {
+        document.getElementById('main-color').value = config.mainColor;
+        document.getElementById('font-family').value = config.fontFamily;
+        document.getElementById('watermark-text').value = config.watermarkText;
+        document.getElementById('font-size').value = config.fontSize;
+        
+        updateColorPreview(config.mainColor);
+      }
+      
+      // Update color preview
+      function updateColorPreview(color) {
+        document.getElementById('color-preview').style.backgroundColor = color;
+      }
+      
+      // Save configuration
+      function saveConfig() {
+        const config = {
+          mainColor: document.getElementById('main-color').value,
+          fontFamily: document.getElementById('font-family').value,
+          watermarkText: document.getElementById('watermark-text').value,
+          fontSize: document.getElementById('font-size').value
+        };
+        
+        google.script.run
+          .withSuccessHandler(onSaveSuccess)
+          .withFailureHandler(onSaveFailure)
+          .saveConfigValues(config);
+      }
+      
+      // Save and apply configuration
+      function saveAndApplyConfig() {
+        const config = {
+          mainColor: document.getElementById('main-color').value,
+          fontFamily: document.getElementById('font-family').value,
+          watermarkText: document.getElementById('watermark-text').value,
+          fontSize: document.getElementById('font-size').value
+        };
+        
+        google.script.run
+          .withSuccessHandler(onSaveAndApplySuccess)
+          .withFailureHandler(onSaveFailure)
+          .saveAndApplyConfig(config);
+      }
+      
+      // Success handler for save
+      function onSaveSuccess() {
+        alert('Configuration saved successfully!');
+      }
+      
+      // Success handler for save and apply
+      function onSaveAndApplySuccess() {
+        alert('Configuration saved and applied to the presentation!');
+      }
+      
+      // Failure handler
+      function onSaveFailure(error) {
+        alert('Error: ' + error.message);
+      }
+      
+      // Run initialization when the page loads
+      window.onload = onLoadSidebar;
+    </script>
+  </body>
+</html>
