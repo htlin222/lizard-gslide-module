@@ -174,10 +174,9 @@ function runToggleWaterMark() {
  * Shows the configuration sidebar.
  */
 function showConfigSidebar() {
-  const html = HtmlService.createHtmlOutputFromFile('sidebar')
-      .setTitle('Lizard Slides Configuration')
-      .setWidth(300);
-  SlidesApp.getUi().showSidebar(html);
+  // Use the modular sidebar approach
+  const sidebar = createModularSidebar();
+  SlidesApp.getUi().showSidebar(sidebar);
 }
 
 /**

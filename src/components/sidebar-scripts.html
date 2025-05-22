@@ -1,0 +1,299 @@
+<script>
+  // Initialize form with current values
+  function onLoadSidebar() {
+    // Show loading message
+    showStatusMessage("Loading configuration...", "info");
+
+    // Call server-side function to get configuration
+    google.script.run
+      .withSuccessHandler(function (config) {
+        // Hide loading message
+        document.getElementById("status-message").style.display = "none";
+        
+        // Update form with values
+        updateForm(config);
+      })
+      .withFailureHandler(function (error) {
+        showStatusMessage("Error loading configuration: " + error.message, "error");
+      })
+      .getConfigValues();
+  }
+
+  // Update form with values from server
+  function updateForm(config) {
+    // Set main color
+    const mainColorInput = document.getElementById("main-color");
+    mainColorInput.value = config.mainColor || "#3D6869";
+    
+    // Update color preview
+    updateColorPreview(mainColorInput.value);
+    
+    // Set up color input event listener
+    mainColorInput.addEventListener("input", function () {
+      updateColorPreview(this.value);
+      updateStylePreviews(this.value);
+    });
+    
+    // Populate font family dropdown
+    const fontFamilySelect = document.getElementById("font-family");
+    const fonts = config.availableFonts || ["Arial", "Verdana", "Helvetica", "Times New Roman"];
+    
+    fonts.forEach(function (font) {
+      const option = document.createElement("option");
+      option.value = font;
+      option.text = font;
+      if (font === config.fontFamily) {
+        option.selected = true;
+      }
+      fontFamilySelect.appendChild(option);
+    });
+    
+    // Set progress bar height
+    document.getElementById("progress-bar-height").value = config.progressBarHeight || 5;
+    
+    // Update style previews
+    updateStylePreviews(config.mainColor || "#3D6869");
+  }
+
+  // Update color preview
+  function updateColorPreview(color) {
+    document.getElementById("color-preview").style.backgroundColor = color;
+  }
+
+  // Update style preview boxes
+  function updateStylePreviews(mainColor) {
+    // Style 1 - Main color background with white text
+    document.getElementById("style-preview-1").style.backgroundColor = mainColor;
+    document.getElementById("style-preview-1").style.color = "#FFFFFF";
+    
+    // Style 2 - Lighter version of main color
+    const lighterColor = getLighterColor(mainColor, 0.7);
+    document.getElementById("style-preview-2").style.backgroundColor = lighterColor;
+    document.getElementById("style-preview-2").style.color = "#000000";
+    
+    // Style 3 - Complementary color
+    const complementaryColor = getComplementaryColor(mainColor);
+    document.getElementById("style-preview-3").style.backgroundColor = complementaryColor;
+    document.getElementById("style-preview-3").style.color = "#FFFFFF";
+  }
+
+  // Save configuration
+  function saveConfig() {
+    // Get values from form
+    const config = {
+      mainColor: document.getElementById("main-color").value,
+      fontFamily: document.getElementById("font-family").value,
+      progressBarHeight: parseInt(document.getElementById("progress-bar-height").value) || 5
+    };
+    
+    // Get the save button
+    const saveButton = document.getElementById("save-button");
+    
+    // Add loading animation
+    saveButton.classList.add("loading");
+    
+    // Call server-side function to save configuration
+    google.script.run
+      .withSuccessHandler(function (result) {
+        // Hide loading animation
+        saveButton.classList.remove("loading");
+        onSaveSuccess(result);
+      })
+      .withFailureHandler(function (error) {
+        // Hide loading animation
+        saveButton.classList.remove("loading");
+        onSaveFailure(error);
+      })
+      .saveConfigValues(config);
+  }
+
+  // Save and apply configuration
+  function saveAndApplyConfig() {
+    // Get values from form
+    const config = {
+      mainColor: document.getElementById("main-color").value,
+      fontFamily: document.getElementById("font-family").value,
+      progressBarHeight: parseInt(document.getElementById("progress-bar-height").value) || 5
+    };
+    
+    // Get the apply button
+    const applyButton = document.getElementById("apply-button");
+    
+    // Add loading animation
+    applyButton.classList.add("loading");
+    
+    // Call server-side function to save and apply configuration
+    google.script.run
+      .withSuccessHandler(function (result) {
+        // Hide loading animation
+        applyButton.classList.remove("loading");
+        onSaveAndApplySuccess(result);
+      })
+      .withFailureHandler(function (error) {
+        // Hide loading animation
+        applyButton.classList.remove("loading");
+        onSaveFailure(error);
+      })
+      .saveAndApplyConfig(config);
+  }
+
+  // Success handler for save
+  function onSaveSuccess(result) {
+    // Show a status message in the sidebar instead of a dialog
+    showStatusMessage("Configuration saved successfully!", "success");
+  }
+
+  // Success handler for save and apply
+  function onSaveAndApplySuccess(result) {
+    // Show a status message in the sidebar instead of a dialog
+    showStatusMessage(
+      "Configuration saved and applied to the presentation!",
+      "success"
+    );
+  }
+
+  // Failure handler
+  function onSaveFailure(error) {
+    // Show a status message in the sidebar instead of a dialog
+    showStatusMessage(
+      "Error: " + (error.message || "Unknown error"),
+      "error"
+    );
+  }
+
+  // Show a status message in the sidebar
+  function showStatusMessage(message, type) {
+    // Create status message element if it doesn't exist
+    let statusEl = document.getElementById("status-message");
+    if (!statusEl) {
+      statusEl = document.createElement("div");
+      statusEl.id = "status-message";
+      document.querySelector(".footer").before(statusEl);
+    }
+
+    // Clear previous content
+    statusEl.innerHTML = "";
+
+    // Set message and style
+    statusEl.className = "status-message " + (type || "info");
+
+    // Add message text
+    const messageText = document.createTextNode(message);
+    statusEl.appendChild(messageText);
+
+    // Add close button
+    const closeBtn = document.createElement("span");
+    closeBtn.className = "close-btn";
+    closeBtn.innerHTML = "&times;";
+    closeBtn.title = "Close";
+    closeBtn.onclick = function () {
+      statusEl.style.opacity = "0";
+      setTimeout(function () {
+        statusEl.style.display = "none";
+      }, 500);
+    };
+    statusEl.appendChild(closeBtn);
+
+    // Show the message
+    statusEl.style.display = "block";
+    statusEl.style.opacity = "1";
+  }
+
+  // Apply style functions with feedback
+  function applyStyle(styleNumber) {
+    // Get the button element
+    const styleButton = document.getElementById(
+      "style-button-" + styleNumber
+    );
+
+    // Add loading animation
+    styleButton.classList.add("loading");
+
+    // Call the appropriate function based on style number
+    const functionName = "applyStyle" + styleNumber;
+
+    google.script.run
+      .withSuccessHandler(function (result) {
+        // Remove loading animation
+        styleButton.classList.remove("loading");
+        // Show success message
+        showStatusMessage(
+          "Style " + styleNumber + " applied successfully!",
+          "success"
+        );
+      })
+      .withFailureHandler(function (error) {
+        // Remove loading animation
+        styleButton.classList.remove("loading");
+        // Show error message
+        showStatusMessage(
+          "Error applying style: " + error.message,
+          "error"
+        );
+      })
+      [functionName](); // Call the function dynamically
+  }
+
+  // Helper function to get a lighter version of a color
+  function getLighterColor(hex, factor) {
+    // Convert hex to RGB
+    let r = parseInt(hex.substring(1, 3), 16);
+    let g = parseInt(hex.substring(3, 5), 16);
+    let b = parseInt(hex.substring(5, 7), 16);
+    
+    // Make it lighter
+    r = Math.min(255, Math.round(r + (255 - r) * factor));
+    g = Math.min(255, Math.round(g + (255 - g) * factor));
+    b = Math.min(255, Math.round(b + (255 - b) * factor));
+    
+    // Convert back to hex
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
+  // Helper function to get complementary color
+  function getComplementaryColor(hex) {
+    // Convert hex to RGB
+    let r = parseInt(hex.substring(1, 3), 16);
+    let g = parseInt(hex.substring(3, 5), 16);
+    let b = parseInt(hex.substring(5, 7), 16);
+    
+    // Invert the colors
+    r = 255 - r;
+    g = 255 - g;
+    b = 255 - b;
+    
+    // Convert back to hex
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
+  // Initialize event listeners
+  function initializeEventListeners() {
+    // Save button
+    document.getElementById("save-button").addEventListener("click", saveConfig);
+    
+    // Apply button
+    document.getElementById("apply-button").addEventListener("click", saveAndApplyConfig);
+    
+    // Style buttons
+    document.getElementById("style-button-1").addEventListener("click", function() {
+      applyStyle(1);
+    });
+    
+    document.getElementById("style-button-2").addEventListener("click", function() {
+      applyStyle(2);
+    });
+    
+    document.getElementById("style-button-3").addEventListener("click", function() {
+      applyStyle(3);
+    });
+  }
+
+  // Run initialization when the page loads
+  window.onload = function() {
+    // Initialize the sidebar
+    onLoadSidebar();
+    
+    // Initialize event listeners
+    initializeEventListeners();
+  };
+</script>
