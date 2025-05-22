@@ -57,6 +57,65 @@
         color: #666;
         text-align: center;
       }
+      .status-message {
+        padding: 10px 30px 10px 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+        text-align: center;
+        transition: opacity 0.5s ease-in-out;
+        display: none;
+        position: relative;
+      }
+      .status-message .close-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 16px;
+        line-height: 1;
+        opacity: 0.7;
+      }
+      .status-message .close-btn:hover {
+        opacity: 1;
+      }
+      .status-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .status-message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .status-message.info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      .loading {
+        position: relative;
+        opacity: 0.6;
+        pointer-events: none;
+      }
+      .loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-radius: 50%;
+        border-top-color: #4285f4;
+        animation: spin 1s ease-in-out infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
     </style>
   </head>
   <body>
@@ -73,13 +132,7 @@
     <div class="form-group">
       <label for="font-family">Font Family:</label>
       <select id="font-family">
-        <option value="Source Sans Pro">Source Sans Pro</option>
-        <option value="Arial">Arial</option>
-        <option value="Roboto">Roboto</option>
-        <option value="Montserrat">Montserrat</option>
-        <option value="Open Sans">Open Sans</option>
-        <option value="Lato">Lato</option>
-        <option value="Noto Sans">Noto Sans</option>
+        <!-- Will be populated dynamically with available fonts -->
       </select>
     </div>
     
@@ -120,9 +173,36 @@
       // Update form with values from server
       function updateForm(config) {
         document.getElementById('main-color').value = config.mainColor;
-        document.getElementById('font-family').value = config.fontFamily;
         document.getElementById('watermark-text').value = config.watermarkText;
         document.getElementById('font-size').value = config.fontSize;
+        
+        // Populate font dropdown with available fonts
+        const fontSelect = document.getElementById('font-family');
+        fontSelect.innerHTML = ''; // Clear existing options
+        
+        // Add available fonts from Google Slides
+        if (config.availableFonts && config.availableFonts.length > 0) {
+          config.availableFonts.forEach(function(fontFamily) {
+            const option = document.createElement('option');
+            option.value = fontFamily;
+            option.textContent = fontFamily;
+            option.style.fontFamily = fontFamily; // Show the actual font in the dropdown
+            fontSelect.appendChild(option);
+          });
+        }
+        
+        // Set the selected font
+        fontSelect.value = config.fontFamily;
+        
+        // If the font isn't in the list, add it
+        if (fontSelect.value !== config.fontFamily) {
+          const option = document.createElement('option');
+          option.value = config.fontFamily;
+          option.textContent = config.fontFamily + ' (Custom)';
+          option.style.fontFamily = config.fontFamily;
+          fontSelect.appendChild(option);
+          fontSelect.value = config.fontFamily;
+        }
         
         updateColorPreview(config.mainColor);
       }
@@ -141,9 +221,21 @@
           fontSize: document.getElementById('font-size').value
         };
         
+        // Show loading animation
+        const saveButton = document.getElementById('save-button');
+        saveButton.classList.add('loading');
+        
         google.script.run
-          .withSuccessHandler(onSaveSuccess)
-          .withFailureHandler(onSaveFailure)
+          .withSuccessHandler(function(result) {
+            // Hide loading animation
+            saveButton.classList.remove('loading');
+            onSaveSuccess(result);
+          })
+          .withFailureHandler(function(error) {
+            // Hide loading animation
+            saveButton.classList.remove('loading');
+            onSaveFailure(error);
+          })
           .saveConfigValues(config);
       }
       
@@ -156,25 +248,81 @@
           fontSize: document.getElementById('font-size').value
         };
         
+        // Show loading animation
+        const applyButton = document.getElementById('apply-button');
+        applyButton.classList.add('loading');
+        
+        // Also show a status message that this might take a moment
+        showStatusMessage('Applying changes to presentation...', 'info');
+        
         google.script.run
-          .withSuccessHandler(onSaveAndApplySuccess)
-          .withFailureHandler(onSaveFailure)
+          .withSuccessHandler(function(result) {
+            // Hide loading animation
+            applyButton.classList.remove('loading');
+            onSaveAndApplySuccess(result);
+          })
+          .withFailureHandler(function(error) {
+            // Hide loading animation
+            applyButton.classList.remove('loading');
+            onSaveFailure(error);
+          })
           .saveAndApplyConfig(config);
       }
       
       // Success handler for save
-      function onSaveSuccess() {
-        alert('Configuration saved successfully!');
+      function onSaveSuccess(result) {
+        // Show a status message in the sidebar instead of a dialog
+        showStatusMessage('Configuration saved successfully!', 'success');
       }
       
       // Success handler for save and apply
-      function onSaveAndApplySuccess() {
-        alert('Configuration saved and applied to the presentation!');
+      function onSaveAndApplySuccess(result) {
+        // Show a status message in the sidebar instead of a dialog
+        showStatusMessage('Configuration saved and applied to the presentation!', 'success');
       }
       
       // Failure handler
       function onSaveFailure(error) {
-        alert('Error: ' + error.message);
+        // Show a status message in the sidebar instead of a dialog
+        showStatusMessage('Error: ' + (error.message || 'Unknown error'), 'error');
+      }
+      
+      // Show a status message in the sidebar
+      function showStatusMessage(message, type) {
+        // Create status message element if it doesn't exist
+        let statusEl = document.getElementById('status-message');
+        if (!statusEl) {
+          statusEl = document.createElement('div');
+          statusEl.id = 'status-message';
+          document.querySelector('.footer').before(statusEl);
+        }
+        
+        // Clear previous content
+        statusEl.innerHTML = '';
+        
+        // Set message and style
+        statusEl.className = 'status-message ' + (type || 'info');
+        
+        // Add message text
+        const messageText = document.createTextNode(message);
+        statusEl.appendChild(messageText);
+        
+        // Add close button
+        const closeBtn = document.createElement('span');
+        closeBtn.className = 'close-btn';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.title = 'Close';
+        closeBtn.onclick = function() {
+          statusEl.style.opacity = '0';
+          setTimeout(function() {
+            statusEl.style.display = 'none';
+          }, 500);
+        };
+        statusEl.appendChild(closeBtn);
+        
+        // Show the message
+        statusEl.style.display = 'block';
+        statusEl.style.opacity = '1';
       }
       
       // Run initialization when the page loads

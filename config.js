@@ -192,13 +192,59 @@ function getConfigValues() {
   const savedWatermarkText = userProperties.getProperty(CONFIG_KEYS.WATERMARK_TEXT);
   const savedFontSize = userProperties.getProperty(CONFIG_KEYS.FONT_SIZE);
   
+  // Get available fonts
+  const availableFonts = getAvailableFonts();
+  
   // Return current values (from Properties if available, otherwise from variables)
   return {
     mainColor: savedMainColor || main_color,
     fontFamily: savedFontFamily || main_font_family,
     watermarkText: savedWatermarkText || water_mark_text,
-    fontSize: savedFontSize || label_font_size
+    fontSize: savedFontSize || label_font_size,
+    availableFonts: availableFonts
   };
+}
+
+/**
+ * Gets the available fonts in Google Slides.
+ * @return {Array} Array of font family names.
+ */
+function getAvailableFonts() {
+  try {
+    // Get all available fonts from Google Slides
+    const availableFonts = SlidesApp.getFonts();
+    
+    // Convert to an array of font family names
+    const fontFamilies = availableFonts.map(function(font) {
+      return font.getFontFamily();
+    });
+    
+    // Sort alphabetically
+    fontFamilies.sort();
+    
+    return fontFamilies;
+  } catch (e) {
+    // If there's an error, return a default list of common fonts
+    console.log('Error getting fonts: ' + e.message);
+    return [
+      'Arial',
+      'Calibri',
+      'Cambria',
+      'Comic Sans MS',
+      'Courier New',
+      'Georgia',
+      'Impact',
+      'Lato',
+      'Montserrat',
+      'Open Sans',
+      'Roboto',
+      'Source Sans Pro',
+      'Tahoma',
+      'Times New Roman',
+      'Trebuchet MS',
+      'Verdana'
+    ];
+  }
 }
 
 /**
@@ -255,4 +301,16 @@ function loadSavedConfiguration() {
   if (savedFontFamily) main_font_family = savedFontFamily;
   if (savedWatermarkText) water_mark_text = savedWatermarkText;
   if (savedFontSize) label_font_size = parseInt(savedFontSize, 10);
+}
+
+/**
+ * Shows a dialog with the specified title and message.
+ * Used by the sidebar to display success/error messages.
+ * 
+ * @param {string} title The title of the dialog.
+ * @param {string} message The message to display in the dialog.
+ */
+function showDialog(title, message) {
+  const ui = SlidesApp.getUi();
+  ui.alert(title, message, ui.ButtonSet.OK);
 }
