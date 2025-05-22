@@ -2,6 +2,8 @@
 function updateProgressBars(slides, requests) {
   const totalSlides = slides.length;
   const maxWidth = slideWidth;
+  const slideWidth = SlidesApp.getActivePresentation().getPageWidth();
+const slideHeight = SlidesApp.getActivePresentation().getPageHeight();
   const height = progressBarHeight;
   const yPosition = slideHeight - height;
 
