@@ -5,8 +5,6 @@ var water_mark_text = "ⓒ Hsieh-Ting Lin";
 var label_font_size = 14;
 var progressBarHeight = 5;
 const sourcePresentationId = "1qAZzq-uo5blLH1nqp9rbrGDlzz_Aj8eIp0XjDdmI220";
-const slideWidth = SlidesApp.getActivePresentation().getPageWidth();
-const slideHeight = SlidesApp.getActivePresentation().getPageHeight();
 
 // Properties service keys for storing configuration
 const CONFIG_KEYS = {

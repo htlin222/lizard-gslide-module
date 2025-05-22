@@ -5,7 +5,7 @@
  */
 function toggleWaterMark(slides, requests) {
   const aColour = '#efefef';
-  const slideWidth  = SlidesApp.getActivePresentation().getPageWidth();
+  const slideWidth = SlidesApp.getActivePresentation().getPageWidth();
   const slideHeight = SlidesApp.getActivePresentation().getPageHeight();
   const wmWidth  = 500;
   const wmHeight = 100;

@@ -32,6 +32,8 @@ function updateTitleFootnotes(slides, requests) {
   // 取第一张幻灯片的 objectId，当做链接目标
   const firstSlideId = slides[0].getObjectId();
   const mainTitle    = getMainTitleFromFirstSlide(slides[0]);
+  const slideWidth = SlidesApp.getActivePresentation().getPageWidth();
+  const slideHeight = SlidesApp.getActivePresentation().getPageHeight();
   if (!mainTitle) return;
   
   for (let i = 1; i < slides.length; i++) {

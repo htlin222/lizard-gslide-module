@@ -2,7 +2,7 @@
 function createStyledBoxesOnCurrentSlide() {
   const ui = SlidesApp.getUi();
   const slideWidth = SlidesApp.getActivePresentation().getPageWidth();
-const slideHeight = SlidesApp.getActivePresentation().getPageHeight();
+  const slideHeight = SlidesApp.getActivePresentation().getPageHeight();
   const response = ui.prompt('Create Boxes', 'Enter the number of boxes to create:', ui.ButtonSet.OK_CANCEL);
 
   if (response.getSelectedButton() !== ui.Button.OK) return;
