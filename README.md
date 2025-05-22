@@ -4,6 +4,15 @@ A Google Apps Script project that enhances Google Slides with automated formatti
 
 ![image](https://github.com/user-attachments/assets/b9930702-381d-4bc6-9458-8385bea9d7a7)
 
+## Project Structure
+
+The codebase is organized into the following directories:
+
+- **src/util** - Utility functions for manipulating slides (shapes, styles, etc.)
+- **src/batch** - Batch processing modules for applying changes to multiple slides
+- **src/components** - HTML components for the sidebar interface
+- **scripts** - Core JavaScript files including configuration and HTML service utilities
+
 ## Features
 
 ### Batch Processing
@@ -73,7 +82,7 @@ A Google Apps Script project that enhances Google Slides with automated formatti
 
 
 10. The `onOpen` function might not run automatically. If you don't see the menu:
-    - In the Apps Script editor, open the `config.gs` file
+    - In the Apps Script editor, open the `scripts/config.js` file
     - Find the `onOpen()` function
     - Click the Run button (▶️) to manually create the menu
 
@@ -121,7 +130,7 @@ After installation, a new menu item "🛠 工具選單" will appear in your Goog
 
 ## Configuration
 
-You can customize the module by modifying the variables in `config.gs`:
+You can customize the module by modifying the variables in `scripts/config.js`:
 
 ```javascript
 var main_color = '#3D6869';               // Main theme color
