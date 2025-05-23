@@ -1,31 +1,3 @@
-function applyListToSelectedTextbox() {
-  const selection = SlidesApp.getActivePresentation().getSelection();
-  const selectedPageElements = selection.getPageElementRange().getPageElements();
-
-  for (const element of selectedPageElements) {
-    if (element.getPageElementType() === SlidesApp.PageElementType.SHAPE) {
-      const shape = element.asShape();
-      const textRange = shape.getText();
-      const textString = textRange.asString();
-
-      Logger.log("Text content: " + textString);
-
-      const paragraphs = textRange.getParagraphs();
-      Logger.log("Paragraph count: " + paragraphs.length);
-
-      // 嘗試套用清單樣式
-      try {
-        shape.getText().getListStyle()
-          .applyListPreset(SlidesApp.ListPreset.DISC_CIRCLE_SQUARE);
-        Logger.log("✅ 成功套用清單樣式");
-      } catch (e) {
-        Logger.log("❌ 套用失敗: " + e.message);
-      }
-    }
-  }
-}
-
-
 function generateIndexSlide() {
   const presentation = SlidesApp.getActivePresentation();
   let slides = presentation.getSlides();
@@ -34,13 +6,13 @@ function generateIndexSlide() {
   for (let i = slides.length - 1; i >= 0; i--) {
     const slide = slides[i];
     const layout = slide.getLayout();
-    const layoutName = layout ? layout.getLayoutName() : '';
+    const layoutName = layout ? layout.getLayoutName() : "";
 
-    if (layoutName === 'TITLE_ONLY') {
+    if (layoutName === "TITLE_ONLY") {
       const shapes = slide.getShapes();
       if (shapes.length > 0) {
         const titleText = shapes[0].getText().asString().trim();
-        if (titleText === 'Index') {
+        if (titleText === "Index") {
           slide.remove();
         }
       }
@@ -53,11 +25,11 @@ function generateIndexSlide() {
   // Step 1: 收集非 SECTION_HEADER 版面投影片的標題與頁碼
   slides.forEach((slide, index) => {
     const layout = slide.getLayout();
-    const layoutName = layout ? layout.getLayoutName() : '';
-    if (layoutName === 'SECTION_HEADER') return;
+    const layoutName = layout ? layout.getLayoutName() : "";
+    if (layoutName === "SECTION_HEADER") return;
 
     const pageElements = slide.getPageElements();
-    let titleText = '';
+    let titleText = "";
 
     for (const element of pageElements) {
       if (element.getPageElementType() === SlidesApp.PageElementType.SHAPE) {
@@ -71,13 +43,15 @@ function generateIndexSlide() {
     }
 
     indexItems.push({
-      text: `${titleText || '[No title]'}, p${index + 1}`,
-      slide: slide
+      text: `${titleText || "[No title]"}, p${index + 1}`,
+      slide: slide,
     });
   });
 
   // Step 2: 新增 Index 投影片
-  const newSlide = presentation.appendSlide(SlidesApp.PredefinedLayout.TITLE_ONLY);
+  const newSlide = presentation.appendSlide(
+    SlidesApp.PredefinedLayout.TITLE_ONLY
+  );
   newSlide.getShapes()[0].getText().setText("Index");
 
   // Step 3: 插入指定寬度的文字框並添加索引項目（每10項換欄）
@@ -94,7 +68,13 @@ function generateIndexSlide() {
     const left = initialLeft + column * width;
     const top = initialTop + row * (height + spacing);
 
-    const shape = newSlide.insertShape(SlidesApp.ShapeType.TEXT_BOX, left, top, width, height);
+    const shape = newSlide.insertShape(
+      SlidesApp.ShapeType.TEXT_BOX,
+      left,
+      top,
+      width,
+      height
+    );
     shape.getText().setText(item.text);
     shape.getText().getTextStyle().setFontSize(9);
     shape.setContentAlignment(SlidesApp.ContentAlignment.MIDDLE); // 垂直置中對齊
