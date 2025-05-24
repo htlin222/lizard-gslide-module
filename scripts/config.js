@@ -62,37 +62,37 @@ function createCustomMenu() {
 
     // Create the batch processing menu as a top-level menu
     ui.createMenu("🗃 批次處理")
-      .addItem("🔁 手動更新選單項目", "showMenuManually")
       .addItem("🛠 同時執行所有功能", "confirmRunAll")
       .addItem("🎨 套用蜥蜴主題", "applyThemeToCurrentPresentation")
       .addItem("⚙️ 打開設定面板", "showConfigSidebar")
       .addItem("🔄 更新進度條", "runUpdateProgressBars")
       .addItem("📑 更新標籤頁", "runProcessTabs")
-      .addItem("📚 更新章節導覽", "runProcessSectionBoxes")
+      .addItem("📚 更新 SECTION Header", "runProcessSectionBoxes")
       .addItem("🦶 更新 Footer", "runUpdateTitleFootnotes")
-      .addItem("✏️ 更新 Index", "generateIndexSlide")
-      .addItem("💧 切換浮水印", "runToggleWaterMark")
+      .addItem("✏️ 更新 Index Page", "generateIndexSlide")
+      .addItem("📅 更新日期 yyyy-mm-dd", "updateDateInFirstSlide")
+      .addItem("💧 浮水印開/關", "runToggleWaterMark")
+      .addItem("🔁 更新選單項目", "showMenuManually")
       .addToUi();
 
     // Create the beautify menu as a top-level menu
-    ui.createMenu("🎨 單頁美化")
-      .addItem("📅 更新日期", "updateDateInFirstSlide")
-      .addItem("📏 加上網格", "toggleGrids")
-      .addItem("❄ 加上影子", "createOffsetBlueShape")
+    ui.createMenu("🎨 加入元素")
+      .addItem("📏 開/關網格", "toggleGrids")
+      .addItem("❄ 為元素加上45度影子", "createOffsetBlueShape")
       .addItem("↙ 加上一個大箭頭 ", "drawArrowOnCurrentSlide")
       .addItem("⇣ 兩者間加上垂直線", "insertVerticalDashedLineBetween")
       .addItem("⇢ 兩者間加上水平線", "insertHorizontalDashedLineBetween")
-      .addItem("🔰 加上badge", "convertToBadges")
-      .addItem("🍡 貼上在同一處", "duplicateImageInPlace")
-      .addItem("🔢 加上數字圓圈", "addNextNumberCircle")
+      .addItem("🔰 將文字轉換成badge", "convertToBadges")
+      .addItem("🍡 貼上同一處", "duplicateImageInPlace")
+      .addItem("🔢 加上數字遞增圓圈", "addNextNumberCircle")
       .addItem("📐 分割成網格", "showSplitShapeDialog")
       .addItem("💬 轉換成標注框", "convertShapeToCallout")
       .addToUi();
 
     // Create the add new content menu as a top-level menu
-    ui.createMenu("🖖 新增")
-      .addItem("👆 取得前一頁的標題", "copyPreviousTitleText")
-      .addItem("👇 標題加到新的下頁", "createNextSlideWithCurrentTitle")
+    ui.createMenu("🖖 跨頁功能")
+      .addItem("👆 在上面加入前一頁的標題", "copyPreviousTitleText")
+      .addItem("👇 新增一頁並加入當前標題", "createNextSlideWithCurrentTitle")
       .addToUi();
 
     return true; // Menu created successfully
