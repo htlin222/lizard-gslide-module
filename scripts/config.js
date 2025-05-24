@@ -85,10 +85,11 @@ function createCustomMenu() {
       .addItem("🔰 將文字轉換成badge", "convertToBadges")
       .addItem("🌆 原地貼上", "duplicateImageInPlace")
       .addItem("🏙️ 覆蓋半透明方塊", "coverImageWithWhite")
+      .addItem("🏞️ 半透明遮罩", "maskImage")
       .addItem("🔢 加上數字遞增圓圈", "addNextNumberCircle")
       .addItem("📐 分割成網格", "showSplitShapeDialog")
-      .addItem("💬 轉換成標注框", "convertShapeToCallout")
-      .addItem("🎨 快速美化表格", "fastStyleSelectedTable")
+      .addItem("🎹 轉換成標注框", "convertShapeToCallout")
+      .addItem("🍽️ 快速美化表格", "fastStyleSelectedTable")
       .addToUi();
 
     // Create the add new content menu as a top-level menu
