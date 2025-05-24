@@ -6,6 +6,7 @@ function updateProgressBars(slides, requests) {
   const slideHeight = SlidesApp.getActivePresentation().getPageHeight();
   const height = progressBarHeight;
   const yPosition = slideHeight - height;
+  const grayBackgroundColor = '#E0E0E0'; // 灰色背景色
 
   for (let i = 1; i < totalSlides; i++) {
     const slide = slides[i];
@@ -13,7 +14,7 @@ function updateProgressBars(slides, requests) {
 
     // 刪除舊的 progress bar
     slide.getShapes().forEach(shape => {
-      if (shape.getTitle && shape.getTitle() === 'PROGRESS') {
+      if (shape.getTitle && shape.getTitle() === 'PROGRESS' || shape.getTitle() === 'PROGRESS_BG') {
         requests.push({
           deleteObject: { objectId: shape.getObjectId() }
         });
@@ -23,7 +24,64 @@ function updateProgressBars(slides, requests) {
     const progressRatio = i / (totalSlides - 1);
     const barWidth = maxWidth * progressRatio;
     const progressId = `progress_${slideId}_${newGuid()}`;
+    const backgroundId = `progress_bg_${slideId}_${newGuid()}`;
 
+    // 先創建灰色背景條
+    requests.push(
+      {
+        createShape: {
+          objectId: backgroundId,
+          shapeType: 'RECTANGLE',
+          elementProperties: {
+            pageObjectId: slideId,
+            size: {
+              height: { magnitude: height, unit: 'PT' },
+              width: { magnitude: maxWidth, unit: 'PT' } // 完整寬度
+            },
+            transform: {
+              scaleX: 1,
+              scaleY: 1,
+              translateX: 0,
+              translateY: yPosition,
+              unit: 'PT'
+            }
+          }
+        }
+      },
+      {
+        updateShapeProperties: {
+          objectId: backgroundId,
+          shapeProperties: {
+            shapeBackgroundFill: {
+              solidFill: {
+                color: {
+                  rgbColor: hexToRgb(grayBackgroundColor)
+                }
+              }
+            },
+            outline: {
+              weight: { magnitude: 0.1, unit: 'PT' },
+              outlineFill: {
+                solidFill: {
+                  color: {
+                    rgbColor: hexToRgb(grayBackgroundColor)
+                  }
+                }
+              }
+            }
+          },
+          fields: 'shapeBackgroundFill.solidFill.color,outline.weight,outline.outlineFill.solidFill.color'
+        }
+      },
+      {
+        updatePageElementAltText: {
+          objectId: backgroundId,
+          title: 'PROGRESS_BG'
+        }
+      }
+    );
+
+    // 再創建進度條
     requests.push(
       {
         createShape: {
