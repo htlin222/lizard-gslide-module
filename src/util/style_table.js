@@ -1,16 +1,35 @@
 /**
  * Quickly styles a selected table with alternating row colors and header styling
+ * Works with either a table element selection or table cell selection
  */
 function fastStyleSelectedTable() {
   const selection = SlidesApp.getActivePresentation().getSelection();
+  let table = null;
+  
+  // Try to get table from cell selection first
   const tableCellRange = selection.getTableCellRange();
-
-  if (!tableCellRange) {
-    SlidesApp.getUi().alert("Please select a table cell.");
-    return;
+  if (tableCellRange) {
+    table = tableCellRange.getTableCells()[0].getParentTable();
+  } else {
+    // If no cell selection, try to get table from page element selection
+    const pageElementRange = selection.getPageElementRange();
+    if (pageElementRange) {
+      const pageElements = pageElementRange.getPageElements();
+      if (pageElements.length > 0) {
+        const element = pageElements[0];
+        if (element.getPageElementType() === SlidesApp.PageElementType.TABLE) {
+          table = element.asTable();
+        }
+      }
+    }
   }
 
-  const table = tableCellRange.getTableCells()[0].getParentTable();
+  // If we still don't have a table, show an error
+  if (!table) {
+    SlidesApp.getUi().alert("Please select a table or table cell.");
+    return;
+  }
+  
   const numRows = table.getNumRows();
   const numCols = table.getNumColumns();
 
@@ -39,32 +58,37 @@ function fastStyleSelectedTable() {
         cell.getFill().setSolidFill(white);
       }
       
-      // Only set text style if there is text content
+      // Always set content alignment regardless of content
+      cell.setContentAlignment(SlidesApp.ContentAlignment.MIDDLE);
+      
+      // Handle text styling for all cells, adding a dot to empty cells
       try {
         const text = cell.getText();
-        if (text && text.asString().trim() !== "") {
-          const textStyle = text.getTextStyle();
-          if (isHeader) {
-            textStyle.setForegroundColor(white).setBold(true);
-          } else {
-            textStyle.setForegroundColor(black).setBold(false);
-          }
+        
+        // Check if cell is empty and add a dot if needed
+        if (text && text.asString().trim() === "") {
+          text.setText(".");
         }
         
-        // Set content alignment to center both horizontally and vertically
-        // MIDDLE only centers vertically, we need to set both horizontal and vertical alignment
-        cell.setContentAlignment(SlidesApp.ContentAlignment.MIDDLE);
+        // Now apply styling to all cells (they all have content now)
+        const textStyle = text.getTextStyle();
+        if (isHeader) {
+          textStyle.setForegroundColor(white).setBold(true);
+        } else {
+          textStyle.setForegroundColor(black).setBold(false);
+        }
         
-        // We also need to set paragraph alignment for horizontal centering
+        // Set paragraph alignment for horizontal centering
         try {
-          const textRange = cell.getText();
-          const paragraphStyle = textRange.getParagraphStyle();
+          const paragraphStyle = text.getParagraphStyle();
           paragraphStyle.setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
         } catch (alignError) {
-          console.log("Could not set paragraph alignment for cell at row " + r + ", column " + c);
+          // Silently continue if paragraph alignment fails
+          // This is not critical and shouldn't stop the process
         }
       } catch (e) {
-        console.log("Skipping text styling for empty cell at row " + r + ", column " + c);
+        // Continue silently if text styling fails
+        console.log("Error styling cell at row " + r + ", column " + c + ": " + e.message);
       }
     }
   }

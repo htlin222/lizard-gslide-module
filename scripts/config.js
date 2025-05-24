@@ -87,6 +87,7 @@ function createCustomMenu() {
       .addItem("🔢 加上數字遞增圓圈", "addNextNumberCircle")
       .addItem("📐 分割成網格", "showSplitShapeDialog")
       .addItem("💬 轉換成標注框", "convertShapeToCallout")
+      .addItem("🎨 快速美化表格", "fastStyleSelectedTable")
       .addToUi();
 
     // Create the add new content menu as a top-level menu
