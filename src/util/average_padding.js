@@ -6,6 +6,7 @@
 /**
  * Centers the selected element by averaging the padding from its nearest neighbors
  * in all four directions (top, bottom, left, right)
+ * If no neighbors are found in a particular direction, uses the presentation edge
  * 
  * @returns {boolean} True if the operation was successful, false otherwise
  */
@@ -32,6 +33,10 @@ function averagePadding() {
   const currentPage = selection.getCurrentPage();
   const allPageElements = currentPage.getPageElements();
   
+  // Get presentation dimensions
+  const slideWidth = presentation.getPageWidth();
+  const slideHeight = presentation.getPageHeight();
+  
   // Step 2: Get coordinates of the selected element
   const selectedLeft = selectedElement.getLeft();
   const selectedTop = selectedElement.getTop();
@@ -54,16 +59,39 @@ function averagePadding() {
   let horizontalCentered = false;
   let verticalCentered = false;
   
-  // Calculate horizontal centering if we have both left and right neighbors
+  // Calculate horizontal centering
+  // If both left and right neighbors exist, center between them
   if (neighbors.left && neighbors.right) {
     const leftEdge = neighbors.left.right;
     const rightEdge = neighbors.right.left;
     const availableWidth = rightEdge - leftEdge;
     newX = leftEdge + (availableWidth - selectedWidth) / 2;
     horizontalCentered = true;
+  } 
+  // If only left neighbor exists, use slide right edge
+  else if (neighbors.left) {
+    const leftEdge = neighbors.left.right;
+    const rightEdge = slideWidth;
+    const availableWidth = rightEdge - leftEdge;
+    newX = leftEdge + (availableWidth - selectedWidth) / 2;
+    horizontalCentered = true;
+  } 
+  // If only right neighbor exists, use slide left edge
+  else if (neighbors.right) {
+    const leftEdge = 0;
+    const rightEdge = neighbors.right.left;
+    const availableWidth = rightEdge - leftEdge;
+    newX = leftEdge + (availableWidth - selectedWidth) / 2;
+    horizontalCentered = true;
+  }
+  // If no horizontal neighbors, center in slide
+  else {
+    newX = (slideWidth - selectedWidth) / 2;
+    horizontalCentered = true;
   }
   
-  // Calculate vertical centering if we have both top and bottom neighbors
+  // Calculate vertical centering
+  // If both top and bottom neighbors exist, center between them
   if (neighbors.top && neighbors.bottom) {
     const topEdge = neighbors.top.bottom;
     const bottomEdge = neighbors.bottom.top;
@@ -71,24 +99,32 @@ function averagePadding() {
     newY = topEdge + (availableHeight - selectedHeight) / 2;
     verticalCentered = true;
   }
+  // If only top neighbor exists, use slide bottom edge
+  else if (neighbors.top) {
+    const topEdge = neighbors.top.bottom;
+    const bottomEdge = slideHeight;
+    const availableHeight = bottomEdge - topEdge;
+    newY = topEdge + (availableHeight - selectedHeight) / 2;
+    verticalCentered = true;
+  }
+  // If only bottom neighbor exists, use slide top edge
+  else if (neighbors.bottom) {
+    const topEdge = 0;
+    const bottomEdge = neighbors.bottom.top;
+    const availableHeight = bottomEdge - topEdge;
+    newY = topEdge + (availableHeight - selectedHeight) / 2;
+    verticalCentered = true;
+  }
+  // If no vertical neighbors, center in slide
+  else {
+    newY = (slideHeight - selectedHeight) / 2;
+    verticalCentered = true;
+  }
   
   // Step 5: Apply the new position
   selectedElement.setLeft(newX);
   selectedElement.setTop(newY);
   
-  // Provide feedback to the user
-  let message = 'Element has been ';
-  if (horizontalCentered && verticalCentered) {
-    message += 'centered horizontally and vertically';
-  } else if (horizontalCentered) {
-    message += 'centered horizontally';
-  } else if (verticalCentered) {
-    message += 'centered vertically';
-  } else {
-    message = 'No neighbors found to center against';
-  }
-  
-  SlidesApp.getUi().alert(message);
   return true;
 }
 
