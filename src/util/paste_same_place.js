@@ -48,7 +48,7 @@ function coverImageWithWhite() {
 
     // Set the border to a minimal weight and make it transparent
     shape.getBorder().setWeight(0.1); // Minimum valid weight
-    shape.getBorder().getLineFill().setSolidFill("#FFFFFF", 0.5); // Transparent border
+    shape.getBorder().getLineFill().setSolidFill("#FFFFFF", 0.3); // Transparent border
 
     // Send the shape to back so it's behind the element
     shape.sendBackward();

@@ -96,6 +96,7 @@ function createCustomMenu() {
     ui.createMenu("🖖 跨頁功能")
       .addItem("👆 在上面加入前一頁的標題", "copyPreviousTitleText")
       .addItem("👇 新增一頁並加入當前標題", "createNextSlideWithCurrentTitle")
+      .addItem("📝 Markdown 轉換成投影片", "showMarkdownDialog")
       .addToUi();
 
     return true; // Menu created successfully

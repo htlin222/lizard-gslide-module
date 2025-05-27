@@ -304,6 +304,28 @@
     document.getElementById("style-button-3").addEventListener("click", function() {
       applyStyle(3);
     });
+    
+    // Markdown to Slides button
+    const md2slidesButton = document.getElementById("md2slides-button");
+    if (md2slidesButton) {
+      md2slidesButton.addEventListener("click", function() {
+        // Show loading state
+        this.classList.add("loading");
+        
+        // Call the server-side function to show the dialog
+        google.script.run
+          .withSuccessHandler(function() {
+            // Remove loading state when dialog is shown
+            md2slidesButton.classList.remove("loading");
+          })
+          .withFailureHandler(function(error) {
+            // Remove loading state and show error
+            md2slidesButton.classList.remove("loading");
+            showStatusMessage("Error: " + error.message, "error");
+          })
+          .showMarkdownDialog();
+      });
+    }
   }
 
   // Run initialization when the page loads
