@@ -69,7 +69,6 @@ function createCustomMenu() {
       .addItem("📑 更新標籤頁", "runProcessTabs")
       .addItem("📚 更新 SECTION Header", "runProcessSectionBoxes")
       .addItem("🦶 更新 Footer", "runUpdateTitleFootnotes")
-      .addItem("✏️ 更新 Index Page", "generateIndexSlide")
       .addItem("📅 更新日期 yyyy-mm-dd", "updateDateInFirstSlide")
       .addItem("💧 浮水印開/關", "runToggleWaterMark")
       .addItem("🔁 更新選單項目", "showMenuManually")
@@ -90,6 +89,7 @@ function createCustomMenu() {
       .addItem("📐 分割成網格", "showSplitShapeDialog")
       .addItem("🎹 轉換成標注框", "convertShapeToCallout")
       .addItem("🍽️ 快速美化表格", "fastStyleSelectedTable")
+      .addItem("📊 平均間距置中", "runAveragePadding")
       .addToUi();
 
     // Create the add new content menu as a top-level menu
@@ -333,4 +333,18 @@ function loadSavedConfiguration() {
 function showDialog(title, message) {
   const ui = SlidesApp.getUi();
   ui.alert(title, message, ui.ButtonSet.OK);
+}
+
+/**
+ * Runs the averagePadding function to center an element between its neighbors
+ */
+function runAveragePadding() {
+  try {
+    const result = averagePadding();
+    if (!result) {
+      SlidesApp.getUi().alert('Please select a single element or group to center');
+    }
+  } catch (e) {
+    SlidesApp.getUi().alert('Error', 'An error occurred while centering the element: ' + e.message);
+  }
 }
