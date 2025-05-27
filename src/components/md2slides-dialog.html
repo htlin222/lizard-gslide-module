@@ -19,9 +19,9 @@
       }
       .header {
         background-color: #f5f5f5;
-        padding: 10px;
+        padding: 15px 20px;
         border-radius: 4px;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
       }
       .instructions {
         margin-bottom: 15px;
@@ -36,42 +36,60 @@
       }
       .content-area {
         flex: 1;
-        overflow-y: auto;
-        padding: 10px;
-        padding-bottom: 60px; /* Space for fixed buttons */
+        overflow: hidden;
+        padding: 15px 20px;
+        padding-bottom: 120px; /* Space for fixed buttons and status */
       }
       textarea {
         width: 100%;
-        height: 250px;
-        padding: 10px;
+        height: 350px;
+        padding: 15px;
         border: 1px solid #ccc;
-        border-radius: 4px;
+        border-radius: 8px;
         font-family: monospace;
-        font-size: 14px;
-        resize: vertical;
-        margin-bottom: 10px;
+        font-size: 18px;
+        resize: none;
+        margin-bottom: 20px;
         box-sizing: border-box;
+        overflow-y: auto;
       }
       .buttons {
         display: flex;
         justify-content: space-between;
         align-items: center;
         gap: 10px;
-        padding: 10px;
+        padding: 15px 15px 5px 15px;
         background-color: #f5f5f5;
         border-top: 1px solid #ddd;
+        position: absolute;
+        bottom: 55px;
+        left: 0;
+        right: 0;
+        z-index: 10;
+      }
+
+      .right-buttons {
+        display: flex;
+        gap: 10px;
+      }
+
+      .status-row {
+        display: flex;
+        padding: 5px 15px 15px 15px;
+        background-color: #f5f5f5;
         position: absolute;
         bottom: 0;
         left: 0;
         right: 0;
         z-index: 10;
+        border-top: 1px solid #eee;
       }
       button {
-        padding: 8px 16px;
+        padding: 10px 20px;
         border: none;
         border-radius: 4px;
         cursor: pointer;
-        font-size: 14px;
+        font-size: 15px;
       }
       #convert-button {
         background-color: #3d6869;
@@ -86,6 +104,13 @@
       }
       #cancel-button:hover {
         background-color: #e1e1e1;
+      }
+      #paste-button {
+        background-color: #4285f4;
+        color: white;
+      }
+      #paste-button:hover {
+        background-color: #3367d6;
       }
       .loading {
         position: relative;
@@ -122,7 +147,6 @@
         opacity: 0;
         transition: opacity 0.3s ease;
         flex-grow: 1;
-        margin-right: 10px;
       }
       .status-message.success {
         background-color: #d4edda;
@@ -149,10 +173,6 @@
   <body>
     <div class="container">
       <div class="content-area">
-        <div class="header">
-          <h2 style="margin: 0">Markdown to Slides Converter</h2>
-        </div>
-
         <textarea
           id="markdown-input"
           placeholder="Paste your markdown here...
@@ -169,9 +189,14 @@ Example:
       </div>
 
       <div class="buttons">
+        <button id="paste-button">Paste from Clipboard</button>
+        <div class="right-buttons">
+          <button id="cancel-button">Cancel</button>
+          <button id="convert-button">Convert to Slides</button>
+        </div>
+      </div>
+      <div class="status-row">
         <div id="status-message" class="status-message"></div>
-        <button id="cancel-button">Cancel</button>
-        <button id="convert-button">Convert to Slides</button>
       </div>
     </div>
 
@@ -230,6 +255,50 @@ Example:
         .getElementById("cancel-button")
         .addEventListener("click", function () {
           google.script.host.close();
+        });
+
+      // Handle the paste from clipboard button click
+      document
+        .getElementById("paste-button")
+        .addEventListener("click", function () {
+          // Show loading state
+          this.classList.add("loading");
+          showStatusMessage("Attempting to paste from clipboard...", "info");
+
+          // Use the clipboard API if available
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            navigator.clipboard
+              .readText()
+              .then((text) => {
+                const textarea = document.getElementById("markdown-input");
+                const currentContent = textarea.value;
+
+                // If there's already content, append with a newline
+                if (currentContent.trim() !== "") {
+                  textarea.value = currentContent + "\n\n" + text;
+                } else {
+                  textarea.value = text;
+                }
+
+                showStatusMessage("Content pasted successfully!", "success");
+                this.classList.remove("loading");
+              })
+              .catch((err) => {
+                console.error("Failed to read clipboard: ", err);
+                showStatusMessage(
+                  "Could not access clipboard. Please paste manually (Ctrl+V).",
+                  "error"
+                );
+                this.classList.remove("loading");
+              });
+          } else {
+            // Fallback for browsers that don't support clipboard API
+            showStatusMessage(
+              "Clipboard access not supported in this browser. Please paste manually (Ctrl+V).",
+              "error"
+            );
+            this.classList.remove("loading");
+          }
         });
 
       // Show a status message

@@ -96,7 +96,7 @@ function createCustomMenu() {
     ui.createMenu("🖖 跨頁功能")
       .addItem("👆 在上面加入前一頁的標題", "copyPreviousTitleText")
       .addItem("👇 新增一頁並加入當前標題", "createNextSlideWithCurrentTitle")
-      .addItem("📝 Markdown 轉換成投影片", "showMarkdownDialog")
+      .addItem("📝 Markdown 轉換成投影片", "showMarkdownToSlidesDialog")
       .addToUi();
 
     return true; // Menu created successfully
@@ -347,5 +347,23 @@ function runAveragePadding() {
     }
   } catch (e) {
     SlidesApp.getUi().alert('Error', 'An error occurred while centering the element: ' + e.message);
+  }
+}
+
+/**
+ * Shows the Markdown to Slides dialog
+ */
+function showMarkdownToSlidesDialog() {
+  try {
+    // Create and show the HTML dialog
+    const html = HtmlService.createHtmlOutputFromFile('src/components/md2slides-dialog.html')
+      .setWidth(600)
+      .setHeight(500)
+      .setTitle('Markdown to Slides Converter');
+    
+    SlidesApp.getUi().showModalDialog(html, 'Markdown to Slides');
+  } catch (e) {
+    console.error('Error showing Markdown to Slides dialog: ' + e.message);
+    SlidesApp.getUi().alert('Error', 'Could not open the Markdown to Slides dialog: ' + e.message);
   }
 }
