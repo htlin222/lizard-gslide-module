@@ -1,3 +1,5 @@
 .clasp.json
 .env
 appsscript.json
+.DS_Store
+**/.DS_Store
