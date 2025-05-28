@@ -97,6 +97,7 @@ function createCustomMenu() {
       .addItem("👆 在上面加入前一頁的標題", "copyPreviousTitleText")
       .addItem("👇 新增一頁並加入當前標題", "createNextSlideWithCurrentTitle")
       .addItem("📝 Markdown 轉換成投影片", "showMarkdownToSlidesDialog")
+      .addItem("**B** Markdown 粗體格式", "runApplyMarkdownBoldFormatting")
       .addToUi();
 
     return true; // Menu created successfully
