@@ -373,8 +373,13 @@ function parseMarkdownToStructure(markdownText) {
       // Skip empty lines
       if (line === '') continue;
       
+      // Check for horizontal rule (---) as slide separator
+      if (line === '---') {
+        // Skip the separator line - don't add it to any slide content
+        continue;
+      }
       // Check for H1 heading (# Heading)
-      if (line.startsWith('# ')) {
+      else if (line.startsWith('# ')) {
         // Create a new SECTION_HEADER slide
         currentSlide = {
           layout: 'SECTION_HEADER',
