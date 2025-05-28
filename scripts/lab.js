@@ -25,6 +25,69 @@ function applyListToSelectedTextbox() {
   }
 }
 
+function applyMarkdownBoldFormatting() {
+  const selection = SlidesApp.getActivePresentation().getSelection();
+  const pageElementRange = selection.getPageElementRange();
+  
+  if (!pageElementRange) {
+    Logger.log("No element selected.");
+    return;
+  }
+  
+  const elements = pageElementRange.getPageElements();
+  
+  elements.forEach(element => {
+    if (element.getPageElementType() === SlidesApp.PageElementType.SHAPE) {
+      const shape = element.asShape();
+      const textRange = shape.getText();
+      const originalText = textRange.asString();
+      
+      // 找到所有 **text** 格式的匹配
+      const matches = [...originalText.matchAll(/\*\*(.+?)\*\*/g)];
+      
+      let newText = '';
+      let lastIndex = 0;
+      const formattingRanges = [];
+      
+      matches.forEach(match => {
+        const matchStart = match.index;
+        const matchEnd = match.index + match[0].length;
+        const content = match[1];
+        
+        // 添加匹配前的文字
+        newText += originalText.substring(lastIndex, matchStart);
+        
+        // 記錄格式化文字在新文字中的位置
+        const formatStart = newText.length;
+        newText += content;
+        const formatEnd = newText.length;
+        
+        // 儲存範圍（end 是 exclusive）
+        formattingRanges.push({ start: formatStart, end: formatEnd });
+        
+        lastIndex = matchEnd;
+      });
+      
+      // 添加剩餘的原始文字
+      newText += originalText.substring(lastIndex);
+      
+      // 替換文字
+      shape.getText().setText(newText);
+      
+      // 重新獲取 textRange，因為 setText() 會重置它
+      const updatedTextRange = shape.getText();
+      
+      // 應用格式化（修正：不需要減 1，因為 end 已經是 exclusive）
+      formattingRanges.forEach(({ start, end }) => {
+        const range = updatedTextRange.getRange(start, end);
+        range.getTextStyle()
+          .setBold(true)
+          .setForegroundColor(main_color);
+      });
+    }
+  });
+}
+
 function createAlphaWhiteSquare() {
   // Get the current presentation
   const presentation = SlidesApp.getActivePresentation();

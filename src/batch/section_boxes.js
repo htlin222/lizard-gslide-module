@@ -160,10 +160,10 @@ const box_x = (720 - box_width) / 2;
 const BOX_CONFIG = {
   x: box_x,
   yBefore: 30,
-  yAfter: 220,
+  yAfter: 240,
   width: box_width,
   boxHeight: 150,
-  fontSize: 24,
+  fontSize: 20,
   fontFamily: main_font_family,
   textColor: '#aaaaaa',
   isBold: false
