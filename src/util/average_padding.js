@@ -4,7 +4,7 @@
  */
 
 /**
- * Centers the selected element by averaging the padding from its nearest neighbors
+ * Centers the selected element(s) by averaging the padding from its nearest neighbors
  * in all four directions (top, bottom, left, right)
  * If no neighbors are found in a particular direction, uses the presentation edge
  * 
@@ -16,20 +16,18 @@ function averagePadding() {
   const selection = presentation.getSelection();
   const selectionType = selection.getSelectionType();
   
-  // Step 1: Validate that only one item or group is selected
+  // Step 1: Validate that elements are selected
   if (selectionType !== SlidesApp.SelectionType.PAGE_ELEMENT) {
-    SlidesApp.getUi().alert('Please select a single element or group');
+    SlidesApp.getUi().alert('Please select one or more elements');
     return false;
   }
   
   const pageElements = selection.getPageElementRange().getPageElements();
-  if (pageElements.length !== 1) {
-    SlidesApp.getUi().alert('Please select exactly one element or group');
+  if (pageElements.length === 0) {
+    SlidesApp.getUi().alert('Please select at least one element');
     return false;
   }
   
-  // Get the selected element
-  const selectedElement = pageElements[0];
   const currentPage = selection.getCurrentPage();
   const allPageElements = currentPage.getPageElements();
   
@@ -37,20 +35,45 @@ function averagePadding() {
   const slideWidth = presentation.getPageWidth();
   const slideHeight = presentation.getPageHeight();
   
-  // Step 2: Get coordinates of the selected element
-  const selectedLeft = selectedElement.getLeft();
-  const selectedTop = selectedElement.getTop();
-  const selectedWidth = selectedElement.getWidth();
-  const selectedHeight = selectedElement.getHeight();
-  const selectedRight = selectedLeft + selectedWidth;
-  const selectedBottom = selectedTop + selectedHeight;
+  // Step 2: Calculate the bounding box of all selected elements
+  let minLeft = Infinity;
+  let minTop = Infinity;
+  let maxRight = 0;
+  let maxBottom = 0;
+  
+  // Find the extreme coordinates of the selected elements
+  pageElements.forEach(element => {
+    const left = element.getLeft();
+    const top = element.getTop();
+    const right = left + element.getWidth();
+    const bottom = top + element.getHeight();
+    
+    minLeft = Math.min(minLeft, left);
+    minTop = Math.min(minTop, top);
+    maxRight = Math.max(maxRight, right);
+    maxBottom = Math.max(maxBottom, bottom);
+  });
+  
+  // Calculate the dimensions of the bounding box
+  const selectedLeft = minLeft;
+  const selectedTop = minTop;
+  const selectedWidth = maxRight - minLeft;
+  const selectedHeight = maxBottom - minTop;
+  const selectedRight = maxRight;
+  const selectedBottom = maxBottom;
   
   // Step 3: Find nearest neighbors in all four directions
+  // Create a set of selected element IDs for quick lookup
+  const selectedElementIds = new Set();
+  pageElements.forEach(element => {
+    selectedElementIds.add(element.getObjectId());
+  });
+  
   const neighbors = {
-    top: findNearestTopNeighbor(selectedElement, allPageElements),
-    bottom: findNearestBottomNeighbor(selectedElement, allPageElements),
-    left: findNearestLeftNeighbor(selectedElement, allPageElements),
-    right: findNearestRightNeighbor(selectedElement, allPageElements)
+    top: findNearestTopNeighbor(selectedLeft, selectedTop, selectedRight, selectedBottom, allPageElements, selectedElementIds),
+    bottom: findNearestBottomNeighbor(selectedLeft, selectedTop, selectedRight, selectedBottom, allPageElements, selectedElementIds),
+    left: findNearestLeftNeighbor(selectedLeft, selectedTop, selectedRight, selectedBottom, allPageElements, selectedElementIds),
+    right: findNearestRightNeighbor(selectedLeft, selectedTop, selectedRight, selectedBottom, allPageElements, selectedElementIds)
   };
   
   // Step 4: Calculate new position based on average padding
@@ -121,38 +144,49 @@ function averagePadding() {
     verticalCentered = true;
   }
   
-  // Step 5: Apply the new position
-  selectedElement.setLeft(newX);
-  selectedElement.setTop(newY);
+  // Step 5: Calculate the amount to move each element
+  const deltaX = newX - selectedLeft;
+  const deltaY = newY - selectedTop;
+  
+  // Apply the movement to all selected elements
+  pageElements.forEach(element => {
+    const currentLeft = element.getLeft();
+    const currentTop = element.getTop();
+    
+    element.setLeft(currentLeft + deltaX);
+    element.setTop(currentTop + deltaY);
+  });
+  
+  // Log the operation for debugging
+  console.log(`Centered ${pageElements.length} elements. Moved by: X=${deltaX}, Y=${deltaY}`);
   
   return true;
 }
 
 /**
- * Finds the nearest element above the selected element
+ * Finds the nearest element above the selected elements
  * 
- * @param {PageElement} selectedElement - The selected element
+ * @param {number} selectedLeft - Left coordinate of the selection bounding box
+ * @param {number} selectedTop - Top coordinate of the selection bounding box
+ * @param {number} selectedRight - Right coordinate of the selection bounding box
+ * @param {number} selectedBottom - Bottom coordinate of the selection bounding box
  * @param {PageElement[]} allElements - All elements on the current slide
+ * @param {Set<string>} selectedElementIds - Set of IDs of the selected elements to exclude
  * @returns {Object|null} The nearest top neighbor's information or null if none found
  */
-function findNearestTopNeighbor(selectedElement, allElements) {
-  const selectedTop = selectedElement.getTop();
-  const selectedLeft = selectedElement.getLeft();
-  const selectedWidth = selectedElement.getWidth();
-  const selectedRight = selectedLeft + selectedWidth;
-  
+function findNearestTopNeighbor(selectedLeft, selectedTop, selectedRight, selectedBottom, allElements, selectedElementIds) {
   let nearestDistance = Infinity;
   let nearestElement = null;
   
   for (const element of allElements) {
-    // Skip if it's the same element
-    if (element.getObjectId() === selectedElement.getObjectId()) continue;
+    // Skip if it's one of the selected elements
+    if (selectedElementIds.has(element.getObjectId())) continue;
     
     const elementBottom = element.getTop() + element.getHeight();
     const elementLeft = element.getLeft();
     const elementRight = elementLeft + element.getWidth();
     
-    // Check if the element is above the selected element
+    // Check if the element is above the selected elements
     if (elementBottom < selectedTop) {
       // Check if there's horizontal overlap
       const hasHorizontalOverlap = 
@@ -176,30 +210,29 @@ function findNearestTopNeighbor(selectedElement, allElements) {
 }
 
 /**
- * Finds the nearest element below the selected element
+ * Finds the nearest element below the selected elements
  * 
- * @param {PageElement} selectedElement - The selected element
+ * @param {number} selectedLeft - Left coordinate of the selection bounding box
+ * @param {number} selectedTop - Top coordinate of the selection bounding box
+ * @param {number} selectedRight - Right coordinate of the selection bounding box
+ * @param {number} selectedBottom - Bottom coordinate of the selection bounding box
  * @param {PageElement[]} allElements - All elements on the current slide
+ * @param {Set<string>} selectedElementIds - Set of IDs of the selected elements to exclude
  * @returns {Object|null} The nearest bottom neighbor's information or null if none found
  */
-function findNearestBottomNeighbor(selectedElement, allElements) {
-  const selectedBottom = selectedElement.getTop() + selectedElement.getHeight();
-  const selectedLeft = selectedElement.getLeft();
-  const selectedWidth = selectedElement.getWidth();
-  const selectedRight = selectedLeft + selectedWidth;
-  
+function findNearestBottomNeighbor(selectedLeft, selectedTop, selectedRight, selectedBottom, allElements, selectedElementIds) {
   let nearestDistance = Infinity;
   let nearestElement = null;
   
   for (const element of allElements) {
-    // Skip if it's the same element
-    if (element.getObjectId() === selectedElement.getObjectId()) continue;
+    // Skip if it's one of the selected elements
+    if (selectedElementIds.has(element.getObjectId())) continue;
     
     const elementTop = element.getTop();
     const elementLeft = element.getLeft();
     const elementRight = elementLeft + element.getWidth();
     
-    // Check if the element is below the selected element
+    // Check if the element is below the selected elements
     if (elementTop > selectedBottom) {
       // Check if there's horizontal overlap
       const hasHorizontalOverlap = 
@@ -223,30 +256,29 @@ function findNearestBottomNeighbor(selectedElement, allElements) {
 }
 
 /**
- * Finds the nearest element to the left of the selected element
+ * Finds the nearest element to the left of the selected elements
  * 
- * @param {PageElement} selectedElement - The selected element
+ * @param {number} selectedLeft - Left coordinate of the selection bounding box
+ * @param {number} selectedTop - Top coordinate of the selection bounding box
+ * @param {number} selectedRight - Right coordinate of the selection bounding box
+ * @param {number} selectedBottom - Bottom coordinate of the selection bounding box
  * @param {PageElement[]} allElements - All elements on the current slide
+ * @param {Set<string>} selectedElementIds - Set of IDs of the selected elements to exclude
  * @returns {Object|null} The nearest left neighbor's information or null if none found
  */
-function findNearestLeftNeighbor(selectedElement, allElements) {
-  const selectedLeft = selectedElement.getLeft();
-  const selectedTop = selectedElement.getTop();
-  const selectedHeight = selectedElement.getHeight();
-  const selectedBottom = selectedTop + selectedHeight;
-  
+function findNearestLeftNeighbor(selectedLeft, selectedTop, selectedRight, selectedBottom, allElements, selectedElementIds) {
   let nearestDistance = Infinity;
   let nearestElement = null;
   
   for (const element of allElements) {
-    // Skip if it's the same element
-    if (element.getObjectId() === selectedElement.getObjectId()) continue;
+    // Skip if it's one of the selected elements
+    if (selectedElementIds.has(element.getObjectId())) continue;
     
     const elementRight = element.getLeft() + element.getWidth();
     const elementTop = element.getTop();
     const elementBottom = elementTop + element.getHeight();
     
-    // Check if the element is to the left of the selected element
+    // Check if the element is to the left of the selected elements
     if (elementRight < selectedLeft) {
       // Check if there's vertical overlap
       const hasVerticalOverlap = 
@@ -270,30 +302,29 @@ function findNearestLeftNeighbor(selectedElement, allElements) {
 }
 
 /**
- * Finds the nearest element to the right of the selected element
+ * Finds the nearest element to the right of the selected elements
  * 
- * @param {PageElement} selectedElement - The selected element
+ * @param {number} selectedLeft - Left coordinate of the selection bounding box
+ * @param {number} selectedTop - Top coordinate of the selection bounding box
+ * @param {number} selectedRight - Right coordinate of the selection bounding box
+ * @param {number} selectedBottom - Bottom coordinate of the selection bounding box
  * @param {PageElement[]} allElements - All elements on the current slide
+ * @param {Set<string>} selectedElementIds - Set of IDs of the selected elements to exclude
  * @returns {Object|null} The nearest right neighbor's information or null if none found
  */
-function findNearestRightNeighbor(selectedElement, allElements) {
-  const selectedRight = selectedElement.getLeft() + selectedElement.getWidth();
-  const selectedTop = selectedElement.getTop();
-  const selectedHeight = selectedElement.getHeight();
-  const selectedBottom = selectedTop + selectedHeight;
-  
+function findNearestRightNeighbor(selectedLeft, selectedTop, selectedRight, selectedBottom, allElements, selectedElementIds) {
   let nearestDistance = Infinity;
   let nearestElement = null;
   
   for (const element of allElements) {
-    // Skip if it's the same element
-    if (element.getObjectId() === selectedElement.getObjectId()) continue;
+    // Skip if it's one of the selected elements
+    if (selectedElementIds.has(element.getObjectId())) continue;
     
     const elementLeft = element.getLeft();
     const elementTop = element.getTop();
     const elementBottom = elementTop + element.getHeight();
     
-    // Check if the element is to the right of the selected element
+    // Check if the element is to the right of the selected elements
     if (elementLeft > selectedRight) {
       // Check if there's vertical overlap
       const hasVerticalOverlap = 
