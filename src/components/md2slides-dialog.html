@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <base target="_top" />
@@ -168,6 +168,24 @@
   </head>
   <body>
     <div class="container">
+      <div class="header">
+        <h3 style="margin: 0 0 10px 0; color: #3d6869">
+          Markdown to Slides Converter
+        </h3>
+        <div class="instructions">
+          <strong>Formatting Rules:</strong>
+          <div class="rule">
+            <strong># Title</strong> → Section Header slide
+          </div>
+          <div class="rule">
+            <strong>## Title</strong> → Title and Body slide
+          </div>
+          <div class="rule"><strong>- Item</strong> → Bullet point in body</div>
+          <div class="rule">
+            <strong>&gt; Note</strong> → Speaker notes for the slide
+          </div>
+        </div>
+      </div>
       <div class="content-area">
         <textarea
           id="markdown-input"
@@ -180,7 +198,10 @@ Example:
 
 - First bullet point
 - Second bullet point
-- Third bullet point"
+- Third bullet point
+
+> This is a speaker note for this slide
+> Multiple lines are supported"
         ></textarea>
       </div>
 
@@ -224,7 +245,7 @@ Example:
               if (result) {
                 showStatusMessage(
                   "Markdown successfully converted to slides!",
-                  "success"
+                  "success",
                 );
                 // Close the dialog after a short delay
                 setTimeout(function () {
@@ -233,7 +254,7 @@ Example:
               } else {
                 showStatusMessage(
                   "Error converting markdown to slides.",
-                  "error"
+                  "error",
                 );
               }
             })
@@ -283,7 +304,7 @@ Example:
                 console.error("Failed to read clipboard: ", err);
                 showStatusMessage(
                   "Could not access clipboard. Please paste manually (Ctrl+V).",
-                  "error"
+                  "error",
                 );
                 this.classList.remove("loading");
               });
@@ -291,7 +312,7 @@ Example:
             // Fallback for browsers that don't support clipboard API
             showStatusMessage(
               "Clipboard access not supported in this browser. Please paste manually (Ctrl+V).",
-              "error"
+              "error",
             );
             this.classList.remove("loading");
           }
