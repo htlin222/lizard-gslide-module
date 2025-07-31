@@ -28,7 +28,7 @@ while read -r scriptId; do
 
   echo "🚀 Pushing to scriptId: $scriptId"
   update_clasp_json "$scriptId"
-  clasp push
+  clasp push --force
   echo "✅ Done pushing to $scriptId"
   echo "--------------------------"
 done <cloned.txt
