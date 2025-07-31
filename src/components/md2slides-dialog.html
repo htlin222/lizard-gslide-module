@@ -19,37 +19,39 @@
       }
       .header {
         background-color: #f5f5f5;
-        padding: 15px 20px;
+        padding: 12px 20px;
         border-radius: 4px;
-        margin-bottom: 15px;
+        margin: 15px 20px 0 20px;
+        flex-shrink: 0;
       }
       .instructions {
-        margin-bottom: 15px;
+        margin-bottom: 10px;
         font-size: 14px;
       }
       .rule {
         background-color: #f9f9f9;
         border-left: 3px solid #3d6869;
-        padding: 8px;
-        margin-bottom: 5px;
-        font-size: 13px;
+        padding: 6px 8px;
+        margin-bottom: 4px;
+        font-size: 12px;
       }
       .content-area {
         flex: 1;
-        overflow: hidden;
-        padding: 15px 20px;
-        padding-bottom: 120px; /* Space for fixed buttons and status */
+        display: flex;
+        flex-direction: column;
+        padding: 15px 20px 0 20px;
+        min-height: 0;
       }
       textarea {
         width: 100%;
-        height: 350px;
+        flex: 1;
+        min-height: 200px;
         padding: 15px;
         border: 1px solid #ccc;
         border-radius: 8px;
         font-family: monospace;
-        font-size: 18px;
+        font-size: 16px;
         resize: none;
-        margin-bottom: 20px;
         box-sizing: border-box;
         overflow-y: auto;
       }
@@ -58,12 +60,8 @@
         justify-content: space-between;
         align-items: center;
         gap: 10px;
-        padding: 15px 15px 5px 15px;
-        position: absolute;
-        bottom: 55px;
-        left: 0;
-        right: 0;
-        z-index: 10;
+        padding: 15px 20px 5px 20px;
+        flex-shrink: 0;
       }
 
       .right-buttons {
@@ -73,12 +71,8 @@
 
       .status-row {
         display: flex;
-        padding: 5px 15px 15px 15px;
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 10;
+        padding: 5px 20px 15px 20px;
+        flex-shrink: 0;
       }
       button {
         padding: 10px 20px;
