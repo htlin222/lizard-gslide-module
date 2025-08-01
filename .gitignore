@@ -4,3 +4,46 @@ appsscript.json
 .DS_Store
 **/.DS_Store
 cloned.txt
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Lock files (optional - uncomment if you want to ignore them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Build output
+dist/
+build/
+out/
+.cache/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Testing
+coverage/
+.nyc_output/
+
+# Environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
