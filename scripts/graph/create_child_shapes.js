@@ -27,8 +27,8 @@ function showCreateChildShapesDialog() {
 
 	// Create and show the dialog
 	const htmlOutput = HtmlService.createHtmlOutput(createChildShapesDialogHtml())
-		.setWidth(250)
-		.setHeight(200);
+		.setWidth(350)
+		.setHeight(280);
 
 	ui.showModalDialog(htmlOutput, "Create Child Shapes");
 }
@@ -103,7 +103,14 @@ function createChildShapesDialogHtml() {
         <div class="form-group">
           <label for="padding">Padding:</label>
           <div>
-            <input type="number" id="padding" min="0" value="5">
+            <input type="number" id="padding" min="0" value="10">
+            <span class="input-suffix">pt</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="paddingTop">Padding Top:</label>
+          <div>
+            <input type="number" id="paddingTop" min="0" value="30">
             <span class="input-suffix">pt</span>
           </div>
         </div>
@@ -123,10 +130,11 @@ function createChildShapesDialogHtml() {
             const rows = parseInt(document.getElementById('rows').value);
             const columns = parseInt(document.getElementById('columns').value);
             const padding = parseInt(document.getElementById('padding').value);
+            const paddingTop = parseInt(document.getElementById('paddingTop').value);
             const gap = parseInt(document.getElementById('gap').value);
             
-            if (rows < 1 || columns < 1 || padding < 0 || gap < 0 || 
-                isNaN(rows) || isNaN(columns) || isNaN(padding) || isNaN(gap)) {
+            if (rows < 1 || columns < 1 || padding < 0 || paddingTop < 0 || gap < 0 || 
+                isNaN(rows) || isNaN(columns) || isNaN(padding) || isNaN(paddingTop) || isNaN(gap)) {
               alert('Please enter valid values. Rows and columns must be at least 1, padding and gap must be at least 0.');
               return;
             }
@@ -138,7 +146,7 @@ function createChildShapesDialogHtml() {
               .withFailureHandler(function(error) {
                 alert('Error: ' + error);
               })
-              .createChildShapesInSelected(rows, columns, padding, gap);
+              .createChildShapesInSelected(rows, columns, padding, paddingTop, gap);
           }
         </script>
       </body>
@@ -151,9 +159,10 @@ function createChildShapesDialogHtml() {
  * @param {number} rows - Number of rows in the grid.
  * @param {number} columns - Number of columns in the grid.
  * @param {number} padding - Padding inside the parent shape in points.
+ * @param {number} paddingTop - Top padding inside the parent shape in points.
  * @param {number} gap - Gap size between child shapes in points.
  */
-function createChildShapesInSelected(rows, columns, padding, gap) {
+function createChildShapesInSelected(rows, columns, padding, paddingTop, gap) {
 	try {
 		// Get the active presentation and selection
 		const presentation = SlidesApp.getActivePresentation();
@@ -201,7 +210,7 @@ function createChildShapesInSelected(rows, columns, padding, gap) {
 
 		// Calculate the available space inside the parent shape after padding
 		const availableWidth = parentWidth - padding * 2;
-		const availableHeight = parentHeight - padding * 2;
+		const availableHeight = parentHeight - paddingTop - padding;
 
 		// Calculate the dimensions for each child shape
 		const childWidth = (availableWidth - gap * (columns - 1)) / columns;
@@ -222,7 +231,7 @@ function createChildShapesInSelected(rows, columns, padding, gap) {
 			for (let col = 0; col < columns; col++) {
 				// Calculate position for the child shape relative to parent
 				const childLeft = parentLeft + padding + col * (childWidth + gap);
-				const childTop = parentTop + padding + row * (childHeight + gap);
+				const childTop = parentTop + paddingTop + row * (childHeight + gap);
 
 				// Create the child shape with the same type as parent
 				const childShape = slide.insertShape(
@@ -244,8 +253,8 @@ function createChildShapesInSelected(rows, columns, padding, gap) {
 					childShape.setRotation(parentRotation);
 				}
 
-				// Copy the styling from the parent shape
-				copyShapeStyle(parentShape, childShape);
+				// Apply white fill and white stroke to child shape
+				applyWhiteStyle(childShape);
 
 				// Add to our array of child shapes
 				childShapes.push(childShape);
@@ -282,64 +291,27 @@ function createChildShapesInSelected(rows, columns, padding, gap) {
 }
 
 /**
- * Copies the style from one shape to another.
- * @param {Shape} sourceShape - The shape to copy style from.
- * @param {Shape} targetShape - The shape to apply the style to.
+ * Applies white fill and white stroke to a shape.
+ * @param {Shape} shape - The shape to apply white style to.
  */
-function copyShapeStyle(sourceShape, targetShape) {
+function applyWhiteStyle(shape) {
 	try {
-		// Copy fill
-		const sourceFill = sourceShape.getFill();
-		const targetFill = targetShape.getFill();
+		// Set white fill
+		const fill = shape.getFill();
+		fill.setSolidFill("#FFFFFF");
 
-		if (sourceFill.getType() === SlidesApp.FillType.SOLID) {
-			targetFill.setSolidFill(
-				sourceFill.getSolidFill().getColor(),
-				sourceFill.getSolidFill().getAlpha(),
-			);
-		}
+		// Set white border
+		const border = shape.getBorder();
+		border.setWeight(1); // 1pt border
+		border.setSolidFill("#FFFFFF");
 
-		// Copy border - using proper border handling for Google Slides
-		const sourceBorder = sourceShape.getBorder();
-		const targetBorder = targetShape.getBorder();
-
-		// Set border weight and dash style
-		targetBorder.setWeight(sourceBorder.getWeight());
-		targetBorder.setDashStyle(sourceBorder.getDashStyle());
-
-		// Set border color if it's a solid fill
-		const borderFill = sourceBorder.getFill();
-		if (borderFill.getType() === SlidesApp.FillType.SOLID) {
-			targetBorder.setSolidFill(
-				borderFill.getSolidFill().getColor(),
-				borderFill.getSolidFill().getAlpha(),
-			);
-		}
-
-		// Copy text style if applicable
-		if (sourceShape.getText() && targetShape.getText()) {
-			const sourceTextStyle = sourceShape.getText().getTextStyle();
-			const targetTextStyle = targetShape.getText().getTextStyle();
-
-			// Copy basic text properties
-			if (sourceTextStyle.getFontFamily()) {
-				targetTextStyle.setFontFamily(sourceTextStyle.getFontFamily());
-			}
-			if (sourceTextStyle.getFontSize()) {
-				targetTextStyle.setFontSize(sourceTextStyle.getFontSize());
-			}
-			targetTextStyle.setBold(sourceTextStyle.isBold());
-			targetTextStyle.setItalic(sourceTextStyle.isItalic());
-			targetTextStyle.setUnderline(sourceTextStyle.isUnderline());
-
-			// Copy text color if available
-			const fontColor = sourceTextStyle.getForegroundColor();
-			if (fontColor) {
-				targetTextStyle.setForegroundColor(fontColor);
-			}
+		// Optionally set text color to black for visibility on white background
+		if (shape.getText()) {
+			const textStyle = shape.getText().getTextStyle();
+			textStyle.setForegroundColor("#000000");
 		}
 	} catch (error) {
 		// Log error but continue execution
-		console.log("Error copying style: " + error.message);
+		console.log("Error applying white style: " + error.message);
 	}
 }
