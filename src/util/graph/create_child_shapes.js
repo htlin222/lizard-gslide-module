@@ -549,7 +549,8 @@ function createChildShapesWithLayout(
 			// Set the text content from the parsed data
 			const cellText = row[colIndex].trim();
 			if (cellText) {
-				childShape.getText().setText(cellText);
+				const textRange = childShape.getText();
+				textRange.setText(cellText);
 			}
 
 			childShapes.push(childShape);
@@ -560,6 +561,14 @@ function createChildShapesWithLayout(
 	for (const childShape of childShapes) {
 		childShape.bringForward();
 	}
+
+	// Set parent shape text alignment to top and set text to content outside {}
+	parentShape.setContentAlignment(SlidesApp.ContentAlignment.TOP);
+
+	// Extract text outside {} brackets
+	const originalText = parentShape.getText().asString();
+	const textOutsideBrackets = extractTextOutsideBrackets(originalText);
+	parentShape.getText().setText(textOutsideBrackets);
 
 	console.log(
 		`Created ${childShapes.length} child shapes with variable column layout`,
@@ -686,6 +695,25 @@ function createNestedChildShapes(parentShape, nestedLayout) {
 	}
 
 	console.log(`Created ${columnCount} column layout with nested grids`);
+}
+
+/**
+ * Extracts text that is outside of {} brackets.
+ * @param {string} text - The original text
+ * @return {string} Text outside brackets, trimmed
+ */
+function extractTextOutsideBrackets(text) {
+	// Remove all {} blocks (including nested ones)
+	let result = text;
+
+	// Remove multi-row format: {[...][...]}
+	result = result.replace(/\{(\[.*?\])+\}/g, "");
+
+	// Remove single-row format: {content}
+	result = result.replace(/\{[^}]*\}/g, "");
+
+	// Clean up extra whitespace and return
+	return result.trim();
 }
 
 /**

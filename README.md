@@ -40,59 +40,64 @@ The codebase is organized into the following directories:
 ## Quick Start Guide
 
 1. Install clasp if you haven't already:
+
    ```bash
    npm install -g @google/clasp
    ```
 
 2. Login to your Google account:
+
    ```bash
    clasp login
    ```
 
 3. Clone this repository:
+
    ```bash
    git clone https://github.com/htlin222/lizard-gslide-module.git
    cd lizard-gslide-module
    ```
 
 4. Create a new Google Slides project from within the cloned directory:
+
    ```bash
    clasp create --type slides --title "My Styled Presentation"
    ```
 
 5. Overwrite the appscript.json file with the example configuration:
+
    ```bash
    cp appsscript.example.json appsscript.json
    ```
 
 6. Push the code to your new project:
+
    ```bash
    clasp push
    ```
 
 7. Open the Google Slides presentation directly:
+
    ```bash
    clasp open-container
    ```
+
    This command opens the container (Google Slides presentation) directly in your browser
 
 8. In the Google Slides presentation, go to Extensions > Apps Script to enable the script
 
    ![image](https://github.com/user-attachments/assets/fe774867-c791-4e6f-a948-b54dfc34c693)
 
+9. The `onOpen` function might not run automatically. If you don't see the menu:
+   - In the Apps Script editor, open the `src/config.js` file
+   - Find the `onOpen()` function
+   - Click the Run button (▶️) to manually create the menu
 
-10. The `onOpen` function might not run automatically. If you don't see the menu:
-    - In the Apps Script editor, open the `scripts/config.js` file
-    - Find the `onOpen()` function
-    - Click the Run button (▶️) to manually create the menu
-
-   ![image](https://github.com/user-attachments/assets/b068f4c2-8c36-406d-9753-c89787370fe3)
-
+![image](https://github.com/user-attachments/assets/b068f4c2-8c36-406d-9753-c89787370fe3)
 
 11. You should now see the "🛠 工具選單" (Tools Menu) in your menu bar
 
-   ![image](https://github.com/user-attachments/assets/dab56975-9be1-494b-9509-1347d9dfa9d3)
-
+![image](https://github.com/user-attachments/assets/dab56975-9be1-494b-9509-1347d9dfa9d3)
 
 ## Manual Installation
 
@@ -130,19 +135,19 @@ After installation, a new menu item "🛠 工具選單" will appear in your Goog
 
 ## Configuration
 
-You can customize the module by modifying the variables in `scripts/config.js`:
+You can customize the module by modifying the variables in `src/config.js`:
 
 ```javascript
-var main_color = '#3D6869';               // Main theme color
-var main_font_family = 'Source Sans Pro';  // Font family
-var water_mark_text = 'ⓒ Hsieh-Ting Lin'; // Watermark text
-var label_font_size = 14;                 // Font size for labels
+var main_color = "#3D6869"; // Main theme color
+var main_font_family = "Source Sans Pro"; // Font family
+var water_mark_text = "ⓒ Hsieh-Ting Lin"; // Watermark text
+var label_font_size = 14; // Font size for labels
 ```
 
 The source presentation template ID can also be changed:
 
 ```javascript
-const sourcePresentationId = '1qAZzq-uo5blLH1nqp9rbrGDlzz_Aj8eIp0XjDdmI220';
+const sourcePresentationId = "1qAZzq-uo5blLH1nqp9rbrGDlzz_Aj8eIp0XjDdmI220";
 ```
 
 ## Requirements

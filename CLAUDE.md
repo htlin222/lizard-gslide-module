@@ -9,6 +9,7 @@ This is a Google Apps Script project that enhances Google Slides with automated 
 ## Development Commands
 
 ### Initial Setup
+
 ```bash
 # Install clasp globally if not already installed
 npm install -g @google/clasp
@@ -27,6 +28,7 @@ clasp open-container
 ```
 
 ### Development Workflow
+
 ```bash
 # Push changes to Google Apps Script
 clasp push
@@ -42,6 +44,7 @@ clasp open
 ```
 
 ### Testing
+
 - No automated testing framework is configured
 - Testing is done manually in Google Slides after pushing code
 - After making changes, run `clasp push` and test in the Google Slides presentation
@@ -50,7 +53,7 @@ clasp open
 
 ### Core Files Structure
 
-- **scripts/config.js** - Main configuration and menu creation logic
+- **src/config.js** - Main configuration and menu creation logic
   - Contains `onOpen()` function that creates custom menus
   - Defines global configuration variables (colors, fonts, etc.)
   - Manages configuration persistence via PropertiesService
@@ -76,15 +79,17 @@ clasp open
 
 ### Menu System
 
-Three main menu categories are created in `scripts/config.js`:
+Three main menu categories are created in `src/config.js`:
+
 - **🗃 批次處理 (Batch Processing)** - Functions that process multiple slides
-- **🎨 加入元素 (Add Elements)** - Single slide beautification tools  
+- **🎨 加入元素 (Add Elements)** - Single slide beautification tools
 - **🖖 跨頁功能 (Cross-page Functions)** - Functions that work across multiple slides
 
 ### Configuration System
 
 Configuration is managed through:
-- Global variables in `scripts/config.js` (defaults)
+
+- Global variables in `src/config.js` (defaults)
 - PropertiesService for user-specific persistent settings
 - Sidebar interface for real-time configuration updates
 
@@ -105,12 +110,13 @@ Configuration is managed through:
 
 ## Configuration Variables
 
-Key variables in `scripts/config.js`:
+Key variables in `src/config.js`:
+
 ```javascript
-var main_color = "#3D6869";               // Main theme color
-var main_font_family = "Source Sans Pro";  // Font family
+var main_color = "#3D6869"; // Main theme color
+var main_font_family = "Source Sans Pro"; // Font family
 var water_mark_text = "ⓒ Hsieh-Ting Lin"; // Watermark text
-var label_font_size = 14;                 // Font size for labels
+var label_font_size = 14; // Font size for labels
 const sourcePresentationId = "1qAZzq-..."; // Template presentation ID
 ```
 
