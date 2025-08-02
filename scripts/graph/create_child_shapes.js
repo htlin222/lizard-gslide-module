@@ -103,7 +103,7 @@ function createChildShapesDialogHtml() {
         <div class="form-group">
           <label for="padding">Padding:</label>
           <div>
-            <input type="number" id="padding" min="0" value="10">
+            <input type="number" id="padding" min="0" value="7">
             <span class="input-suffix">pt</span>
           </div>
         </div>
@@ -117,7 +117,7 @@ function createChildShapesDialogHtml() {
         <div class="form-group">
           <label for="gap">Gap:</label>
           <div>
-            <input type="number" id="gap" min="0" value="5">
+            <input type="number" id="gap" min="0" value="7">
             <span class="input-suffix">pt</span>
           </div>
         </div>
@@ -303,7 +303,10 @@ function applyWhiteStyle(shape) {
 		// Set white border
 		const border = shape.getBorder();
 		border.setWeight(1); // 1pt border
-		border.setSolidFill("#FFFFFF");
+
+		// Get the border fill and set it to white
+		const borderFill = border.getFill();
+		borderFill.setSolidFill("#FFFFFF");
 
 		// Optionally set text color to black for visibility on white background
 		if (shape.getText()) {
