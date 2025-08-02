@@ -568,7 +568,19 @@ function createChildShapesWithLayout(
 	// Extract text outside {} brackets
 	const originalText = parentShape.getText().asString();
 	const textOutsideBrackets = extractTextOutsideBrackets(originalText);
-	parentShape.getText().setText(textOutsideBrackets);
+
+	// Check if text outside brackets is wrapped in quotes "text"
+	const titleTextBox = createTitleTextBoxIfNeeded(
+		parentShape,
+		textOutsideBrackets,
+		slide,
+	);
+
+	// Set remaining text to parent shape (after removing quoted text)
+	const remainingText = titleTextBox
+		? extractTextWithoutQuotes(textOutsideBrackets)
+		: textOutsideBrackets;
+	parentShape.getText().setText(remainingText);
 
 	console.log(
 		`Created ${childShapes.length} child shapes with variable column layout`,
@@ -703,9 +715,10 @@ function createNestedChildShapes(parentShape, nestedLayout) {
  * @return {string} Text outside brackets, trimmed
  */
 function extractTextOutsideBrackets(text) {
-	// Remove all {} blocks (including nested ones)
-	let result = text;
+	// Remove line breaks and normalize whitespace
+	let result = text.replace(/\r?\n|\r/g, " ");
 
+	// Remove all {} blocks (including nested ones)
 	// Remove multi-row format: {[...][...]}
 	result = result.replace(/\{(\[.*?\])+\}/g, "");
 
@@ -713,7 +726,87 @@ function extractTextOutsideBrackets(text) {
 	result = result.replace(/\{[^}]*\}/g, "");
 
 	// Clean up extra whitespace and return
-	return result.trim();
+	return result.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Creates a title TEXT_BOX above the parent shape if the text is wrapped in quotes "text".
+ * @param {Shape} parentShape - The parent shape
+ * @param {string} textOutsideBrackets - The text outside {} brackets
+ * @param {Slide} slide - The slide to add the text box to
+ * @return {Shape|null} The created text box or null if no quoted text found
+ */
+function createTitleTextBoxIfNeeded(parentShape, textOutsideBrackets, slide) {
+	// Check if text contains quoted content "text"
+	const quotedTextRegex = /"([^"]*)"/;
+	const match = textOutsideBrackets.match(quotedTextRegex);
+
+	if (!match) {
+		return null; // No quoted text found
+	}
+
+	const quotedText = match[1]; // Text inside quotes
+
+	// Get parent shape properties
+	const parentLeft = parentShape.getLeft();
+	const parentTop = parentShape.getTop();
+	const parentWidth = parentShape.getWidth();
+	const parentRotation = parentShape.getRotation();
+
+	// Create text box positioned 30pt above parent shape with same width and 30pt height
+	const textBoxLeft = parentLeft;
+	const textBoxTop = parentTop - 30; // 30pt above
+	const textBoxWidth = parentWidth; // Same width as parent
+	const textBoxHeight = 30; // 30pt height
+
+	// Create the text box
+	const titleTextBox = slide.insertShape(
+		SlidesApp.ShapeType.TEXT_BOX,
+		textBoxLeft,
+		textBoxTop,
+		textBoxWidth,
+		textBoxHeight,
+	);
+
+	// Apply rotation if parent has any
+	if (parentRotation !== 0) {
+		titleTextBox.setRotation(parentRotation);
+	}
+
+	// Set the text content
+	titleTextBox.getText().setText(quotedText);
+
+	// Style the text - 14pt, bold, main_color
+	const textStyle = titleTextBox.getText().getTextStyle();
+	textStyle.setFontSize(14);
+	textStyle.setBold(true);
+	textStyle.setForegroundColor(main_color);
+
+	// Style the text box - TEXT_BOX is already transparent by default
+	// Don't set border weight to 0 as it causes an error, leave it as default
+
+	// Bring text box forward
+	titleTextBox.bringForward();
+
+	console.log(`Created title text box with text: "${quotedText}"`);
+
+	return titleTextBox;
+}
+
+/**
+ * Extracts text without the quoted portions "text".
+ * @param {string} text - The original text
+ * @return {string} Text with quoted portions removed
+ */
+function extractTextWithoutQuotes(text) {
+	// Remove line breaks and normalize whitespace
+	let result = text.replace(/\r?\n|\r/g, " ");
+
+	// Remove all quoted text "content"
+	result = result.replace(/"[^"]*"/g, "");
+
+	// Clean up extra whitespace and return
+	return result.replace(/\s+/g, " ").trim();
 }
 
 /**
@@ -809,8 +902,12 @@ function applyBoldStyleTransformation(shape) {
 			return result;
 		}
 
-		// Get the text content and trim it
-		const textContent = textRange.asString().trim();
+		// Get the text content, remove line breaks and normalize whitespace
+		const textContent = textRange
+			.asString()
+			.replace(/\r?\n|\r/g, " ")
+			.replace(/\s+/g, " ")
+			.trim();
 		result.originalText = textContent;
 		result.debug.hasText = true;
 		result.debug.textLength = textContent.length;
