@@ -291,6 +291,404 @@ function createChildShapesInSelected(rows, columns, padding, paddingTop, gap) {
 }
 
 /**
+ * Automatically creates child shapes supporting nested syntax:
+ * - Single level: {[item1|item2][item3|item4]} - creates grid directly
+ * - Nested level: {grid1} {grid2} {grid3} - splits into columns, then creates grids in each
+ */
+function autoCreateChildShapesFromText() {
+	try {
+		// Get the active presentation and selection
+		const presentation = SlidesApp.getActivePresentation();
+		const selection = presentation.getSelection();
+
+		// Check if a shape is selected
+		const selectedElements = selection.getPageElementRange()
+			? selection.getPageElementRange().getPageElements()
+			: [];
+
+		const selectedShapes = selectedElements.filter(
+			(element) =>
+				element.getPageElementType() === SlidesApp.PageElementType.SHAPE,
+		);
+
+		if (selectedShapes.length !== 1) {
+			SlidesApp.getUi().alert(
+				"Error",
+				"Please select exactly one shape with text syntax to auto-create child shapes.",
+				SlidesApp.getUi().ButtonSet.OK,
+			);
+			return;
+		}
+
+		const parentShape = selectedShapes[0].asShape();
+
+		// Get the text content from the shape
+		const textContent = parentShape.getText().asString();
+
+		// Check if this is a nested syntax (multiple {} blocks with complex content)
+		const nestedLayout = parseNestedSyntax(textContent);
+
+		if (nestedLayout) {
+			// Handle nested syntax: split into columns first, then create grids in each column
+			createNestedChildShapes(parentShape, nestedLayout);
+			console.log(
+				`Auto-created nested layout with ${nestedLayout.columns} columns`,
+			);
+			return;
+		}
+
+		// Try single-level parsing
+		const gridLayout = parseGridSyntax(textContent);
+
+		if (!gridLayout) {
+			SlidesApp.getUi().alert(
+				"Error",
+				"No valid grid syntax found. Please use format: {[item1|item2][item3|item4]} or nested format",
+				SlidesApp.getUi().ButtonSet.OK,
+			);
+			return;
+		}
+
+		// Create child shapes with default settings
+		const defaultPadding = 7;
+		const defaultPaddingTop = 30;
+		const defaultGap = 7;
+
+		createChildShapesWithLayout(
+			parentShape,
+			gridLayout,
+			defaultPadding,
+			defaultPaddingTop,
+			defaultGap,
+		);
+
+		console.log(
+			`Auto-created child shapes with ${gridLayout.rows} rows and varying columns`,
+		);
+	} catch (error) {
+		SlidesApp.getUi().alert(
+			"Error",
+			`An error occurred: ${error.message}`,
+			SlidesApp.getUi().ButtonSet.OK,
+		);
+	}
+}
+
+/**
+ * Parses grid syntax supporting two formats:
+ * 1. Multi-row: {[item1|item2|item3][item4|item5]} - rows with columns
+ * 2. Single-row: {item1} {item2} {item3} - simple column layout
+ * @param {string} text - The text to parse
+ * @return {Object|null} Grid layout object or null if invalid syntax
+ */
+function parseGridSyntax(text) {
+	// First try to match multi-row format: {[...][...]}
+	const multiRowRegex = /\{(\[.*?\])+\}/;
+	const multiRowMatch = text.match(multiRowRegex);
+
+	if (multiRowMatch) {
+		return parseMultiRowSyntax(multiRowMatch[0]);
+	}
+
+	// Try to match single-row format: {} {} {}
+	const singleRowRegex = /\{([^}]*)\}/g;
+	const singleRowMatches = [];
+	let singleRowMatch;
+
+	while ((singleRowMatch = singleRowRegex.exec(text)) !== null) {
+		const content = singleRowMatch[1].trim();
+		if (content) {
+			singleRowMatches.push(content);
+		}
+	}
+
+	if (singleRowMatches.length > 0) {
+		return parseSingleRowSyntax(singleRowMatches);
+	}
+
+	return null;
+}
+
+/**
+ * Parses multi-row syntax like {[item1|item2][item3|item4]}
+ * @param {string} gridText - The matched grid text
+ * @return {Object} Grid layout object
+ */
+function parseMultiRowSyntax(gridText) {
+	// Extract all row patterns [...]
+	const rowRegex = /\[([^\]]*)\]/g;
+	const rows = [];
+	let rowMatch;
+
+	while ((rowMatch = rowRegex.exec(gridText)) !== null) {
+		const rowContent = rowMatch[1];
+		// Split by | to get columns, filter out empty strings
+		const columns = rowContent.split("|").filter((col) => col.trim() !== "");
+		if (columns.length > 0) {
+			rows.push(columns);
+		}
+	}
+
+	if (rows.length === 0) {
+		return null;
+	}
+
+	// Find the maximum number of columns across all rows
+	const maxColumns = Math.max(...rows.map((row) => row.length));
+
+	return {
+		rows: rows.length,
+		maxColumns: maxColumns,
+		rowData: rows,
+		isVariableColumns: rows.some((row) => row.length !== maxColumns),
+		syntaxType: "multi-row",
+	};
+}
+
+/**
+ * Parses single-row syntax like {item1} {item2} {item3}
+ * @param {Array} matches - Array of matched content strings
+ * @return {Object} Grid layout object
+ */
+function parseSingleRowSyntax(matches) {
+	return {
+		rows: 1,
+		maxColumns: matches.length,
+		rowData: [matches], // Single row with all the columns
+		isVariableColumns: false,
+		syntaxType: "single-row",
+	};
+}
+
+/**
+ * Creates child shapes with a specific layout structure (supporting variable columns per row).
+ * @param {Shape} parentShape - The parent shape
+ * @param {Object} layout - The grid layout structure
+ * @param {number} padding - Padding in points
+ * @param {number} paddingTop - Top padding in points
+ * @param {number} gap - Gap between shapes in points
+ */
+function createChildShapesWithLayout(
+	parentShape,
+	layout,
+	padding,
+	paddingTop,
+	gap,
+) {
+	// Get the slide from the presentation selection
+	const presentation = SlidesApp.getActivePresentation();
+	const selection = presentation.getSelection();
+	const slide = selection.getCurrentPage();
+
+	// Get parent properties
+	const parentLeft = parentShape.getLeft();
+	const parentTop = parentShape.getTop();
+	const parentWidth = parentShape.getWidth();
+	const parentHeight = parentShape.getHeight();
+	const parentRotation = parentShape.getRotation();
+
+	// Calculate available space
+	const availableWidth = parentWidth - padding * 2;
+	const availableHeight = parentHeight - paddingTop - padding;
+
+	// Calculate row height
+	const rowHeight = (availableHeight - gap * (layout.rows - 1)) / layout.rows;
+
+	if (rowHeight <= 0) {
+		throw new Error("Parent shape is too small for the specified layout.");
+	}
+
+	const childShapes = [];
+
+	// Create shapes for each row
+	for (let rowIndex = 0; rowIndex < layout.rows; rowIndex++) {
+		const row = layout.rowData[rowIndex];
+		const columnsInRow = row.length;
+
+		// Calculate column width for this specific row
+		const columnWidth =
+			(availableWidth - gap * (columnsInRow - 1)) / columnsInRow;
+
+		if (columnWidth <= 0) {
+			console.warn(
+				`Row ${rowIndex + 1} has too many columns for the available width`,
+			);
+			continue;
+		}
+
+		// Calculate the starting Y position for this row
+		const rowTop = parentTop + paddingTop + rowIndex * (rowHeight + gap);
+
+		// Create shapes for each column in this row
+		for (let colIndex = 0; colIndex < columnsInRow; colIndex++) {
+			const columnLeft = parentLeft + padding + colIndex * (columnWidth + gap);
+
+			// Create the child shape
+			const childShape = slide.insertShape(
+				parentShape.getShapeType(),
+				columnLeft,
+				rowTop,
+				columnWidth,
+				rowHeight,
+			);
+
+			// Set precise positioning
+			childShape.setLeft(columnLeft);
+			childShape.setTop(rowTop);
+			childShape.setWidth(columnWidth);
+			childShape.setHeight(rowHeight);
+
+			// Apply rotation if needed
+			if (parentRotation !== 0) {
+				childShape.setRotation(parentRotation);
+			}
+
+			// Apply white styling
+			applyWhiteStyle(childShape);
+
+			// Set the text content from the parsed data
+			const cellText = row[colIndex].trim();
+			if (cellText) {
+				childShape.getText().setText(cellText);
+			}
+
+			childShapes.push(childShape);
+		}
+	}
+
+	// Bring all child shapes forward
+	for (const childShape of childShapes) {
+		childShape.bringForward();
+	}
+
+	console.log(
+		`Created ${childShapes.length} child shapes with variable column layout`,
+	);
+}
+
+/**
+ * Parses nested syntax where multiple {} blocks contain complex grid definitions.
+ * Example: {[A|B][C|D]} {[E|F][G|H]} {[I|J][K|L]}
+ * @param {string} text - The text to parse
+ * @return {Object|null} Nested layout object or null if not nested syntax
+ */
+function parseNestedSyntax(text) {
+	// Look for multiple {} blocks that contain [...] patterns (complex grids)
+	const complexBlockRegex = /\{(\[.*?\])+\}/g;
+	const complexBlocks = [];
+	let match;
+
+	while ((match = complexBlockRegex.exec(text)) !== null) {
+		complexBlocks.push(match[0]);
+	}
+
+	// Only consider it nested if we have multiple complex blocks
+	if (complexBlocks.length < 2) {
+		return null;
+	}
+
+	// Parse each block's content
+	const columnLayouts = [];
+	for (const block of complexBlocks) {
+		const layout = parseMultiRowSyntax(block);
+		if (layout) {
+			columnLayouts.push({
+				content: block,
+				layout: layout,
+			});
+		}
+	}
+
+	if (columnLayouts.length === 0) {
+		return null;
+	}
+
+	return {
+		columns: columnLayouts.length,
+		columnLayouts: columnLayouts,
+		syntaxType: "nested",
+	};
+}
+
+/**
+ * Creates nested child shapes: first splits into columns, then creates grids in each column.
+ * @param {Shape} parentShape - The parent shape
+ * @param {Object} nestedLayout - The nested layout structure
+ */
+function createNestedChildShapes(parentShape, nestedLayout) {
+	// Get the slide from the presentation selection
+	const presentation = SlidesApp.getActivePresentation();
+	const selection = presentation.getSelection();
+	const slide = selection.getCurrentPage();
+
+	// Get parent properties
+	const parentLeft = parentShape.getLeft();
+	const parentTop = parentShape.getTop();
+	const parentWidth = parentShape.getWidth();
+	const parentHeight = parentShape.getHeight();
+	const parentRotation = parentShape.getRotation();
+
+	// Split into columns first (like split_shape.js)
+	const columnCount = nestedLayout.columns;
+	const columnGap = 7; // Gap between main columns
+	const columnPadding = 7; // Padding around each column
+
+	// Calculate column dimensions
+	const availableWidth = parentWidth - columnPadding * 2;
+	const columnWidth =
+		(availableWidth - columnGap * (columnCount - 1)) / columnCount;
+
+	if (columnWidth <= 0) {
+		throw new Error("Parent shape is too small for the number of columns.");
+	}
+
+	// Create a column shape for each layout
+	for (let colIndex = 0; colIndex < columnCount; colIndex++) {
+		const columnLayout = nestedLayout.columnLayouts[colIndex];
+
+		// Calculate column position
+		const columnLeft =
+			parentLeft + columnPadding + colIndex * (columnWidth + columnGap);
+		const columnTop = parentTop;
+
+		// Create a temporary column shape to hold the grid
+		const columnShape = slide.insertShape(
+			parentShape.getShapeType(),
+			columnLeft,
+			columnTop,
+			columnWidth,
+			parentHeight,
+		);
+
+		// Apply rotation if needed
+		if (parentRotation !== 0) {
+			columnShape.setRotation(parentRotation);
+		}
+
+		// Apply white styling to column
+		applyWhiteStyle(columnShape);
+
+		// Now create the grid inside this column using the parsed layout
+		const gridPadding = 3; // Smaller padding for nested grids
+		const gridPaddingTop = 15; // Smaller top padding for nested grids
+		const gridGap = 3; // Smaller gaps for nested grids
+
+		createChildShapesWithLayout(
+			columnShape,
+			columnLayout.layout,
+			gridPadding,
+			gridPaddingTop,
+			gridGap,
+		);
+
+		// The column shape is now the container, bring it forward
+		columnShape.bringForward();
+	}
+
+	console.log(`Created ${columnCount} column layout with nested grids`);
+}
+
+/**
  * Applies white fill and white stroke to a shape.
  * @param {Shape} shape - The shape to apply white style to.
  */
@@ -300,13 +698,12 @@ function applyWhiteStyle(shape) {
 		const fill = shape.getFill();
 		fill.setSolidFill("#FFFFFF");
 
-		// Set white border
-		const border = shape.getBorder();
-		border.setWeight(1); // 1pt border
+		// Set white border following the documented approach in basic_style_api.md
+		// First set the border weight
+		shape.getBorder().setWeight(1);
 
-		// Get the border fill and set it to white
-		const borderFill = border.getFill();
-		borderFill.setSolidFill("#FFFFFF");
+		// Then set the border color using getLineFill() - the correct documented way
+		shape.getBorder().getLineFill().setSolidFill("#FFFFFF");
 
 		// Optionally set text color to black for visibility on white background
 		if (shape.getText()) {

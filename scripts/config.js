@@ -90,12 +90,14 @@ function createCustomMenu() {
 			.addItem("🎹 轉換成標注框", "convertShapeToCallout")
 			.addItem("🍽️ 快速美化表格", "fastStyleSelectedTable")
 			.addItem("📊 平均間距置中", "runAveragePadding")
+			.addItem("🔍 檢視物件屬性", "showSelectedObjectPropertiesDialog")
 			.addToUi();
 
 		// Create the graph menu as a top-level menu
 		ui.createMenu("📊 繪圖")
 			.addItem("📐 分割成網格", "showSplitShapeDialog")
 			.addItem("🏗️ 建立子形狀", "showCreateChildShapesDialog")
+			.addItem("🔤 自動語法解析", "autoCreateChildShapesFromText")
 			.addToUi();
 
 		// Create the add new content menu as a top-level menu
