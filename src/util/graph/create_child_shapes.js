@@ -124,7 +124,7 @@ function createChildShapesDialogHtml() {
         <div class="button-container">
           <button onclick="submitForm()">Create Child Shapes</button>
         </div>
-        
+
         <script>
           function submitForm() {
             const rows = parseInt(document.getElementById('rows').value);
@@ -132,13 +132,13 @@ function createChildShapesDialogHtml() {
             const padding = parseInt(document.getElementById('padding').value);
             const paddingTop = parseInt(document.getElementById('paddingTop').value);
             const gap = parseInt(document.getElementById('gap').value);
-            
-            if (rows < 1 || columns < 1 || padding < 0 || paddingTop < 0 || gap < 0 || 
+
+            if (rows < 1 || columns < 1 || padding < 0 || paddingTop < 0 || gap < 0 ||
                 isNaN(rows) || isNaN(columns) || isNaN(padding) || isNaN(paddingTop) || isNaN(gap)) {
               alert('Please enter valid values. Rows and columns must be at least 1, padding and gap must be at least 0.');
               return;
             }
-            
+
             google.script.run
               .withSuccessHandler(function() {
                 google.script.host.close();
@@ -543,15 +543,15 @@ function createChildShapesWithLayout(
 				childShape.setRotation(parentRotation);
 			}
 
-			// Apply white styling
-			applyWhiteStyle(childShape);
-
 			// Set the text content from the parsed data
 			const cellText = row[colIndex].trim();
 			if (cellText) {
 				const textRange = childShape.getText();
 				textRange.setText(cellText);
 			}
+
+			// Apply styling after text is set (so we can check for ** markers)
+			applyWhiteStyle(childShape);
 
 			childShapes.push(childShape);
 		}
@@ -717,47 +717,157 @@ function extractTextOutsideBrackets(text) {
 }
 
 /**
+ * Applies bold styling to selected shape if text is wrapped in **asterisks**.
+ * This is a standalone function for testing the bold styling feature.
+ */
+function applyBoldStyleToSelectedShape() {
+	try {
+		// Get the active presentation and selection
+		const presentation = SlidesApp.getActivePresentation();
+		const selection = presentation.getSelection();
+
+		// Check if a shape is selected
+		const selectedElements = selection.getPageElementRange()
+			? selection.getPageElementRange().getPageElements()
+			: [];
+
+		const selectedShapes = selectedElements.filter(
+			(element) =>
+				element.getPageElementType() === SlidesApp.PageElementType.SHAPE,
+		);
+
+		if (selectedShapes.length !== 1) {
+			SlidesApp.getUi().alert(
+				"Error",
+				"Please select exactly one shape to apply bold styling.",
+				SlidesApp.getUi().ButtonSet.OK,
+			);
+			return;
+		}
+
+		const shape = selectedShapes[0].asShape();
+
+		// Apply the bold styling transformation
+		const result = applyBoldStyleTransformation(shape);
+
+		if (result.applied) {
+			SlidesApp.getUi().alert(
+				"Success",
+				`Bold styling applied. Text changed from "${result.originalText}" to "${result.newText}"`,
+				SlidesApp.getUi().ButtonSet.OK,
+			);
+		} else {
+			// Create debug message
+			let debugMessage = "No bold styling applied.\n\n";
+			debugMessage += `Original text: "${result.originalText}"\n`;
+			debugMessage += `Text length: ${result.debug.textLength}\n`;
+			debugMessage += `Starts with **: ${result.debug.startsWithAsterisk}\n`;
+			debugMessage += `Ends with **: ${result.debug.endsWithAsterisk}\n`;
+
+			if (result.debug.error) {
+				debugMessage += `\nError: ${result.debug.error}`;
+			} else if (result.debug.reason) {
+				debugMessage += `\nReason: ${result.debug.reason}`;
+			} else {
+				debugMessage +=
+					"\nText must be wrapped in **asterisks** (e.g., **text**).";
+			}
+
+			SlidesApp.getUi().alert(
+				"Debug Info",
+				debugMessage,
+				SlidesApp.getUi().ButtonSet.OK,
+			);
+		}
+	} catch (error) {
+		SlidesApp.getUi().alert(
+			"Error",
+			`An error occurred: ${error.message}`,
+			SlidesApp.getUi().ButtonSet.OK,
+		);
+	}
+}
+
+/**
+ * Applies bold style transformation to a shape if its text is wrapped in **asterisks**.
+ * @param {Shape} shape - The shape to apply bold style to
+ * @return {Object} Result object with applied status, original text, and new text
+ */
+function applyBoldStyleTransformation(shape) {
+	const result = {
+		applied: false,
+		originalText: "",
+		newText: "",
+		debug: {},
+	};
+
+	try {
+		// Check if the shape has text
+		const textRange = shape.getText();
+		if (!textRange) {
+			result.debug.hasText = false;
+			return result;
+		}
+
+		// Get the text content and trim it
+		const textContent = textRange.asString().trim();
+		result.originalText = textContent;
+		result.debug.hasText = true;
+		result.debug.textLength = textContent.length;
+		result.debug.startsWithAsterisk = textContent.startsWith("**");
+		result.debug.endsWithAsterisk = textContent.endsWith("**");
+
+		// Check if text is wrapped in ** and has content between them
+		if (
+			textContent.startsWith("**") &&
+			textContent.endsWith("**") &&
+			textContent.length > 4 // Must have at least 1 character between the **
+		) {
+			// Apply special formatting for **text**
+			// Set border with main_color and 1.5pt weight
+			shape.getBorder().setWeight(1);
+			shape.getBorder().getLineFill().setSolidFill(main_color);
+
+			// Remove the ** markers and set text
+			const cleanText = textContent.substring(2, textContent.length - 2);
+			textRange.setText(cleanText);
+
+			// Set text to main_color and bold
+			const textStyle = textRange.getTextStyle();
+			textStyle.setForegroundColor(main_color);
+			textStyle.setBold(true);
+
+			result.newText = cleanText;
+			result.applied = true;
+			result.debug.transformationApplied = true;
+		} else {
+			result.debug.transformationApplied = false;
+			result.debug.reason = "Text not wrapped in ** or too short";
+		}
+	} catch (error) {
+		console.log(`Error in applyBoldStyleTransformation: ${error.message}`);
+		result.debug.error = error.message;
+	}
+
+	return result;
+}
+
+/**
  * Applies white fill and white stroke to a shape.
  * If the text is wrapped in **asterisks**, applies special formatting.
  * @param {Shape} shape - The shape to apply white style to.
  */
 function applyWhiteStyle(shape) {
 	try {
-		// Check if the shape has text wrapped in **asterisks**
-		let isSpecialFormatting = false;
-		if (shape.getText()) {
-			const textContent = shape.getText().asString();
-			if (textContent.startsWith("**") && textContent.endsWith("**")) {
-				isSpecialFormatting = true;
-			}
-		}
+		// Always set white fill first
+		const fill = shape.getFill();
+		fill.setSolidFill("#FFFFFF");
 
-		if (isSpecialFormatting) {
-			// Apply special formatting for **text**
-			// Set white fill
-			const fill = shape.getFill();
-			fill.setSolidFill("#FFFFFF");
+		// Check if we should apply bold style transformation
+		const result = applyBoldStyleTransformation(shape);
 
-			// Set border with main_color and 2pt weight
-			shape.getBorder().setWeight(2);
-			shape.getBorder().getLineFill().setSolidFill(main_color);
-
-			// Set text to main_color and bold
-			const textRange = shape.getText();
-			const originalText = textRange.asString();
-			// Remove the ** markers
-			const cleanText = originalText.substring(2, originalText.length - 2);
-			textRange.setText(cleanText);
-
-			const textStyle = textRange.getTextStyle();
-			textStyle.setForegroundColor(main_color);
-			textStyle.setBold(true);
-		} else {
-			// Apply normal white style
-			// Set white fill
-			const fill = shape.getFill();
-			fill.setSolidFill("#FFFFFF");
-
+		if (!result.applied) {
+			// Apply normal white style if no bold transformation was applied
 			// Set white border following the documented approach in basic_style_api.md
 			// First set the border weight
 			shape.getBorder().setWeight(1);
@@ -773,6 +883,6 @@ function applyWhiteStyle(shape) {
 		}
 	} catch (error) {
 		// Log error but continue execution
-		console.log("Error applying white style: " + error.message);
+		console.log(`Error applying white style: ${error.message}`);
 	}
 }
