@@ -27,8 +27,8 @@ function showCreateChildShapesDialog() {
 
 	// Create and show the dialog
 	const htmlOutput = HtmlService.createHtmlOutput(createChildShapesDialogHtml())
-		.setWidth(300)
-		.setHeight(300);
+		.setWidth(250)
+		.setHeight(200);
 
 	ui.showModalDialog(htmlOutput, "Create Child Shapes");
 }
@@ -47,19 +47,26 @@ function createChildShapesDialogHtml() {
           body {
             font-family: Arial, sans-serif;
             margin: 10px;
+            font-size: 14px;
           }
           .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
           }
           label {
-            display: block;
-            margin-bottom: 5px;
             font-weight: bold;
+            flex: 1;
+            margin-right: 10px;
           }
-          input {
-            width: 100%;
-            padding: 5px;
+          input[type="number"] {
+            width: 80px;
+            padding: 4px 8px;
             box-sizing: border-box;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 3px;
           }
           .button-container {
             display: flex;
@@ -77,24 +84,35 @@ function createChildShapesDialogHtml() {
           button:hover {
             background-color: #2a75f3;
           }
+          .input-suffix {
+            font-size: 12px;
+            color: #666;
+            margin-left: 5px;
+          }
         </style>
       </head>
       <body>
         <div class="form-group">
-          <label for="rows">Number of Rows:</label>
+          <label for="rows">Rows:</label>
           <input type="number" id="rows" min="1" value="2">
         </div>
         <div class="form-group">
-          <label for="columns">Number of Columns:</label>
+          <label for="columns">Columns:</label>
           <input type="number" id="columns" min="1" value="1">
         </div>
         <div class="form-group">
-          <label for="padding">Padding (points):</label>
-          <input type="number" id="padding" min="0" value="5">
+          <label for="padding">Padding:</label>
+          <div>
+            <input type="number" id="padding" min="0" value="5">
+            <span class="input-suffix">pt</span>
+          </div>
         </div>
         <div class="form-group">
-          <label for="gap">Gap between shapes (points):</label>
-          <input type="number" id="gap" min="0" value="5">
+          <label for="gap">Gap:</label>
+          <div>
+            <input type="number" id="gap" min="0" value="5">
+            <span class="input-suffix">pt</span>
+          </div>
         </div>
         <div class="button-container">
           <button onclick="submitForm()">Create Child Shapes</button>

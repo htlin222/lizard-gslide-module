@@ -86,11 +86,15 @@ function createCustomMenu() {
 			.addItem("🏙️ 覆蓋半透明方塊", "coverImageWithWhite")
 			.addItem("🏞️ 半透明遮罩", "maskImage")
 			.addItem("🔢 加上數字遞增圓圈", "addNextNumberCircle")
-			.addItem("📐 分割成網格", "showSplitShapeDialog")
 			.addItem("📄 分割成多欄", "showMultipleColumnsDialog")
 			.addItem("🎹 轉換成標注框", "convertShapeToCallout")
 			.addItem("🍽️ 快速美化表格", "fastStyleSelectedTable")
 			.addItem("📊 平均間距置中", "runAveragePadding")
+			.addToUi();
+
+		// Create the graph menu as a top-level menu
+		ui.createMenu("📊 繪圖")
+			.addItem("📐 分割成網格", "showSplitShapeDialog")
 			.addItem("🏗️ 建立子形狀", "showCreateChildShapesDialog")
 			.addToUi();
 
