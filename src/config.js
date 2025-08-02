@@ -79,15 +79,12 @@ function createCustomMenu() {
 			.addItem("📏 開/關網格", "toggleGrids")
 			.addItem("❄ 為元素加上45度影子", "createOffsetBlueShape")
 			.addItem("↙ 加上一個大箭頭 ", "drawArrowOnCurrentSlide")
-			.addItem("⇣ 兩者間加上垂直線", "insertVerticalDashedLineBetween")
-			.addItem("⇢ 兩者間加上水平線", "insertHorizontalDashedLineBetween")
 			.addItem("🔰 將文字轉換成badge", "convertToBadges")
 			.addItem("🌆 原地貼上", "duplicateImageInPlace")
 			.addItem("🏙️ 覆蓋半透明方塊", "coverImageWithWhite")
 			.addItem("🏞️ 半透明遮罩", "maskImage")
 			.addItem("🔢 加上數字遞增圓圈", "addNextNumberCircle")
 			.addItem("📄 分割成多欄", "showMultipleColumnsDialog")
-			.addItem("🎹 轉換成標注框", "convertShapeToCallout")
 			.addItem("🍽️ 快速美化表格", "fastStyleSelectedTable")
 			.addItem("📊 平均間距置中", "runAveragePadding")
 			.addItem("🔍 檢視物件屬性", "showSelectedObjectPropertiesDialog")
@@ -98,6 +95,10 @@ function createCustomMenu() {
 			.addItem("📐 分割成網格", "showSplitShapeDialog")
 			.addItem("🏗️ 建立子形狀", "showCreateChildShapesDialog")
 			.addItem("🔤 自動語法解析", "autoCreateChildShapesFromText")
+			.addItem("📏 調整間距", "showSetGapDialog")
+			.addItem("⇣ 兩者間加上垂直線", "insertVerticalDashedLineBetween")
+			.addItem("⇢ 兩者間加上水平線", "insertHorizontalDashedLineBetween")
+			.addItem("🎹 轉換成標注框", "convertShapeToCallout")
 			.addToUi();
 
 		// Create the add new content menu as a top-level menu

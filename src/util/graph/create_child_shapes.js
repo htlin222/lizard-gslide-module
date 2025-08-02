@@ -718,25 +718,58 @@ function extractTextOutsideBrackets(text) {
 
 /**
  * Applies white fill and white stroke to a shape.
+ * If the text is wrapped in **asterisks**, applies special formatting.
  * @param {Shape} shape - The shape to apply white style to.
  */
 function applyWhiteStyle(shape) {
 	try {
-		// Set white fill
-		const fill = shape.getFill();
-		fill.setSolidFill("#FFFFFF");
-
-		// Set white border following the documented approach in basic_style_api.md
-		// First set the border weight
-		shape.getBorder().setWeight(1);
-
-		// Then set the border color using getLineFill() - the correct documented way
-		shape.getBorder().getLineFill().setSolidFill("#FFFFFF");
-
-		// Optionally set text color to black for visibility on white background
+		// Check if the shape has text wrapped in **asterisks**
+		let isSpecialFormatting = false;
 		if (shape.getText()) {
-			const textStyle = shape.getText().getTextStyle();
-			textStyle.setForegroundColor("#000000");
+			const textContent = shape.getText().asString();
+			if (textContent.startsWith("**") && textContent.endsWith("**")) {
+				isSpecialFormatting = true;
+			}
+		}
+
+		if (isSpecialFormatting) {
+			// Apply special formatting for **text**
+			// Set white fill
+			const fill = shape.getFill();
+			fill.setSolidFill("#FFFFFF");
+
+			// Set border with main_color and 2pt weight
+			shape.getBorder().setWeight(2);
+			shape.getBorder().getLineFill().setSolidFill(main_color);
+
+			// Set text to main_color and bold
+			const textRange = shape.getText();
+			const originalText = textRange.asString();
+			// Remove the ** markers
+			const cleanText = originalText.substring(2, originalText.length - 2);
+			textRange.setText(cleanText);
+
+			const textStyle = textRange.getTextStyle();
+			textStyle.setForegroundColor(main_color);
+			textStyle.setBold(true);
+		} else {
+			// Apply normal white style
+			// Set white fill
+			const fill = shape.getFill();
+			fill.setSolidFill("#FFFFFF");
+
+			// Set white border following the documented approach in basic_style_api.md
+			// First set the border weight
+			shape.getBorder().setWeight(1);
+
+			// Then set the border color using getLineFill() - the correct documented way
+			shape.getBorder().getLineFill().setSolidFill("#FFFFFF");
+
+			// Optionally set text color to black for visibility on white background
+			if (shape.getText()) {
+				const textStyle = shape.getText().getTextStyle();
+				textStyle.setForegroundColor("#000000");
+			}
 		}
 	} catch (error) {
 		// Log error but continue execution
