@@ -451,10 +451,15 @@ function parseMarkdownToStructure(markdownText) {
 			}
 			// Check for H1 heading (# Heading)
 			else if (line.startsWith("# ")) {
+				// Extract title and remove page numbering pattern if present
+				let title = line.substring(2).trim();
+				// Remove patterns like "Page 1:" or "Page 10:" from the title
+				title = title.replace(/^Page\s+\d+:\s*/i, '');
+				
 				// Create a new SECTION_HEADER slide
 				currentSlide = {
 					layout: "SECTION_HEADER",
-					title: line.substring(2).trim(),
+					title: title,
 					bodyItems: [],
 					speakerNotes: [],
 				};
@@ -462,10 +467,15 @@ function parseMarkdownToStructure(markdownText) {
 			}
 			// Check for H2 heading (## Heading)
 			else if (line.startsWith("## ")) {
+				// Extract title and remove page numbering pattern if present
+				let title = line.substring(3).trim();
+				// Remove patterns like "Page 1:" or "Page 10:" from the title
+				title = title.replace(/^Page\s+\d+:\s*/i, '');
+				
 				// Create a new TITLE_AND_BODY slide
 				currentSlide = {
 					layout: "TITLE_AND_BODY",
-					title: line.substring(3).trim(),
+					title: title,
 					bodyItems: [],
 					speakerNotes: [],
 				};
