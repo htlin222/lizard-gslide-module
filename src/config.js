@@ -180,8 +180,13 @@ function runProcessSectionBoxesLegacy() {
 	runRequestProcessors(processSectionBoxes);
 }
 
-// 🚀 OPTIMIZED VERSION: 60-80% performance improvement
+// 🚀 MEGA BATCH VERSION: Single API call for ultimate performance
 function runAllFunctions() {
+	runAllFunctionsMegaBatch();
+}
+
+// 🚀 OPTIMIZED VERSION: 4 separate optimized API calls (fallback)
+function runAllFunctionsOptimized() {
 	runOptimizedRequestProcessors(
 		updateProgressBarsOptimized,
 		processTabsOptimized,
