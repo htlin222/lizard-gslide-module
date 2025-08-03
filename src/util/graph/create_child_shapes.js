@@ -1,3 +1,8 @@
+// Configuration constants for child shapes
+const DEFAULT_PADDING = 7;
+const DEFAULT_PADDING_TOP = 30;
+const DEFAULT_GAP = 7;
+
 /**
  * Shows a dialog to input parameters for creating child shapes inside a parent shape.
  */
@@ -144,7 +149,7 @@ function createChildShapesInSelected(rows, columns, padding, paddingTop, gap) {
 
 		// Set titles for parent and child shapes
 		parentShape.setTitle("PARENT");
-		
+
 		// Set title for each child shape and bring them forward
 		for (let i = 0; i < childShapes.length; i++) {
 			childShapes[i].setTitle("CHILD");
@@ -208,7 +213,10 @@ function autoCreateChildShapesFromText() {
 
 		// Get the text content from the shape and remove line breaks to avoid syntax errors
 		const rawTextContent = parentShape.getText().asString();
-		const textContent = rawTextContent.replace(/\r?\n|\r/g, " ").replace(/\s+/g, " ").trim();
+		const textContent = rawTextContent
+			.replace(/\r?\n|\r/g, " ")
+			.replace(/\s+/g, " ")
+			.trim();
 
 		// Check if this is a nested syntax (multiple {} blocks with complex content)
 		const nestedLayout = parseNestedSyntax(textContent);
@@ -437,7 +445,7 @@ function createChildShapesWithLayout(
 
 			// Apply styling after text is set (so we can check for ** markers)
 			applyWhiteStyle(childShape);
-			
+
 			// Set title for child shape
 			childShape.setTitle("CHILD");
 
@@ -452,7 +460,7 @@ function createChildShapesWithLayout(
 
 	// Set parent shape text alignment to top and set text to content outside {}
 	parentShape.setContentAlignment(SlidesApp.ContentAlignment.TOP);
-	
+
 	// Set title for parent shape
 	parentShape.setTitle("PARENT");
 
@@ -579,7 +587,7 @@ function createNestedChildShapes(parentShape, nestedLayout) {
 
 		// Apply white styling to column
 		applyWhiteStyle(columnShape);
-		
+
 		// Set title for column shape (which acts as a parent for nested grids)
 		columnShape.setTitle("PARENT");
 
@@ -776,7 +784,7 @@ function applyBoldStyleToSelectedShape() {
 }
 
 /**
- * Applies bold style transformation to a shape if its text is wrapped in **asterisks**.
+ * Applies bold style transformation to a shape if its text is wrapped in [brackets].
  * @param {Shape} shape - The shape to apply bold style to
  * @return {Object} Result object with applied status, original text, and new text
  */
@@ -805,22 +813,22 @@ function applyBoldStyleTransformation(shape) {
 		result.originalText = textContent;
 		result.debug.hasText = true;
 		result.debug.textLength = textContent.length;
-		result.debug.startsWithAsterisk = textContent.startsWith("**");
-		result.debug.endsWithAsterisk = textContent.endsWith("**");
+		result.debug.startsWithBracket = textContent.startsWith("[");
+		result.debug.endsWithBracket = textContent.endsWith("]");
 
-		// Check if text is wrapped in ** and has content between them
+		// Check if text is wrapped in [] and has content between them
 		if (
-			textContent.startsWith("**") &&
-			textContent.endsWith("**") &&
-			textContent.length > 4 // Must have at least 1 character between the **
+			textContent.startsWith("[") &&
+			textContent.endsWith("]") &&
+			textContent.length > 2 // Must have at least 1 character between the []
 		) {
-			// Apply special formatting for **text**
-			// Set border with main_color and 1.5pt weight
+			// Apply special formatting for [text]
+			// Set border with main_color and 1pt weight
 			shape.getBorder().setWeight(1);
 			shape.getBorder().getLineFill().setSolidFill(main_color);
 
-			// Remove the ** markers and set text
-			const cleanText = textContent.substring(2, textContent.length - 2);
+			// Remove the [] markers and set text
+			const cleanText = textContent.substring(1, textContent.length - 1);
 			textRange.setText(cleanText);
 
 			// Set text to main_color and bold
@@ -833,7 +841,7 @@ function applyBoldStyleTransformation(shape) {
 			result.debug.transformationApplied = true;
 		} else {
 			result.debug.transformationApplied = false;
-			result.debug.reason = "Text not wrapped in ** or too short";
+			result.debug.reason = "Text not wrapped in [] or too short";
 		}
 	} catch (error) {
 		console.log(`Error in applyBoldStyleTransformation: ${error.message}`);
@@ -841,6 +849,179 @@ function applyBoldStyleTransformation(shape) {
 	}
 
 	return result;
+}
+
+/**
+ * Simple syntax parser: Line 1 = title, Line 2 = parent text, Line 3+ = rows (| separated)
+ * Supports [bold] text formatting. No complex {[]} syntax needed.
+ */
+function autoCreateChildShapesFromLines() {
+	try {
+		// Get the active presentation and selection
+		const presentation = SlidesApp.getActivePresentation();
+		const selection = presentation.getSelection();
+
+		// Check if a shape is selected
+		const selectedElements = selection.getPageElementRange()
+			? selection.getPageElementRange().getPageElements()
+			: [];
+
+		const selectedShapes = selectedElements.filter(
+			(element) =>
+				element.getPageElementType() === SlidesApp.PageElementType.SHAPE,
+		);
+
+		if (selectedShapes.length !== 1) {
+			SlidesApp.getUi().alert(
+				"Error",
+				"Please select exactly one shape with line-based text to create child shapes.",
+				SlidesApp.getUi().ButtonSet.OK,
+			);
+			return;
+		}
+
+		const parentShape = selectedShapes[0].asShape();
+
+		// Get the raw text content (preserve line breaks)
+		const rawTextContent = parentShape.getText().asString();
+		const lines = rawTextContent.split(/\r?\n/);
+
+		// Filter out empty lines
+		const nonEmptyLines = lines.filter((line) => line.trim() !== "");
+
+		if (nonEmptyLines.length < 3) {
+			SlidesApp.getUi().alert(
+				"Error",
+				"Need at least 3 lines: Line 1 = title, Line 2 = parent text, Line 3+ = rows",
+				SlidesApp.getUi().ButtonSet.OK,
+			);
+			return;
+		}
+
+		// Parse the lines
+		const titleText = nonEmptyLines[0].trim();
+		const parentText = nonEmptyLines[1].trim();
+		const rowLines = nonEmptyLines.slice(2);
+
+		// Parse rows (split by |)
+		const rowData = rowLines
+			.map((line) =>
+				line
+					.split("|")
+					.map((cell) => cell.trim())
+					.filter((cell) => cell !== ""),
+			)
+			.filter((row) => row.length > 0);
+
+		if (rowData.length === 0) {
+			SlidesApp.getUi().alert(
+				"Error",
+				"No valid rows found. Use | to separate columns in each row.",
+				SlidesApp.getUi().ButtonSet.OK,
+			);
+			return;
+		}
+
+		// Create the layout structure
+		const maxColumns = Math.max(...rowData.map((row) => row.length));
+		const layout = {
+			rows: rowData.length,
+			maxColumns: maxColumns,
+			rowData: rowData,
+			isVariableColumns: rowData.some((row) => row.length !== maxColumns),
+			syntaxType: "line-based",
+		};
+
+		// Get the slide
+		const slide = selection.getCurrentPage();
+
+		// Create title text box if title exists
+		if (titleText) {
+			createTitleTextBoxFromText(parentShape, titleText, slide);
+		}
+
+		// Set parent text
+		parentShape.getText().setText(parentText);
+		parentShape.setContentAlignment(SlidesApp.ContentAlignment.TOP);
+		parentShape.setTitle("PARENT");
+
+		// Create child shapes with default settings
+		createChildShapesWithLayout(
+			parentShape,
+			layout,
+			DEFAULT_PADDING,
+			DEFAULT_PADDING_TOP,
+			DEFAULT_GAP,
+		);
+
+		console.log(
+			`Auto-created child shapes from ${rowData.length} lines with line-based syntax`,
+		);
+	} catch (error) {
+		SlidesApp.getUi().alert(
+			"Error",
+			`An error occurred: ${error.message}`,
+			SlidesApp.getUi().ButtonSet.OK,
+		);
+	}
+}
+
+/**
+ * Creates a title RECTANGLE above the parent shape with the given text.
+ * @param {Shape} parentShape - The parent shape
+ * @param {string} titleText - The title text
+ * @param {Slide} slide - The slide to add the rectangle to
+ * @return {Shape} The created rectangle
+ */
+function createTitleTextBoxFromText(parentShape, titleText, slide) {
+	// Get parent shape properties
+	const parentLeft = parentShape.getLeft();
+	const parentTop = parentShape.getTop();
+	const parentWidth = parentShape.getWidth();
+	const parentRotation = parentShape.getRotation();
+
+	// Create rectangle positioned 30pt above parent shape
+	const rectangleLeft = parentLeft;
+	const rectangleTop = parentTop - 30; // 30pt above
+	const rectangleWidth = parentWidth; // Same width as parent
+	const rectangleHeight = 30; // 30pt height
+
+	// Create the rectangle
+	const titleRectangle = slide.insertShape(
+		SlidesApp.ShapeType.RECTANGLE,
+		rectangleLeft,
+		rectangleTop,
+		rectangleWidth,
+		rectangleHeight,
+	);
+
+	// Apply rotation if parent has any
+	if (parentRotation !== 0) {
+		titleRectangle.setRotation(parentRotation);
+	}
+
+	// Set the fill color to main_color
+	const fill = titleRectangle.getFill();
+	fill.setSolidFill(main_color);
+
+	// Set the text content
+	titleRectangle.getText().setText(titleText);
+
+	// Style the text - 14pt, bold, white
+	const textStyle = titleRectangle.getText().getTextStyle();
+	textStyle.setFontSize(14);
+	textStyle.setBold(true);
+	textStyle.setForegroundColor("#FFFFFF");
+
+	// Center the text vertically and horizontally
+	titleRectangle.setContentAlignment(SlidesApp.ContentAlignment.MIDDLE);
+
+	// Bring rectangle forward
+	titleRectangle.bringForward();
+
+	console.log(`Created title rectangle with text: "${titleText}"`);
+
+	return titleRectangle;
 }
 
 /**

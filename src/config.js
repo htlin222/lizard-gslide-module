@@ -94,7 +94,7 @@ function createCustomMenu() {
 		ui.createMenu("📊 繪圖")
 			.addItem("📐 分割成網格", "showSplitShapeDialog")
 			.addItem("🏗️ 建立子形狀", "showCreateChildShapesDialog")
-			.addItem("🔤 自動語法解析", "autoCreateChildShapesFromText")
+			.addItem("🔤 自動語法解析", "autoCreateChildShapesFromLines")
 			.addItem("📏 調整間距", "showSetGapDialog")
 			.addItem("🧙 智能間距重設", "showSmartGapResetDialog")
 			.addItem("⇣ 兩者間加上垂直線", "insertVerticalDashedLineBetween")
