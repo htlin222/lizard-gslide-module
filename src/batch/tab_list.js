@@ -166,7 +166,7 @@ function appendPageNumberToSlide({
 					pageObjectId: slideId,
 					size: {
 						height: { magnitude: 30, unit: "PT" },
-						width: { magnitude: 60, unit: "PT" },
+						width: { magnitude: 70, unit: "PT" },
 					},
 					transform: {
 						translateX: 650,
