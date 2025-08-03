@@ -3,6 +3,7 @@ const DEFAULT_PADDING = 10;
 const DEFAULT_PADDING_TOP = 30;
 const DEFAULT_GAP = 10;
 const FOOTER_BOX_HEIGHT = 15;
+const HOME_PLATE_HEIGHT = 10;
 
 /**
  * Shows a dialog to input parameters for creating child shapes inside a parent shape.
@@ -396,8 +397,10 @@ function createChildShapesWithLayout(
 
 	// Create shapes for each row
 	for (let rowIndex = 0; rowIndex < layout.rows; rowIndex++) {
-		const row = layout.rowData[rowIndex];
+		const rowInfo = layout.rowData[rowIndex];
+		const row = rowInfo.cells || rowInfo; // Handle both new and old format
 		const columnsInRow = row.length;
+		const homePlates = rowInfo.homePlates || []; // Get home plate positions
 
 		// Calculate column width for this specific row
 		const columnWidth =
@@ -474,6 +477,60 @@ function createChildShapesWithLayout(
 			childShape.setTitle("CHILD");
 
 			childShapes.push(childShape);
+		}
+
+		// Create HOME_PLATE shapes for this row if any are specified
+		for (const homePlatePosition of homePlates) {
+			// Calculate position between cells
+			const leftCellIndex = homePlatePosition - 1;
+			const rightCellIndex = homePlatePosition;
+
+			// Only create if both cells exist
+			if (leftCellIndex >= 0 && rightCellIndex < columnsInRow) {
+				const leftCellRight =
+					parentLeft +
+					padding +
+					leftCellIndex * (columnWidth + gap) +
+					columnWidth;
+				const rightCellLeft =
+					parentLeft + padding + rightCellIndex * (columnWidth + gap);
+
+				// Position HOME_PLATE in the gap between cells
+				const homePlateLeft = leftCellRight;
+				const homePlateTop = rowTop + (rowHeight - HOME_PLATE_HEIGHT) / 2; // Center vertically
+				const homePlateWidth = gap; // Use gap width
+				const homePlateHeight = HOME_PLATE_HEIGHT;
+
+				// Create the HOME_PLATE shape
+				const homePlate = slide.insertShape(
+					SlidesApp.ShapeType.HOME_PLATE,
+					homePlateLeft,
+					homePlateTop,
+					homePlateWidth,
+					homePlateHeight,
+				);
+
+				// Apply rotation if needed
+				if (parentRotation !== 0) {
+					homePlate.setRotation(parentRotation);
+				}
+
+				// Set main_color fill and border
+				const fill = homePlate.getFill();
+				fill.setSolidFill(main_color);
+
+				homePlate.getBorder().setWeight(1);
+				homePlate.getBorder().getLineFill().setSolidFill(main_color);
+
+				// Don't set any title for HOME_PLATE shapes (they are connectors, not content)
+
+				// Bring HOME_PLATE forward
+				homePlate.bringForward();
+
+				console.log(
+					`Created HOME_PLATE at row ${rowIndex + 1}, position ${homePlatePosition}`,
+				);
+			}
 		}
 	}
 
@@ -927,15 +984,10 @@ function autoCreateChildShapesFromLines() {
 		const parentText = nonEmptyLines[1].trim();
 		const rowLines = nonEmptyLines.slice(2);
 
-		// Parse rows (split by |)
+		// Parse rows (split by | but handle -|> syntax)
 		const rowData = rowLines
-			.map((line) =>
-				line
-					.split("|")
-					.map((cell) => cell.trim())
-					.filter((cell) => cell !== ""),
-			)
-			.filter((row) => row.length > 0);
+			.map((line) => parseRowWithHomePlates(line))
+			.filter((rowInfo) => rowInfo.cells.length > 0);
 
 		if (rowData.length === 0) {
 			SlidesApp.getUi().alert(
@@ -947,12 +999,16 @@ function autoCreateChildShapesFromLines() {
 		}
 
 		// Create the layout structure
-		const maxColumns = Math.max(...rowData.map((row) => row.length));
+		const maxColumns = Math.max(
+			...rowData.map((rowInfo) => rowInfo.cells.length),
+		);
 		const layout = {
 			rows: rowData.length,
 			maxColumns: maxColumns,
 			rowData: rowData,
-			isVariableColumns: rowData.some((row) => row.length !== maxColumns),
+			isVariableColumns: rowData.some(
+				(rowInfo) => rowInfo.cells.length !== maxColumns,
+			),
 			syntaxType: "line-based",
 		};
 
@@ -1050,6 +1106,63 @@ function createTitleTextBoxFromText(parentShape, titleText, slide) {
 	console.log(`Created title rectangle with text: "${titleText}"`);
 
 	return titleRectangle;
+}
+
+/**
+ * Parses a row line to detect -|> syntax for home plates and extract cells.
+ * @param {string} line - The row line to parse
+ * @return {Object} Object with cells array and homePlates array
+ */
+function parseRowWithHomePlates(line) {
+	// Split by | but keep track of home plate positions
+	const parts = line.split("|");
+	const cells = [];
+	const homePlates = [];
+
+	for (let i = 0; i < parts.length; i++) {
+		const part = parts[i].trim();
+
+		// Check if this part ends with - (indicating start of home plate)
+		if (part.endsWith("-") && i < parts.length - 1) {
+			// Next part should start with > for complete -|> syntax
+			const nextPart = parts[i + 1].trim();
+			if (nextPart.startsWith(">")) {
+				// This is a home plate position
+				// Add the cell without the trailing -
+				const cellText = part.slice(0, -1).trim();
+				if (cellText) {
+					cells.push(cellText);
+				}
+
+				// Record home plate position (after current cell)
+				homePlates.push(cells.length);
+
+				// Add the next cell without the leading >
+				const nextCellText = nextPart.slice(1).trim();
+				if (nextCellText) {
+					cells.push(nextCellText);
+				}
+
+				// Skip the next part since we already processed it
+				i++;
+			} else {
+				// Not a home plate, just a regular cell
+				if (part) {
+					cells.push(part);
+				}
+			}
+		} else {
+			// Regular cell
+			if (part) {
+				cells.push(part);
+			}
+		}
+	}
+
+	return {
+		cells: cells.filter((cell) => cell !== ""),
+		homePlates: homePlates,
+	};
 }
 
 /**
