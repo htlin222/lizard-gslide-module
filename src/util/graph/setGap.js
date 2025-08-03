@@ -26,68 +26,13 @@ function showSetGapDialog() {
 	}
 
 	// Create and show the dialog
-	const htmlOutput = HtmlService.createHtmlOutput(createSetGapDialogHtml())
+	const htmlOutput = HtmlService.createHtmlOutputFromFile(
+		"src/components/set-gap-dialog.html",
+	)
 		.setWidth(300)
 		.setHeight(150);
 
 	ui.showModalDialog(htmlOutput, "Set Gap Between Shapes");
-}
-
-/**
- * Creates the HTML content for the set gap dialog.
- * @return {string} The HTML content.
- */
-function createSetGapDialogHtml() {
-	return `
-		<!DOCTYPE html>
-		<html>
-		<head>
-			<base target="_top">
-			<style>
-				body { font-family: Arial, sans-serif; margin: 10px; font-size: 14px; }
-				.form-group { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
-				label { font-weight: bold; flex: 1; margin-right: 10px; }
-				input[type="number"] { width: 80px; padding: 4px 8px; text-align: center; border: 1px solid #ccc; border-radius: 3px; }
-				.button-container { display: flex; justify-content: flex-end; margin-top: 20px; }
-				button { padding: 8px 16px; background-color: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; }
-				button:hover { background-color: #2a75f3; }
-				.input-suffix { font-size: 12px; color: #666; margin-left: 5px; }
-			</style>
-		</head>
-		<body>
-			<div class="form-group">
-				<label for="targetGap">Target Gap:</label>
-				<div>
-					<input type="number" id="targetGap" min="0" value="7">
-					<span class="input-suffix">pt</span>
-				</div>
-			</div>
-			<div class="button-container">
-				<button onclick="submitForm()">Set Gap</button>
-			</div>
-			
-			<script>
-				function submitForm() {
-					const targetGap = parseInt(document.getElementById('targetGap').value);
-					
-					if (targetGap < 0 || isNaN(targetGap)) {
-						alert('Please enter a valid gap value (0 or greater).');
-						return;
-					}
-					
-					google.script.run
-						.withSuccessHandler(function() {
-							google.script.host.close();
-						})
-						.withFailureHandler(function(error) {
-							alert('Error: ' + error);
-						})
-						.setGapBetweenShapes(targetGap);
-				}
-			</script>
-		</body>
-		</html>
-	`;
 }
 
 /**
@@ -299,9 +244,9 @@ function showSmartGapResetDialog() {
 			return;
 		}
 
-		// Create and show the dialog with detected values
-		const htmlOutput = HtmlService.createHtmlOutput(
-			createSmartGapResetDialogHtml(analysis),
+		// Create and show the dialog
+		const htmlOutput = HtmlService.createHtmlOutputFromFile(
+			"src/components/smart-gap-reset-dialog.html",
 		)
 			.setWidth(400)
 			.setHeight(300);
@@ -525,122 +470,6 @@ function groupChildrenByRows(children) {
 	rows.push(currentRow);
 
 	return rows;
-}
-
-/**
- * Creates the HTML content for the smart gap reset dialog.
- * @param {Object} analysis - The analysis result from analyzeParentChildLayout
- * @return {string} The HTML content
- */
-function createSmartGapResetDialogHtml(analysis) {
-	const spacing = analysis.currentSpacing;
-
-	return `
-		<!DOCTYPE html>
-		<html>
-		<head>
-			<base target="_top">
-			<style>
-				body { font-family: Arial, sans-serif; margin: 15px; font-size: 14px; }
-				.header { margin-bottom: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 5px; }
-				.header h3 { margin: 0 0 5px 0; color: #333; }
-				.header p { margin: 0; color: #666; font-size: 12px; }
-				.form-section { margin-bottom: 20px; }
-				.form-section h4 { margin: 0 0 10px 0; color: #444; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-				.form-group { margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
-				label { font-weight: bold; flex: 1; margin-right: 10px; }
-				input[type="number"] { width: 80px; padding: 4px 8px; text-align: center; border: 1px solid #ccc; border-radius: 3px; }
-				.current-value { font-size: 12px; color: #666; margin-left: 5px; }
-				.button-container { display: flex; justify-content: flex-end; margin-top: 20px; gap: 10px; }
-				button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
-				.btn-primary { background-color: #4285f4; color: white; }
-				.btn-primary:hover { background-color: #2a75f3; }
-				.btn-secondary { background-color: #f0f0f0; color: #333; }
-				.btn-secondary:hover { background-color: #e0e0e0; }
-				.input-suffix { font-size: 12px; color: #666; margin-left: 5px; }
-				.detected-info { background-color: #e8f5e8; padding: 8px; border-radius: 3px; font-size: 12px; }
-			</style>
-		</head>
-		<body>
-			<div class="header">
-				<h3>Smart Gap & Padding Reset</h3>
-				<p>Detected: 1 parent + ${analysis.childCount} children (${spacing.rows} rows, max ${spacing.maxColumns} columns)</p>
-			</div>
-			
-			<div class="form-section">
-				<h4>Current Detected Values</h4>
-				<div class="detected-info">
-					Padding: ${spacing.padding}pt • Top: ${spacing.paddingTop}pt • H-Gap: ${spacing.horizontalGap}pt • V-Gap: ${spacing.verticalGap}pt
-				</div>
-			</div>
-			
-			<div class="form-section">
-				<h4>New Values</h4>
-				<div class="form-group">
-					<label for="newPadding">Padding (L/R/B):</label>
-					<div>
-						<input type="number" id="newPadding" min="0" value="${spacing.padding}">
-						<span class="input-suffix">pt</span>
-						<span class="current-value">(current: ${spacing.padding}pt)</span>
-					</div>
-				</div>
-				<div class="form-group">
-					<label for="newPaddingTop">Top Padding:</label>
-					<div>
-						<input type="number" id="newPaddingTop" min="0" value="${spacing.paddingTop}">
-						<span class="input-suffix">pt</span>
-						<span class="current-value">(current: ${spacing.paddingTop}pt)</span>
-					</div>
-				</div>
-				<div class="form-group">
-					<label for="newHorizontalGap">Horizontal Gap:</label>
-					<div>
-						<input type="number" id="newHorizontalGap" min="0" value="7">
-						<span class="input-suffix">pt</span>
-						<span class="current-value">(current: ${spacing.horizontalGap}pt)</span>
-					</div>
-				</div>
-				<div class="form-group">
-					<label for="newVerticalGap">Vertical Gap:</label>
-					<div>
-						<input type="number" id="newVerticalGap" min="0" value="7">
-						<span class="input-suffix">pt</span>
-						<span class="current-value">(current: ${spacing.verticalGap}pt)</span>
-					</div>
-				</div>
-			</div>
-			
-			<div class="button-container">
-				<button class="btn-secondary" onclick="google.script.host.close()">Cancel</button>
-				<button class="btn-primary" onclick="submitReset()">Apply Reset</button>
-			</div>
-			
-			<script>
-				function submitReset() {
-					const newPadding = parseInt(document.getElementById('newPadding').value);
-					const newPaddingTop = parseInt(document.getElementById('newPaddingTop').value);
-					const newHorizontalGap = parseInt(document.getElementById('newHorizontalGap').value);
-					const newVerticalGap = parseInt(document.getElementById('newVerticalGap').value);
-					
-					if (newPadding < 0 || newPaddingTop < 0 || newHorizontalGap < 0 || newVerticalGap < 0 ||
-						isNaN(newPadding) || isNaN(newPaddingTop) || isNaN(newHorizontalGap) || isNaN(newVerticalGap)) {
-						alert('Please enter valid values (0 or greater).');
-						return;
-					}
-					
-					google.script.run
-						.withSuccessHandler(function() {
-							google.script.host.close();
-						})
-						.withFailureHandler(function(error) {
-							alert('Error: ' + error);
-						})
-						.applySmartGapReset(newPadding, newPaddingTop, newHorizontalGap, newVerticalGap);
-				}
-			</script>
-		</body>
-		</html>
-	`;
 }
 
 /**

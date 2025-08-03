@@ -26,132 +26,13 @@ function showCreateChildShapesDialog() {
 	}
 
 	// Create and show the dialog
-	const htmlOutput = HtmlService.createHtmlOutput(createChildShapesDialogHtml())
+	const htmlOutput = HtmlService.createHtmlOutputFromFile(
+		"src/components/create-child-shapes-dialog.html",
+	)
 		.setWidth(350)
 		.setHeight(280);
 
 	ui.showModalDialog(htmlOutput, "Create Child Shapes");
-}
-
-/**
- * Creates the HTML content for the child shapes dialog.
- * @return {string} The HTML content.
- */
-function createChildShapesDialogHtml() {
-	return `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <base target="_top">
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            margin: 10px;
-            font-size: 14px;
-          }
-          .form-group {
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-          }
-          label {
-            font-weight: bold;
-            flex: 1;
-            margin-right: 10px;
-          }
-          input[type="number"] {
-            width: 80px;
-            padding: 4px 8px;
-            box-sizing: border-box;
-            text-align: center;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-          }
-          .button-container {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 20px;
-          }
-          button {
-            padding: 8px 16px;
-            background-color: #4285f4;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-          }
-          button:hover {
-            background-color: #2a75f3;
-          }
-          .input-suffix {
-            font-size: 12px;
-            color: #666;
-            margin-left: 5px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="form-group">
-          <label for="rows">Rows:</label>
-          <input type="number" id="rows" min="1" value="2">
-        </div>
-        <div class="form-group">
-          <label for="columns">Columns:</label>
-          <input type="number" id="columns" min="1" value="1">
-        </div>
-        <div class="form-group">
-          <label for="padding">Padding:</label>
-          <div>
-            <input type="number" id="padding" min="0" value="7">
-            <span class="input-suffix">pt</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="paddingTop">Padding Top:</label>
-          <div>
-            <input type="number" id="paddingTop" min="0" value="30">
-            <span class="input-suffix">pt</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="gap">Gap:</label>
-          <div>
-            <input type="number" id="gap" min="0" value="7">
-            <span class="input-suffix">pt</span>
-          </div>
-        </div>
-        <div class="button-container">
-          <button onclick="submitForm()">Create Child Shapes</button>
-        </div>
-
-        <script>
-          function submitForm() {
-            const rows = parseInt(document.getElementById('rows').value);
-            const columns = parseInt(document.getElementById('columns').value);
-            const padding = parseInt(document.getElementById('padding').value);
-            const paddingTop = parseInt(document.getElementById('paddingTop').value);
-            const gap = parseInt(document.getElementById('gap').value);
-
-            if (rows < 1 || columns < 1 || padding < 0 || paddingTop < 0 || gap < 0 ||
-                isNaN(rows) || isNaN(columns) || isNaN(padding) || isNaN(paddingTop) || isNaN(gap)) {
-              alert('Please enter valid values. Rows and columns must be at least 1, padding and gap must be at least 0.');
-              return;
-            }
-
-            google.script.run
-              .withSuccessHandler(function() {
-                google.script.host.close();
-              })
-              .withFailureHandler(function(error) {
-                alert('Error: ' + error);
-              })
-              .createChildShapesInSelected(rows, columns, padding, paddingTop, gap);
-          }
-        </script>
-      </body>
-    </html>
-  `;
 }
 
 /**

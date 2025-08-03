@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 10px;
+        font-size: 14px;
+      }
+      .form-group {
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      label {
+        font-weight: bold;
+        flex: 1;
+        margin-right: 10px;
+      }
+      input[type="number"] {
+        width: 80px;
+        padding: 4px 8px;
+        text-align: center;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+      }
+      .button-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+      }
+      button {
+        padding: 8px 16px;
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #2a75f3;
+      }
+      .input-suffix {
+        font-size: 12px;
+        color: #666;
+        margin-left: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-group">
+      <label for="targetGap">Target Gap:</label>
+      <div>
+        <input type="number" id="targetGap" min="0" value="7" />
+        <span class="input-suffix">pt</span>
+      </div>
+    </div>
+    <div class="button-container">
+      <button onclick="submitForm()">Set Gap</button>
+    </div>
+
+    <script>
+      function submitForm() {
+        const targetGap = parseInt(document.getElementById("targetGap").value);
+
+        if (targetGap < 0 || isNaN(targetGap)) {
+          alert("Please enter a valid gap value (0 or greater).");
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function () {
+            google.script.host.close();
+          })
+          .withFailureHandler(function (error) {
+            alert("Error: " + error);
+          })
+          .setGapBetweenShapes(targetGap);
+      }
+    </script>
+  </body>
+</html>

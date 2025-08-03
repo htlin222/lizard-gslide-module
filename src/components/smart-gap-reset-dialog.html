@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        font-size: 14px;
+      }
+      .form-section {
+        margin-bottom: 25px;
+      }
+      .form-section h4 {
+        margin: 0 0 15px 0;
+        color: #444;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+      }
+      label {
+        font-weight: bold;
+        width: 140px;
+        margin-right: 15px;
+        text-align: left;
+      }
+      .input-container {
+        display: flex;
+        align-items: center;
+        flex: 1;
+      }
+      input[type="number"] {
+        width: 80px;
+        padding: 6px 10px;
+        text-align: center;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        font-size: 14px;
+      }
+      .button-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 30px;
+        gap: 10px;
+      }
+      button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .btn-primary {
+        background-color: #4285f4;
+        color: white;
+      }
+      .btn-primary:hover {
+        background-color: #2a75f3;
+      }
+      .btn-secondary {
+        background-color: #f0f0f0;
+        color: #333;
+      }
+      .btn-secondary:hover {
+        background-color: #e0e0e0;
+      }
+      .input-suffix {
+        font-size: 12px;
+        color: #666;
+        margin-left: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-section">
+      <h4>Spacing Values</h4>
+      <div class="form-group">
+        <label for="newPadding">Padding (L/R/B):</label>
+        <div class="input-container">
+          <input type="number" id="newPadding" min="0" value="7" />
+          <span class="input-suffix">pt</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="newPaddingTop">Top Padding:</label>
+        <div class="input-container">
+          <input type="number" id="newPaddingTop" min="0" value="30" />
+          <span class="input-suffix">pt</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="newHorizontalGap">Horizontal Gap:</label>
+        <div class="input-container">
+          <input type="number" id="newHorizontalGap" min="0" value="7" />
+          <span class="input-suffix">pt</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="newVerticalGap">Vertical Gap:</label>
+        <div class="input-container">
+          <input type="number" id="newVerticalGap" min="0" value="7" />
+          <span class="input-suffix">pt</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="button-container">
+      <button class="btn-secondary" onclick="google.script.host.close()">
+        Cancel
+      </button>
+      <button class="btn-primary" onclick="submitReset()">Apply Reset</button>
+    </div>
+
+    <script>
+      function submitReset() {
+        const newPadding = parseInt(
+          document.getElementById("newPadding").value,
+        );
+        const newPaddingTop = parseInt(
+          document.getElementById("newPaddingTop").value,
+        );
+        const newHorizontalGap = parseInt(
+          document.getElementById("newHorizontalGap").value,
+        );
+        const newVerticalGap = parseInt(
+          document.getElementById("newVerticalGap").value,
+        );
+
+        if (
+          newPadding < 0 ||
+          newPaddingTop < 0 ||
+          newHorizontalGap < 0 ||
+          newVerticalGap < 0 ||
+          isNaN(newPadding) ||
+          isNaN(newPaddingTop) ||
+          isNaN(newHorizontalGap) ||
+          isNaN(newVerticalGap)
+        ) {
+          alert("Please enter valid values (0 or greater).");
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function () {
+            google.script.host.close();
+          })
+          .withFailureHandler(function (error) {
+            alert("Error: " + error);
+          })
+          .applySmartGapReset(
+            newPadding,
+            newPaddingTop,
+            newHorizontalGap,
+            newVerticalGap,
+          );
+      }
+    </script>
+  </body>
+</html>

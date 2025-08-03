@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 10px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input {
+        width: 100%;
+        padding: 5px;
+        box-sizing: border-box;
+      }
+      .button-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+      }
+      button {
+        padding: 8px 16px;
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #2a75f3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-group">
+      <label for="columns">欄數 (Number of Columns):</label>
+      <input type="number" id="columns" min="2" value="2" />
+    </div>
+    <div class="form-group">
+      <label for="gap">間距 (Gap Size in points):</label>
+      <input type="number" id="gap" min="0" value="10" />
+    </div>
+    <div class="button-container">
+      <button onclick="submitForm()">分割文字框</button>
+    </div>
+
+    <script>
+      function submitForm() {
+        const columns = parseInt(document.getElementById("columns").value);
+        const gap = parseInt(document.getElementById("gap").value);
+
+        if (columns < 2 || gap < 0 || isNaN(columns) || isNaN(gap)) {
+          alert("請輸入有效值。欄數至少為2，間距至少為0。");
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function () {
+            google.script.host.close();
+          })
+          .withFailureHandler(function (error) {
+            alert("錯誤: " + error);
+          })
+          .splitTextBoxToColumns(columns, gap);
+      }
+    </script>
+  </body>
+</html>
