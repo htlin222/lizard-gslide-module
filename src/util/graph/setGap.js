@@ -11,8 +11,15 @@ function showSetGapDialog() {
 				.getPageElementRange()
 				.getPageElements()
 				.filter(
-					(element) =>
-						element.getPageElementType() === SlidesApp.PageElementType.SHAPE,
+					(element) => {
+						if (element.getPageElementType() !== SlidesApp.PageElementType.SHAPE) {
+							return false;
+						}
+						const shape = element.asShape();
+						const title = shape.getTitle();
+						// Only include shapes with CHILD or PARENT title
+						return title === "CHILD" || title === "PARENT";
+					},
 				)
 		: [];
 
@@ -49,8 +56,15 @@ function setGapBetweenShapes(targetGap) {
 					.getPageElementRange()
 					.getPageElements()
 					.filter(
-						(element) =>
-							element.getPageElementType() === SlidesApp.PageElementType.SHAPE,
+						(element) => {
+							if (element.getPageElementType() !== SlidesApp.PageElementType.SHAPE) {
+								return false;
+							}
+							const shape = element.asShape();
+							const title = shape.getTitle();
+							// Only include shapes with CHILD or PARENT title
+							return title === "CHILD" || title === "PARENT";
+						},
 					)
 					.map((element) => element.asShape())
 			: [];
@@ -216,8 +230,15 @@ function showSmartGapResetDialog() {
 				.getPageElementRange()
 				.getPageElements()
 				.filter(
-					(element) =>
-						element.getPageElementType() === SlidesApp.PageElementType.SHAPE,
+					(element) => {
+						if (element.getPageElementType() !== SlidesApp.PageElementType.SHAPE) {
+							return false;
+						}
+						const shape = element.asShape();
+						const title = shape.getTitle();
+						// Only include shapes with CHILD or PARENT title
+						return title === "CHILD" || title === "PARENT";
+					},
 				)
 				.map((element) => element.asShape())
 		: [];
@@ -493,8 +514,15 @@ function applySmartGapReset(
 					.getPageElementRange()
 					.getPageElements()
 					.filter(
-						(element) =>
-							element.getPageElementType() === SlidesApp.PageElementType.SHAPE,
+						(element) => {
+							if (element.getPageElementType() !== SlidesApp.PageElementType.SHAPE) {
+								return false;
+							}
+							const shape = element.asShape();
+							const title = shape.getTitle();
+							// Only include shapes with CHILD or PARENT title
+							return title === "CHILD" || title === "PARENT";
+						},
 					)
 					.map((element) => element.asShape())
 			: [];

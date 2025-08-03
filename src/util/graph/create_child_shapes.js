@@ -142,9 +142,12 @@ function createChildShapesInSelected(rows, columns, padding, paddingTop, gap) {
 			}
 		}
 
-		// Bring child shapes just above the parent shape
-		// This maintains the parent's relative position with other elements
+		// Set titles for parent and child shapes
+		parentShape.setTitle("PARENT");
+		
+		// Set title for each child shape and bring them forward
 		for (let i = 0; i < childShapes.length; i++) {
+			childShapes[i].setTitle("CHILD");
 			childShapes[i].bringForward();
 		}
 
@@ -203,8 +206,9 @@ function autoCreateChildShapesFromText() {
 
 		const parentShape = selectedShapes[0].asShape();
 
-		// Get the text content from the shape
-		const textContent = parentShape.getText().asString();
+		// Get the text content from the shape and remove line breaks to avoid syntax errors
+		const rawTextContent = parentShape.getText().asString();
+		const textContent = rawTextContent.replace(/\r?\n|\r/g, " ").replace(/\s+/g, " ").trim();
 
 		// Check if this is a nested syntax (multiple {} blocks with complex content)
 		const nestedLayout = parseNestedSyntax(textContent);
@@ -433,6 +437,9 @@ function createChildShapesWithLayout(
 
 			// Apply styling after text is set (so we can check for ** markers)
 			applyWhiteStyle(childShape);
+			
+			// Set title for child shape
+			childShape.setTitle("CHILD");
 
 			childShapes.push(childShape);
 		}
@@ -445,6 +452,9 @@ function createChildShapesWithLayout(
 
 	// Set parent shape text alignment to top and set text to content outside {}
 	parentShape.setContentAlignment(SlidesApp.ContentAlignment.TOP);
+	
+	// Set title for parent shape
+	parentShape.setTitle("PARENT");
 
 	// Extract text outside {} brackets
 	const originalText = parentShape.getText().asString();
@@ -569,6 +579,9 @@ function createNestedChildShapes(parentShape, nestedLayout) {
 
 		// Apply white styling to column
 		applyWhiteStyle(columnShape);
+		
+		// Set title for column shape (which acts as a parent for nested grids)
+		columnShape.setTitle("PARENT");
 
 		// Now create the grid inside this column using the parsed layout
 		const gridPadding = 3; // Smaller padding for nested grids
