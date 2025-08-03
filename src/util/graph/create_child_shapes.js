@@ -1,7 +1,8 @@
 // Configuration constants for child shapes
-const DEFAULT_PADDING = 7;
+const DEFAULT_PADDING = 10;
 const DEFAULT_PADDING_TOP = 30;
-const DEFAULT_GAP = 7;
+const DEFAULT_GAP = 10;
+const FOOTER_BOX_HEIGHT = 15;
 
 /**
  * Shows a dialog to input parameters for creating child shapes inside a parent shape.
@@ -436,15 +437,38 @@ function createChildShapesWithLayout(
 				childShape.setRotation(parentRotation);
 			}
 
-			// Set the text content from the parsed data
+			// Process the cell text for footer boxes (text) and main content
 			const cellText = row[colIndex].trim();
-			if (cellText) {
-				const textRange = childShape.getText();
-				textRange.setText(cellText);
+			const footerBoxData = processFooterBoxText(cellText);
+
+			// Adjust child shape height if footer box is needed
+			let adjustedRowHeight = rowHeight;
+			if (footerBoxData.hasFooter) {
+				adjustedRowHeight = rowHeight - FOOTER_BOX_HEIGHT;
+				childShape.setHeight(adjustedRowHeight);
 			}
 
-			// Apply styling after text is set (so we can check for ** markers)
+			// Set the main text content (without footer text)
+			if (footerBoxData.mainText) {
+				const textRange = childShape.getText();
+				textRange.setText(footerBoxData.mainText);
+			}
+
+			// Apply styling after text is set (so we can check for [bold] markers)
 			applyWhiteStyle(childShape);
+
+			// Create footer box if needed
+			if (footerBoxData.hasFooter) {
+				createFooterBox(
+					slide,
+					columnLeft,
+					rowTop + adjustedRowHeight, // Position at bottom of adjusted cell
+					columnWidth,
+					FOOTER_BOX_HEIGHT,
+					footerBoxData.footerText,
+					parentRotation,
+				);
+			}
 
 			// Set title for child shape
 			childShape.setTitle("CHILD");
@@ -853,7 +877,7 @@ function applyBoldStyleTransformation(shape) {
 
 /**
  * Simple syntax parser: Line 1 = title, Line 2 = parent text, Line 3+ = rows (| separated)
- * Supports [bold] text formatting. No complex {[]} syntax needed.
+ * Supports [bold] text formatting and (footer) boxes. No complex {[]} syntax needed.
  */
 function autoCreateChildShapesFromLines() {
 	try {
@@ -1004,6 +1028,10 @@ function createTitleTextBoxFromText(parentShape, titleText, slide) {
 	const fill = titleRectangle.getFill();
 	fill.setSolidFill(main_color);
 
+	// Set white border with 0.1pt weight
+	titleRectangle.getBorder().setWeight(0.1);
+	titleRectangle.getBorder().getLineFill().setSolidFill("#FFFFFF");
+
 	// Set the text content
 	titleRectangle.getText().setText(titleText);
 
@@ -1025,6 +1053,88 @@ function createTitleTextBoxFromText(parentShape, titleText, slide) {
 }
 
 /**
+ * Processes cell text to extract main content and footer box text.
+ * Detects (text) pattern for footer boxes.
+ * @param {string} cellText - The original cell text
+ * @return {Object} Object with hasFooter, mainText, and footerText properties
+ */
+function processFooterBoxText(cellText) {
+	// Check if text contains footer pattern (text)
+	const footerRegex = /\(([^)]*)\)/;
+	const match = cellText.match(footerRegex);
+
+	if (match) {
+		const footerText = match[1]; // Text inside parentheses
+		const mainText = cellText.replace(footerRegex, "").trim(); // Text without parentheses
+
+		return {
+			hasFooter: true,
+			mainText: mainText,
+			footerText: footerText,
+		};
+	}
+
+	return {
+		hasFooter: false,
+		mainText: cellText,
+		footerText: "",
+	};
+}
+
+/**
+ * Creates a footer box at the bottom of a cell.
+ * @param {Slide} slide - The slide to add the footer box to
+ * @param {number} left - Left position of the footer box
+ * @param {number} top - Top position of the footer box
+ * @param {number} width - Width of the footer box
+ * @param {number} height - Height of the footer box
+ * @param {string} text - Text content for the footer box
+ * @param {number} rotation - Rotation angle to apply
+ * @return {Shape} The created footer box shape
+ */
+function createFooterBox(slide, left, top, width, height, text, rotation) {
+	// Create the footer box rectangle
+	const footerBox = slide.insertShape(
+		SlidesApp.ShapeType.RECTANGLE,
+		left,
+		top,
+		width,
+		height,
+	);
+
+	// Apply rotation if needed
+	if (rotation !== 0) {
+		footerBox.setRotation(rotation);
+	}
+
+	// Set background color to main_color
+	const fill = footerBox.getFill();
+	fill.setSolidFill(main_color);
+
+	// Set white border with 0.1pt weight
+	footerBox.getBorder().setWeight(0.1);
+	footerBox.getBorder().getLineFill().setSolidFill("#FFFFFF");
+
+	// Set the text content
+	footerBox.getText().setText(text);
+
+	// Style the text - white color, 10pt font size, centered
+	const textStyle = footerBox.getText().getTextStyle();
+	textStyle.setForegroundColor("#FFFFFF");
+	textStyle.setFontSize(10);
+
+	// Center the text both vertically and horizontally
+	footerBox.setContentAlignment(SlidesApp.ContentAlignment.MIDDLE);
+
+	// Bring footer box forward
+	footerBox.bringForward();
+
+	console.log(`Created footer box with text: "${text}"`);
+
+	return footerBox;
+}
+
+/**
  * Applies white fill and white stroke to a shape.
  * If the text is wrapped in **asterisks**, applies special formatting.
  * @param {Shape} shape - The shape to apply white style to.
@@ -1040,11 +1150,8 @@ function applyWhiteStyle(shape) {
 
 		if (!result.applied) {
 			// Apply normal white style if no bold transformation was applied
-			// Set white border following the documented approach in basic_style_api.md
-			// First set the border weight
-			shape.getBorder().setWeight(1);
-
-			// Then set the border color using getLineFill() - the correct documented way
+			// Set white border with 0.1pt weight
+			shape.getBorder().setWeight(0.1);
 			shape.getBorder().getLineFill().setSolidFill("#FFFFFF");
 
 			// Optionally set text color to black for visibility on white background
