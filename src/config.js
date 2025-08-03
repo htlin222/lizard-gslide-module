@@ -186,30 +186,9 @@ function runAllFunctions() {
 }
 
 // 🚀 MEGA BATCH VERSION: Single API call (fallback)
-function runAllFunctionsMegaBatchFallback() {
-	runAllFunctionsMegaBatch();
-}
-
-// 🚀 OPTIMIZED VERSION: 4 separate optimized API calls (fallback)
-function runAllFunctionsOptimized() {
-	runOptimizedRequestProcessors(
-		updateProgressBarsOptimized,
-		processTabsOptimized,
-		updateTitleFootnotesOptimized,
-		processSectionBoxesOptimized,
-	);
-	updateDateInFirstSlide();
-}
-
-// Legacy version (for fallback if needed)
-function runAllFunctionsLegacy() {
-	runRequestProcessors(
-		updateProgressBars,
-		processTabs,
-		updateTitleFootnotes,
-		processSectionBoxes,
-	);
-	updateDateInFirstSlide();
+// Fallback function - uses same ultra mega batch
+function runAllFunctionsFallback() {
+	runAllFunctionsUltraMegaBatch();
 }
 
 function confirmRunAll() {
