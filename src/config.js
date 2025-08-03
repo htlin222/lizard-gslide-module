@@ -180,8 +180,13 @@ function runProcessSectionBoxesLegacy() {
 	runRequestProcessors(processSectionBoxes);
 }
 
-// 🚀 MEGA BATCH VERSION: Single API call for ultimate performance
+// 🚀 ULTRA MEGA BATCH VERSION: Maximum possible performance
 function runAllFunctions() {
+	runAllFunctionsUltraMegaBatch();
+}
+
+// 🚀 MEGA BATCH VERSION: Single API call (fallback)
+function runAllFunctionsMegaBatchFallback() {
 	runAllFunctionsMegaBatch();
 }
 
@@ -208,14 +213,8 @@ function runAllFunctionsLegacy() {
 }
 
 function confirmRunAll() {
-	const ui = SlidesApp.getUi();
-	const response = ui.alert(
-		"確定要執行所有功能？將會執行以下: \nupdateProgressBars, \nprocessTabs, \nupdateTitleFootnotes, \nrunProcessSectionBoxes",
-		ui.ButtonSet.YES_NO,
-	);
-	if (response === ui.Button.YES) {
-		runAllFunctions();
-	}
+	// No confirmation needed - run directly with ultra performance
+	runAllFunctions();
 }
 
 function runToggleWaterMark() {
