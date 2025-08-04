@@ -796,6 +796,21 @@ function createSimpleVerticalSplit(
 		// Apply the same styling as regular cells
 		applyWhiteStyle(segmentShape);
 
+		// Set font size and alignment to match regular cells
+		if (segmentShape.getText()) {
+			const textRange = segmentShape.getText();
+			const textStyle = textRange.getTextStyle();
+			textStyle.setFontSize(label_font_size); // Use global font size variable
+
+			// Set horizontal centering (paragraph alignment)
+			textRange
+				.getParagraphStyle()
+				.setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
+		}
+
+		// Set vertical centering (content alignment)
+		segmentShape.setContentAlignment(SlidesApp.ContentAlignment.MIDDLE);
+
 		// Create footer box if needed
 		if (footerData.hasFooter) {
 			createFooterBox(
