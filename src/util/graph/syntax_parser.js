@@ -216,14 +216,16 @@ function autoCreateChildShapesFromLines() {
 function parseRowWithHomePlates(line) {
 	// Split by | but keep track of home plate positions
 	const parts = line.split("|");
-	const cells = [];
+	const rawCells = [];
 	const homePlates = [];
 
+	// First pass: Handle home plate syntax (-|>) and collect raw cell text
 	for (let i = 0; i < parts.length; i++) {
 		const part = parts[i].trim();
 
-		// Check if this part ends with - (indicating start of home plate)
-		if (part.endsWith("-") && i < parts.length - 1) {
+		// Check for home plate syntax: current part ends with single - and next part starts with >
+		// But NOT if it's part of -- vertical split syntax
+		if (part.endsWith("-") && !part.endsWith("--") && i < parts.length - 1) {
 			// Next part should start with > for complete -|> syntax
 			const nextPart = parts[i + 1].trim();
 			if (nextPart.startsWith(">")) {
@@ -231,16 +233,16 @@ function parseRowWithHomePlates(line) {
 				// Add the cell without the trailing -
 				const cellText = part.slice(0, -1).trim();
 				if (cellText) {
-					cells.push(processCellForVerticalSplit(cellText));
+					rawCells.push(cellText);
 				}
 
 				// Record home plate position (after current cell)
-				homePlates.push(cells.length);
+				homePlates.push(rawCells.length);
 
 				// Add the next cell without the leading >
 				const nextCellText = nextPart.slice(1).trim();
 				if (nextCellText) {
-					cells.push(processCellForVerticalSplit(nextCellText));
+					rawCells.push(nextCellText);
 				}
 
 				// Skip the next part since we already processed it
@@ -248,16 +250,19 @@ function parseRowWithHomePlates(line) {
 			} else {
 				// Not a home plate, just a regular cell
 				if (part) {
-					cells.push(processCellForVerticalSplit(part));
+					rawCells.push(part);
 				}
 			}
 		} else {
-			// Regular cell - check for vertical splitting
+			// Regular cell
 			if (part) {
-				cells.push(processCellForVerticalSplit(part));
+				rawCells.push(part);
 			}
 		}
 	}
+
+	// Second pass: Keep raw cells as strings for now, defer vertical split processing
+	const cells = rawCells;
 
 	return {
 		cells: cells.filter((cell) => cell !== ""),
@@ -280,7 +285,8 @@ function processCellForVerticalSplit(cellText) {
 			.map((segment) => segment.trim())
 			.filter((segment) => segment !== "");
 
-		if (segments.length > 1) {
+		// Only create vertical split if we have 2 or more valid segments
+		if (segments.length >= 2) {
 			return {
 				isVerticalSplit: true,
 				segments: segments,
@@ -289,7 +295,7 @@ function processCellForVerticalSplit(cellText) {
 		}
 	}
 
-	// Return as regular cell text if no splitting
+	// Return as regular cell text if no splitting or insufficient segments
 	return cellText;
 }
 

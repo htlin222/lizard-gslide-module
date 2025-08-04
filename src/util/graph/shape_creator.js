@@ -234,53 +234,51 @@ function createChildShapesWithLayout(
 				childShape.setRotation(parentRotation);
 			}
 
-			// Process the cell text for vertical splitting, footer boxes, and main content
+			// Process cell text for footer boxes (but not vertical splits yet)
 			const cellText = row[colIndex];
-			const footerBoxData = processFooterBoxText(cellText);
 
-			// Check if this is a vertically split cell
-			if (footerBoxData.isVerticalSplit) {
-				// Handle vertically split cell
-				createVerticalSplitCell(
-					slide,
-					childShape,
-					footerBoxData,
-					columnLeft,
-					rowTop,
-					columnWidth,
-					rowHeight,
-					parentRotation,
-				);
-			} else {
-				// Handle regular cell
+			// Only process footer if this cell doesn't have vertical splits (no --)
+			if (cellText && !cellText.includes("--")) {
+				// Process for footer box syntax (text)
+				const footerData = processFooterBoxTextForSegment(cellText);
+
 				// Adjust child shape height if footer box is needed
 				let adjustedRowHeight = rowHeight;
-				if (footerBoxData.hasFooter) {
+				if (footerData.hasFooter) {
 					adjustedRowHeight = rowHeight - FOOTER_BOX_HEIGHT;
 					childShape.setHeight(adjustedRowHeight);
 				}
 
 				// Set the main text content (without footer text)
-				if (footerBoxData.mainText) {
+				if (footerData.mainText) {
 					const textRange = childShape.getText();
-					textRange.setText(footerBoxData.mainText);
+					textRange.setText(footerData.mainText);
 				}
 
-				// Apply styling after text is set (so we can check for [bold] markers)
+				// Apply styling after text is set
 				applyWhiteStyle(childShape);
 
 				// Create footer box if needed
-				if (footerBoxData.hasFooter) {
+				if (footerData.hasFooter) {
 					createFooterBox(
 						slide,
 						columnLeft,
 						rowTop + adjustedRowHeight, // Position at bottom of adjusted cell
 						columnWidth,
 						FOOTER_BOX_HEIGHT,
-						footerBoxData.footerText,
+						footerData.footerText,
 						parentRotation,
 					);
 				}
+			} else {
+				// For cells with -- or no text, just set the raw text
+				if (cellText) {
+					const textRange = childShape.getText();
+					textRange.setText(cellText);
+				}
+
+				// Apply basic styling
+				applyWhiteStyle(childShape);
 			}
 
 			// Set title for child shape
@@ -354,6 +352,21 @@ function createChildShapesWithLayout(
 
 	// Set title for parent shape
 	parentShape.setTitle("PARENT");
+
+	// Post-process vertical splits after all shapes are created
+	postProcessVerticalSplits(
+		slide,
+		layout,
+		childShapes,
+		parentRotation,
+		padding,
+		paddingTop,
+		gap,
+		parentLeft,
+		parentTop,
+		parentWidth,
+		parentHeight,
+	);
 
 	console.log(
 		`Created ${childShapes.length} child shapes with variable column layout`,
@@ -498,7 +511,25 @@ function createVerticalSplitCell(
 ) {
 	const segments = footerBoxData.segments;
 	const segmentCount = segments.length;
+
+	// Validate segment count to prevent division by zero
+	if (segmentCount <= 0) {
+		console.error("Invalid segment count for vertical split:", segmentCount);
+		return;
+	}
+
 	const segmentHeight = height / segmentCount;
+
+	// Validate dimensions to prevent Google Apps Script errors
+	if (segmentHeight <= 0 || width <= 0) {
+		console.error("Invalid dimensions for vertical split segments:", {
+			segmentHeight,
+			width,
+			height,
+			segmentCount,
+		});
+		return;
+	}
 
 	// Set the parent cell to be invisible (no fill, no border) as it will be a container
 	const parentFill = parentCell.getFill();
@@ -577,6 +608,228 @@ function createVerticalSplitCell(
 }
 
 /**
+ * Post-processes child shapes to handle vertical splits after all normal shapes are created.
+ * @param {Slide} slide - The slide containing the shapes
+ * @param {Object} layout - The grid layout structure
+ * @param {Array} childShapes - Array of created child shapes
+ * @param {number} parentRotation - Parent shape rotation
+ * @param {number} padding - Padding in points
+ * @param {number} paddingTop - Top padding in points
+ * @param {number} gap - Gap between shapes in points
+ * @param {number} parentLeft - Parent left position
+ * @param {number} parentTop - Parent top position
+ * @param {number} parentWidth - Parent width
+ * @param {number} parentHeight - Parent height
+ */
+function postProcessVerticalSplits(
+	slide,
+	layout,
+	childShapes,
+	parentRotation,
+	padding,
+	paddingTop,
+	gap,
+	parentLeft,
+	parentTop,
+	parentWidth,
+	parentHeight,
+) {
+	let shapeIndex = 0;
+
+	// Calculate available space
+	const availableWidth = parentWidth - padding * 2;
+	const availableHeight = parentHeight - paddingTop - padding;
+	const rowHeight = (availableHeight - gap * (layout.rows - 1)) / layout.rows;
+
+	// Iterate through each row and column to find vertical splits
+	for (let rowIndex = 0; rowIndex < layout.rows; rowIndex++) {
+		const rowInfo = layout.rowData[rowIndex];
+		const row = rowInfo.cells || rowInfo;
+		const columnsInRow = row.length;
+		const columnWidth =
+			(availableWidth - gap * (columnsInRow - 1)) / columnsInRow;
+
+		for (let colIndex = 0; colIndex < columnsInRow; colIndex++) {
+			const cellText = row[colIndex];
+			const childShape = childShapes[shapeIndex];
+
+			// Check if this cell needs vertical splitting
+			if (cellText && cellText.includes("--")) {
+				// Split the text by --
+				const segments = cellText
+					.split("--")
+					.map((s) => s.trim())
+					.filter((s) => s !== "");
+
+				if (segments.length >= 2) {
+					// Calculate position for this cell
+					const columnLeft =
+						parentLeft + padding + colIndex * (columnWidth + gap);
+					const rowTop = parentTop + paddingTop + rowIndex * (rowHeight + gap);
+
+					// Log the calculated positions for debugging
+					console.log(`About to create vertical split for "${cellText}":`, {
+						columnLeft,
+						rowTop,
+						columnWidth,
+						rowHeight,
+						parentRotation,
+						segments,
+					});
+
+					// Create simple vertical split using the footer box pattern
+					createSimpleVerticalSplit(
+						slide,
+						columnLeft,
+						rowTop,
+						columnWidth,
+						rowHeight,
+						segments,
+						parentRotation,
+					);
+
+					// Clear the original shape text since we've replaced it with segments
+					childShape.getText().setText("");
+
+					console.log(
+						`Post-processed vertical split for cell: "${cellText}" into ${segments.length} segments`,
+					);
+				}
+			}
+
+			shapeIndex++;
+		}
+	}
+}
+
+/**
+ * Creates simple vertical split shapes following the footer box pattern.
+ * @param {Slide} slide - The slide to add shapes to
+ * @param {number} left - Left position of the cell
+ * @param {number} top - Top position of the cell
+ * @param {number} width - Width of the cell
+ * @param {number} height - Height of the cell
+ * @param {Array} segments - Array of text segments
+ * @param {number} rotation - Rotation angle to apply
+ */
+function createSimpleVerticalSplit(
+	slide,
+	left,
+	top,
+	width,
+	height,
+	segments,
+	rotation,
+) {
+	const segmentCount = segments.length;
+	const segmentHeight = height / segmentCount;
+
+	// Log all input parameters for debugging
+	console.log("createSimpleVerticalSplit called with:", {
+		left,
+		top,
+		width,
+		height,
+		segmentCount,
+		segmentHeight,
+		segments,
+		rotation,
+	});
+
+	// Validate ALL dimensions to prevent Google Apps Script errors
+	if (left < 0 || top < 0 || width <= 0 || height <= 0 || segmentHeight <= 0) {
+		console.error("Invalid dimensions for vertical split:", {
+			left,
+			top,
+			width,
+			height,
+			segmentCount,
+			segmentHeight,
+		});
+		return;
+	}
+
+	// Create each segment as a simple text box (like footer boxes)
+	for (let i = 0; i < segmentCount; i++) {
+		const segmentText = segments[i];
+		const segmentTop = top + i * segmentHeight;
+
+		// Process this segment for footer box syntax (text)
+		const footerData = processFooterBoxTextForSegment(segmentText);
+
+		// Log the exact parameters being passed to insertShape
+		console.log(`Creating segment ${i + 1} with:`, {
+			type: "TEXT_BOX",
+			left,
+			segmentTop,
+			width,
+			segmentHeight,
+			segmentText,
+			footerData,
+		});
+
+		// Adjust segment height if footer box is needed
+		let adjustedSegmentHeight = segmentHeight;
+		if (footerData.hasFooter) {
+			adjustedSegmentHeight = segmentHeight - FOOTER_BOX_HEIGHT;
+		}
+
+		// Create a text box for this segment (same pattern as footer box)
+		const segmentShape = slide.insertShape(
+			SlidesApp.ShapeType.TEXT_BOX,
+			left,
+			segmentTop,
+			width,
+			adjustedSegmentHeight,
+		);
+
+		// Apply rotation if needed (same as footer box)
+		if (rotation !== 0) {
+			segmentShape.setRotation(rotation);
+		}
+
+		// Set the main text content (without footer text)
+		if (footerData.mainText) {
+			segmentShape.getText().setText(footerData.mainText);
+		}
+
+		// Apply the same styling as regular cells
+		applyWhiteStyle(segmentShape);
+
+		// Create footer box if needed
+		if (footerData.hasFooter) {
+			createFooterBox(
+				slide,
+				left,
+				segmentTop + adjustedSegmentHeight, // Position at bottom of adjusted segment
+				width,
+				FOOTER_BOX_HEIGHT,
+				footerData.footerText,
+				rotation,
+			);
+		}
+
+		// Bring shape forward (same as footer box)
+		segmentShape.bringForward();
+
+		// Set title for identification
+		segmentShape.setTitle(`VSPLIT_${i + 1}`);
+	}
+
+	// Create divider lines between segments (but not after the last one)
+	// TEMPORARILY DISABLED FOR DEBUGGING
+	console.log("Skipping divider lines to debug the error");
+	/*
+	for (let i = 0; i < segmentCount - 1; i++) {
+		const lineTop = top + (i + 1) * segmentHeight;
+		createHorizontalDividerLine(slide, left, lineTop, width, rotation);
+	}
+	*/
+
+	console.log(`Created simple vertical split with ${segmentCount} segments`);
+}
+
+/**
  * Creates a horizontal divider line with main_color.
  * @param {Slide} slide - The slide to add the line to
  * @param {number} left - Left position of the line
@@ -588,10 +841,34 @@ function createVerticalSplitCell(
 function createHorizontalDividerLine(slide, left, top, width, rotation) {
 	// Create a thin rectangle to serve as a horizontal line
 	const lineHeight = 1; // 1pt height for the line
+	const adjustedTop = top - lineHeight / 2; // Center the line on the specified top position
+
+	// Log parameters for debugging
+	console.log("createHorizontalDividerLine called with:", {
+		left,
+		top,
+		adjustedTop,
+		width,
+		lineHeight,
+		rotation,
+	});
+
+	// Validate parameters before creating the line
+	if (left < 0 || adjustedTop < 0 || width <= 0 || lineHeight <= 0) {
+		console.error("Invalid line parameters:", {
+			left,
+			top,
+			adjustedTop,
+			width,
+			lineHeight,
+		});
+		return null;
+	}
+
 	const line = slide.insertShape(
 		SlidesApp.ShapeType.RECTANGLE,
 		left,
-		top - lineHeight / 2, // Center the line on the specified top position
+		adjustedTop,
 		width,
 		lineHeight,
 	);
