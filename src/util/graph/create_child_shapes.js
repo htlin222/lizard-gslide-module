@@ -182,91 +182,89 @@ function createChildShapesInSelected(rows, columns, padding, paddingTop, gap) {
 }
 
 /**
- * Automatically creates child shapes supporting nested syntax:
- * - Single level: {[item1|item2][item3|item4]} - creates grid directly
- * - Nested level: {grid1} {grid2} {grid3} - splits into columns, then creates grids in each
+ * Parses grid syntax supporting two formats:
+ * 1. Multi-row: {[item1|item2|item3][item4|item5]} - rows with columns
+ * 2. Single-row: {item1} {item2} {item3} - simple column layout
+ * @param {string} text - The text to parse
+ * @return {Object|null} Grid layout object or null if invalid syntax
  */
-function autoCreateChildShapesFromText() {
-	try {
-		// Get the active presentation and selection
-		const presentation = SlidesApp.getActivePresentation();
-		const selection = presentation.getSelection();
+function parseGridSyntax(text) {
+	// First try to match multi-row format: {[...][...]}
+	const multiRowRegex = /\{(\[.*?\])+\}/;
+	const multiRowMatch = text.match(multiRowRegex);
 
-		// Check if a shape is selected
-		const selectedElements = selection.getPageElementRange()
-			? selection.getPageElementRange().getPageElements()
-			: [];
-
-		const selectedShapes = selectedElements.filter(
-			(element) =>
-				element.getPageElementType() === SlidesApp.PageElementType.SHAPE,
-		);
-
-		if (selectedShapes.length !== 1) {
-			SlidesApp.getUi().alert(
-				"Error",
-				"Please select exactly one shape with text syntax to auto-create child shapes.",
-				SlidesApp.getUi().ButtonSet.OK,
-			);
-			return;
-		}
-
-		const parentShape = selectedShapes[0].asShape();
-
-		// Get the text content from the shape and remove line breaks to avoid syntax errors
-		const rawTextContent = parentShape.getText().asString();
-		const textContent = rawTextContent
-			.replace(/\r?\n|\r/g, " ")
-			.replace(/\s+/g, " ")
-			.trim();
-
-		// Check if this is a nested syntax (multiple {} blocks with complex content)
-		const nestedLayout = parseNestedSyntax(textContent);
-
-		if (nestedLayout) {
-			// Handle nested syntax: split into columns first, then create grids in each column
-			createNestedChildShapes(parentShape, nestedLayout);
-			console.log(
-				`Auto-created nested layout with ${nestedLayout.columns} columns`,
-			);
-			return;
-		}
-
-		// Try single-level parsing
-		const gridLayout = parseGridSyntax(textContent);
-
-		if (!gridLayout) {
-			SlidesApp.getUi().alert(
-				"Error",
-				"No valid grid syntax found. Please use format: {[item1|item2][item3|item4]} or nested format",
-				SlidesApp.getUi().ButtonSet.OK,
-			);
-			return;
-		}
-
-		// Create child shapes with default settings
-		const defaultPadding = 7;
-		const defaultPaddingTop = 30;
-		const defaultGap = 7;
-
-		createChildShapesWithLayout(
-			parentShape,
-			gridLayout,
-			defaultPadding,
-			defaultPaddingTop,
-			defaultGap,
-		);
-
-		console.log(
-			`Auto-created child shapes with ${gridLayout.rows} rows and varying columns`,
-		);
-	} catch (error) {
-		SlidesApp.getUi().alert(
-			"Error",
-			`An error occurred: ${error.message}`,
-			SlidesApp.getUi().ButtonSet.OK,
-		);
+	if (multiRowMatch) {
+		return parseMultiRowSyntax(multiRowMatch[0]);
 	}
+
+	// Try to match single-row format: {} {} {}
+	const singleRowRegex = /\{([^}]*)\}/g;
+	const singleRowMatches = [];
+	let singleRowMatch;
+
+	while ((singleRowMatch = singleRowRegex.exec(text)) !== null) {
+		const content = singleRowMatch[1].trim();
+		if (content) {
+			singleRowMatches.push(content);
+		}
+	}
+
+	if (singleRowMatches.length > 0) {
+		return parseSingleRowSyntax(singleRowMatches);
+	}
+
+	return null;
+}
+
+/**
+ * Parses multi-row syntax like {[item1|item2][item3|item4]}
+ * @param {string} gridText - The matched grid text
+ * @return {Object} Grid layout object
+ */
+function parseMultiRowSyntax(gridText) {
+	// Extract all row patterns [...]
+	const rowRegex = /\[([^\]]*)\]/g;
+	const rows = [];
+	let rowMatch;
+
+	while ((rowMatch = rowRegex.exec(gridText)) !== null) {
+		const rowContent = rowMatch[1];
+		// Split by | to get columns, filter out empty strings
+		const columns = rowContent.split("|").filter((col) => col.trim() !== "");
+		if (columns.length > 0) {
+			rows.push(columns);
+		}
+	}
+
+	if (rows.length === 0) {
+		return null;
+	}
+
+	// Find the maximum number of columns across all rows
+	const maxColumns = Math.max(...rows.map((row) => row.length));
+
+	return {
+		rows: rows.length,
+		maxColumns: maxColumns,
+		rowData: rows,
+		isVariableColumns: rows.some((row) => row.length !== maxColumns),
+		syntaxType: "multi-row",
+	};
+}
+
+/**
+ * Parses single-row syntax like {item1} {item2} {item3}
+ * @param {Array} matches - Array of matched content strings
+ * @return {Object} Grid layout object
+ */
+function parseSingleRowSyntax(matches) {
+	return {
+		rows: 1,
+		maxColumns: matches.length,
+		rowData: [matches], // Single row with all the columns
+		isVariableColumns: false,
+		syntaxType: "single-row",
+	};
 }
 
 /**
