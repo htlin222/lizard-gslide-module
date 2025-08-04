@@ -234,37 +234,53 @@ function createChildShapesWithLayout(
 				childShape.setRotation(parentRotation);
 			}
 
-			// Process the cell text for footer boxes (text) and main content
-			const cellText = row[colIndex].trim();
+			// Process the cell text for vertical splitting, footer boxes, and main content
+			const cellText = row[colIndex];
 			const footerBoxData = processFooterBoxText(cellText);
 
-			// Adjust child shape height if footer box is needed
-			let adjustedRowHeight = rowHeight;
-			if (footerBoxData.hasFooter) {
-				adjustedRowHeight = rowHeight - FOOTER_BOX_HEIGHT;
-				childShape.setHeight(adjustedRowHeight);
-			}
-
-			// Set the main text content (without footer text)
-			if (footerBoxData.mainText) {
-				const textRange = childShape.getText();
-				textRange.setText(footerBoxData.mainText);
-			}
-
-			// Apply styling after text is set (so we can check for [bold] markers)
-			applyWhiteStyle(childShape);
-
-			// Create footer box if needed
-			if (footerBoxData.hasFooter) {
-				createFooterBox(
+			// Check if this is a vertically split cell
+			if (footerBoxData.isVerticalSplit) {
+				// Handle vertically split cell
+				createVerticalSplitCell(
 					slide,
+					childShape,
+					footerBoxData,
 					columnLeft,
-					rowTop + adjustedRowHeight, // Position at bottom of adjusted cell
+					rowTop,
 					columnWidth,
-					FOOTER_BOX_HEIGHT,
-					footerBoxData.footerText,
+					rowHeight,
 					parentRotation,
 				);
+			} else {
+				// Handle regular cell
+				// Adjust child shape height if footer box is needed
+				let adjustedRowHeight = rowHeight;
+				if (footerBoxData.hasFooter) {
+					adjustedRowHeight = rowHeight - FOOTER_BOX_HEIGHT;
+					childShape.setHeight(adjustedRowHeight);
+				}
+
+				// Set the main text content (without footer text)
+				if (footerBoxData.mainText) {
+					const textRange = childShape.getText();
+					textRange.setText(footerBoxData.mainText);
+				}
+
+				// Apply styling after text is set (so we can check for [bold] markers)
+				applyWhiteStyle(childShape);
+
+				// Create footer box if needed
+				if (footerBoxData.hasFooter) {
+					createFooterBox(
+						slide,
+						columnLeft,
+						rowTop + adjustedRowHeight, // Position at bottom of adjusted cell
+						columnWidth,
+						FOOTER_BOX_HEIGHT,
+						footerBoxData.footerText,
+						parentRotation,
+					);
+				}
 			}
 
 			// Set title for child shape
@@ -457,4 +473,141 @@ function createFooterBox(slide, left, top, width, height, text, rotation) {
 	console.log(`Created footer box with text: "${text}"`);
 
 	return footerBox;
+}
+
+/**
+ * Creates a vertically split cell with multiple segments and divider lines.
+ * @param {Slide} slide - The slide to add shapes to
+ * @param {Shape} parentCell - The parent cell shape to modify
+ * @param {Object} footerBoxData - The processed footer box data with segments
+ * @param {number} left - Left position of the cell
+ * @param {number} top - Top position of the cell
+ * @param {number} width - Width of the cell
+ * @param {number} height - Height of the cell
+ * @param {number} rotation - Rotation angle to apply
+ */
+function createVerticalSplitCell(
+	slide,
+	parentCell,
+	footerBoxData,
+	left,
+	top,
+	width,
+	height,
+	rotation,
+) {
+	const segments = footerBoxData.segments;
+	const segmentCount = segments.length;
+	const segmentHeight = height / segmentCount;
+
+	// Set the parent cell to be invisible (no fill, no border) as it will be a container
+	const parentFill = parentCell.getFill();
+	parentFill.setSolidFill("#FFFFFF"); // White background
+	parentCell.getBorder().setWeight(0.1);
+	parentCell.getBorder().getLineFill().setSolidFill("#FFFFFF");
+
+	// Clear any existing text from parent cell
+	parentCell.getText().setText("");
+
+	// Create each segment as a separate text box
+	for (let i = 0; i < segmentCount; i++) {
+		const segment = segments[i];
+		const segmentTop = top + i * segmentHeight;
+
+		// Create a text box for this segment
+		const segmentShape = slide.insertShape(
+			SlidesApp.ShapeType.TEXT_BOX,
+			left,
+			segmentTop,
+			width,
+			segmentHeight,
+		);
+
+		// Apply rotation if needed
+		if (rotation !== 0) {
+			segmentShape.setRotation(rotation);
+		}
+
+		// Set transparent fill and no border for the text box
+		const segmentFill = segmentShape.getFill();
+		segmentFill.setTransparent();
+		segmentShape.getBorder().setWeight(0);
+
+		// Handle footer box for this segment
+		let segmentTextHeight = segmentHeight;
+		if (segment.hasFooter) {
+			segmentTextHeight = segmentHeight - FOOTER_BOX_HEIGHT;
+			segmentShape.setHeight(segmentTextHeight);
+
+			// Create footer box for this segment
+			createFooterBox(
+				slide,
+				left,
+				segmentTop + segmentTextHeight,
+				width,
+				FOOTER_BOX_HEIGHT,
+				segment.footerText,
+				rotation,
+			);
+		}
+
+		// Set the segment text
+		if (segment.mainText) {
+			const textRange = segmentShape.getText();
+			textRange.setText(segment.mainText);
+
+			// Apply styling (check for [bold] markers)
+			applyWhiteStyle(segmentShape);
+		}
+
+		// Set title for segment
+		segmentShape.setTitle(`SEGMENT_${i + 1}`);
+		segmentShape.bringForward();
+	}
+
+	// Create divider lines between segments (but not after the last one)
+	for (let i = 0; i < segmentCount - 1; i++) {
+		const lineTop = top + (i + 1) * segmentHeight;
+		createHorizontalDividerLine(slide, left, lineTop, width, rotation);
+	}
+
+	console.log(
+		`Created vertically split cell with ${segmentCount} segments and ${segmentCount - 1} divider lines`,
+	);
+}
+
+/**
+ * Creates a horizontal divider line with main_color.
+ * @param {Slide} slide - The slide to add the line to
+ * @param {number} left - Left position of the line
+ * @param {number} top - Top position of the line
+ * @param {number} width - Width of the line
+ * @param {number} rotation - Rotation angle to apply
+ * @return {Shape} The created line shape
+ */
+function createHorizontalDividerLine(slide, left, top, width, rotation) {
+	// Create a thin rectangle to serve as a horizontal line
+	const lineHeight = 1; // 1pt height for the line
+	const line = slide.insertShape(
+		SlidesApp.ShapeType.RECTANGLE,
+		left,
+		top - lineHeight / 2, // Center the line on the specified top position
+		width,
+		lineHeight,
+	);
+
+	// Apply rotation if needed
+	if (rotation !== 0) {
+		line.setRotation(rotation);
+	}
+
+	// Set main_color fill and no border
+	const fill = line.getFill();
+	fill.setSolidFill(main_color);
+	line.getBorder().setWeight(0);
+
+	// Bring line forward
+	line.bringForward();
+
+	return line;
 }

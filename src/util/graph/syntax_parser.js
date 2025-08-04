@@ -209,6 +209,7 @@ function autoCreateChildShapesFromLines() {
 
 /**
  * Parses a row line to detect -|> syntax for home plates and extract cells.
+ * Also detects -- syntax for vertical cell splitting (e.g., "upper--lower").
  * @param {string} line - The row line to parse
  * @return {Object} Object with cells array and homePlates array
  */
@@ -230,7 +231,7 @@ function parseRowWithHomePlates(line) {
 				// Add the cell without the trailing -
 				const cellText = part.slice(0, -1).trim();
 				if (cellText) {
-					cells.push(cellText);
+					cells.push(processCellForVerticalSplit(cellText));
 				}
 
 				// Record home plate position (after current cell)
@@ -239,7 +240,7 @@ function parseRowWithHomePlates(line) {
 				// Add the next cell without the leading >
 				const nextCellText = nextPart.slice(1).trim();
 				if (nextCellText) {
-					cells.push(nextCellText);
+					cells.push(processCellForVerticalSplit(nextCellText));
 				}
 
 				// Skip the next part since we already processed it
@@ -247,13 +248,13 @@ function parseRowWithHomePlates(line) {
 			} else {
 				// Not a home plate, just a regular cell
 				if (part) {
-					cells.push(part);
+					cells.push(processCellForVerticalSplit(part));
 				}
 			}
 		} else {
-			// Regular cell
+			// Regular cell - check for vertical splitting
 			if (part) {
-				cells.push(part);
+				cells.push(processCellForVerticalSplit(part));
 			}
 		}
 	}
@@ -265,19 +266,72 @@ function parseRowWithHomePlates(line) {
 }
 
 /**
+ * Processes a cell for vertical splitting using -- syntax.
+ * Examples: "upper--lower" creates 2 vertical sections (50%/50%)
+ *          "top--middle--bottom" creates 3 sections (33%/33%/33%)
+ * @param {string} cellText - The cell text to process
+ * @return {Object|string} Either a string for normal cells or an object for split cells
+ */
+function processCellForVerticalSplit(cellText) {
+	// Check if cell contains -- for vertical splitting
+	if (cellText.includes("--")) {
+		const segments = cellText
+			.split("--")
+			.map((segment) => segment.trim())
+			.filter((segment) => segment !== "");
+
+		if (segments.length > 1) {
+			return {
+				isVerticalSplit: true,
+				segments: segments,
+				segmentCount: segments.length,
+			};
+		}
+	}
+
+	// Return as regular cell text if no splitting
+	return cellText;
+}
+
+/**
  * Processes cell text to extract main content and footer box text.
  * Detects (text) pattern for footer boxes.
  * @param {string} cellText - The original cell text
  * @return {Object} Object with hasFooter, mainText, and footerText properties
  */
 function processFooterBoxText(cellText) {
+	// Handle vertical split cells - apply footer processing to each segment
+	if (typeof cellText === "object" && cellText.isVerticalSplit) {
+		const processedSegments = cellText.segments.map((segment) => {
+			const footerData = processFooterBoxTextForSegment(segment);
+			return footerData;
+		});
+
+		return {
+			isVerticalSplit: true,
+			segments: processedSegments,
+			segmentCount: cellText.segmentCount,
+			hasFooter: processedSegments.some((seg) => seg.hasFooter),
+		};
+	}
+
+	// Regular cell processing
+	return processFooterBoxTextForSegment(cellText);
+}
+
+/**
+ * Processes a single text segment for footer box extraction.
+ * @param {string} segmentText - The text segment to process
+ * @return {Object} Object with hasFooter, mainText, and footerText properties
+ */
+function processFooterBoxTextForSegment(segmentText) {
 	// Check if text contains footer pattern (text)
 	const footerRegex = /\(([^)]*)\)/;
-	const match = cellText.match(footerRegex);
+	const match = segmentText.match(footerRegex);
 
 	if (match) {
 		const footerText = match[1]; // Text inside parentheses
-		const mainText = cellText.replace(footerRegex, "").trim(); // Text without parentheses
+		const mainText = segmentText.replace(footerRegex, "").trim(); // Text without parentheses
 
 		return {
 			hasFooter: true,
@@ -288,7 +342,7 @@ function processFooterBoxText(cellText) {
 
 	return {
 		hasFooter: false,
-		mainText: cellText,
+		mainText: segmentText,
 		footerText: "",
 	};
 }
