@@ -832,16 +832,67 @@ function createSimpleVerticalSplit(
 	}
 
 	// Create divider lines between segments (but not after the last one)
-	// TEMPORARILY DISABLED FOR DEBUGGING
-	console.log("Skipping divider lines to debug the error");
-	/*
 	for (let i = 0; i < segmentCount - 1; i++) {
-		const lineTop = top + (i + 1) * segmentHeight;
-		createHorizontalDividerLine(slide, left, lineTop, width, rotation);
+		const lineY = top + (i + 1) * segmentHeight;
+		createHorizontalDividerLineSimple(slide, left, lineY, width, rotation);
 	}
-	*/
 
 	console.log(`Created simple vertical split with ${segmentCount} segments`);
+}
+
+/**
+ * Creates a simple horizontal divider line using insertLine (like the dashed line utility).
+ * @param {Slide} slide - The slide to add the line to
+ * @param {number} left - Left position of the line
+ * @param {number} top - Top position of the line
+ * @param {number} width - Width of the line
+ * @param {number} rotation - Rotation angle to apply
+ * @return {Line} The created line
+ */
+function createHorizontalDividerLineSimple(slide, left, top, width, rotation) {
+	// Log parameters for debugging
+	console.log("createHorizontalDividerLineSimple called with:", {
+		left,
+		top,
+		width,
+		rotation,
+	});
+
+	// Validate parameters before creating the line
+	if (left < 0 || top < 0 || width <= 0) {
+		console.error("Invalid line parameters:", {
+			left,
+			top,
+			width,
+		});
+		return null;
+	}
+
+	// Create horizontal line using insertLine (same approach as dashed line utility)
+	const rightX = left + width;
+	const line = slide.insertLine(
+		SlidesApp.LineCategory.STRAIGHT,
+		left, // startX
+		top, // startY
+		rightX, // endX
+		top, // endY
+	);
+
+	// Apply rotation if needed (though rotation on lines might not work as expected)
+	if (rotation !== 0) {
+		line.setRotation(rotation);
+	}
+
+	// Style the line (following the styleLine pattern from dashed line utility)
+	line.getLineFill().setSolidFill(main_color); // Use main_color instead of gray
+	line.setWeight(1); // 1pt line weight
+	// Note: Not setting dash style, so it will be solid
+
+	// Bring line forward
+	line.bringForward();
+
+	console.log("Created horizontal divider line successfully");
+	return line;
 }
 
 /**
