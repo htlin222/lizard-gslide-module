@@ -259,6 +259,30 @@ function createChildInDirection(
 	const originalWidth = originalShape.getWidth();
 	const originalHeight = originalShape.getHeight();
 
+	// Handle hierarchical naming system
+	const parentGraphId = getShapeGraphId(originalShape);
+	let parentLevel = "";
+	let nextLevel = "B";
+
+	if (parentGraphId) {
+		const parsed = parseGraphId(parentGraphId);
+		if (parsed && parsed.current) {
+			// Extract the level from current ID (e.g., "A1" -> "A", "B2" -> "B")
+			const levelMatch = parsed.current.match(/^([A-Z]+)/);
+			if (levelMatch) {
+				parentLevel = levelMatch[1];
+				nextLevel = getNextLevel(parentLevel);
+			}
+		}
+	} else {
+		// If parent doesn't have a graph ID, make it the root
+		parentLevel = "A";
+		nextLevel = "B";
+	}
+
+	// Generate sibling IDs for all children
+	const childIds = generateSiblingIds(nextLevel, count);
+
 	// Create multiple children as siblings
 	const createdShapes = [];
 
@@ -321,6 +345,14 @@ function createChildInDirection(
 		// Copy styling from original shape
 		copyShapeStyle(originalShape, childShape);
 
+		// Set the hierarchical graph ID for the child shape
+		const childId = childIds[i];
+		const parentCurrentId = parentGraphId
+			? parseGraphId(parentGraphId)?.current || "A1"
+			: "A1";
+		const childGraphId = generateGraphId(parentCurrentId, childId, []);
+		setShapeGraphId(childShape, childGraphId);
+
 		// Connect to parent shape (not previous shape)
 		const connectionPairs = {
 			TOP: { parentSide: "TOP", childSide: "BOTTOM" },
@@ -354,6 +386,9 @@ function createChildInDirection(
 
 		createdShapes.push(childShape);
 	}
+
+	// Update parent shape to include new children in its graph ID
+	updateParentWithChildren(originalShape, childIds);
 
 	return createdShapes;
 }
@@ -500,6 +535,317 @@ function pickConnectionSite(shape, side) {
 	const idx = map[side];
 	if (idx != null && idx < sites.length) return sites[idx];
 	return sites[0];
+}
+
+/**
+ * Hierarchical Shape Naming System
+ * Manages parent-child relationships with structured IDs
+ * Format: graph[parent][current][children]
+ * Example: graph[A1][B1][C1,C2,C3]
+ */
+
+/**
+ * Parses a graph ID to extract its components
+ * @param {string} graphId - The graph ID to parse
+ * @returns {Object|null} - Object with parent, current, children arrays or null if not a graph ID
+ */
+function parseGraphId(graphId) {
+	if (!graphId || !graphId.startsWith("graph[")) {
+		return null;
+	}
+
+	// Extract content between brackets using regex
+	const matches = graphId.match(/graph\[([^\]]*)\]\[([^\]]*)\]\[([^\]]*)\]/);
+	if (!matches) {
+		return null;
+	}
+
+	return {
+		parent: matches[1] || "",
+		current: matches[2] || "",
+		children: matches[3] ? matches[3].split(",").filter((c) => c.trim()) : [],
+	};
+}
+
+/**
+ * Generates a graph ID from components
+ * @param {string} parent - Parent ID
+ * @param {string} current - Current ID
+ * @param {Array} children - Array of child IDs
+ * @returns {string} - Generated graph ID
+ */
+function generateGraphId(parent, current, children = []) {
+	const childrenStr = children.join(",");
+	return `graph[${parent}][${current}][${childrenStr}]`;
+}
+
+/**
+ * Generates the next level ID for a child
+ * @param {string} parentLevel - Parent's level (e.g., "A", "B", "C")
+ * @returns {string} - Next level (e.g., "A" -> "B", "B" -> "C")
+ */
+function getNextLevel(parentLevel) {
+	if (!parentLevel) return "A";
+	const lastChar = parentLevel.charAt(parentLevel.length - 1);
+	if (lastChar >= "A" && lastChar < "Z") {
+		return (
+			parentLevel.slice(0, -1) + String.fromCharCode(lastChar.charCodeAt(0) + 1)
+		);
+	}
+	return parentLevel + "A";
+}
+
+/**
+ * Generates sibling IDs for multiple children
+ * @param {string} baseLevel - Base level for siblings (e.g., "C")
+ * @param {number} count - Number of siblings to generate
+ * @returns {Array} - Array of sibling IDs (e.g., ["C1", "C2", "C3"])
+ */
+function generateSiblingIds(baseLevel, count) {
+	const siblings = [];
+	for (let i = 1; i <= count; i++) {
+		siblings.push(`${baseLevel}${i}`);
+	}
+	return siblings;
+}
+
+/**
+ * Updates a shape's title with a new graph ID
+ * @param {GoogleAppsScript.Slides.Shape} shape - Shape to update
+ * @param {string} graphId - New graph ID to set
+ */
+function setShapeGraphId(shape, graphId) {
+	try {
+		// Set the shape's alt title for identification
+		shape.setTitle(graphId);
+
+		// Try to use title placeholder if it exists
+		const slide = shape.getParentPage();
+		try {
+			const titlePlaceholder = slide.getPlaceholder(
+				SlidesApp.PlaceholderType.TITLE,
+			);
+			if (titlePlaceholder) {
+				titlePlaceholder.asShape().getText().setText(graphId);
+			}
+		} catch (placeholderError) {
+			// If no title placeholder, set the shape's own text as fallback
+			try {
+				shape.getText().setText(graphId);
+			} catch (textError) {
+				console.log(`Warning: Could not set shape text: ${textError.message}`);
+			}
+		}
+	} catch (e) {
+		console.log(`Warning: Could not set shape title: ${e.message}`);
+	}
+}
+
+/**
+ * Gets the graph ID from a shape's title or text
+ * @param {GoogleAppsScript.Slides.Shape} shape - Shape to read from
+ * @returns {string|null} - Graph ID or null if not found
+ */
+function getShapeGraphId(shape) {
+	try {
+		// First try to get from alt title
+		const title = shape.getTitle();
+		if (title && title.startsWith("graph[")) {
+			return title;
+		}
+
+		// Try to get from title placeholder
+		const slide = shape.getParentPage();
+		try {
+			const titlePlaceholder = slide.getPlaceholder(
+				SlidesApp.PlaceholderType.TITLE,
+			);
+			if (titlePlaceholder) {
+				const placeholderText = titlePlaceholder
+					.asShape()
+					.getText()
+					.asString()
+					.trim();
+				if (placeholderText && placeholderText.startsWith("graph[")) {
+					return placeholderText;
+				}
+			}
+		} catch (placeholderError) {
+			// Title placeholder not found, continue to next fallback
+		}
+
+		// Fallback to shape's own text content
+		const text = shape.getText().asString().trim();
+		if (text && text.startsWith("graph[")) {
+			return text;
+		}
+
+		return null;
+	} catch (e) {
+		console.log(`Warning: Could not get shape title: ${e.message}`);
+		return null;
+	}
+}
+
+/**
+ * Updates parent shape to include new children in its ID
+ * @param {GoogleAppsScript.Slides.Shape} parentShape - Parent shape to update
+ * @param {Array} newChildIds - Array of new child IDs to add
+ */
+function updateParentWithChildren(parentShape, newChildIds) {
+	const currentId = getShapeGraphId(parentShape);
+	if (!currentId) {
+		// If parent doesn't have a graph ID, create one
+		const newId = generateGraphId("", "A1", newChildIds);
+		setShapeGraphId(parentShape, newId);
+		return;
+	}
+
+	const parsed = parseGraphId(currentId);
+	if (!parsed) return;
+
+	// Merge existing children with new ones
+	const allChildren = [...parsed.children, ...newChildIds];
+	const updatedId = generateGraphId(parsed.parent, parsed.current, allChildren);
+	setShapeGraphId(parentShape, updatedId);
+}
+
+/**
+ * Initializes a selected shape as a root graph node
+ * Useful for starting a new flowchart hierarchy
+ */
+function initializeRootGraphShape() {
+	const pres = SlidesApp.getActivePresentation();
+	const selection = pres.getSelection();
+	const range = selection.getPageElementRange();
+
+	if (!range) {
+		return SlidesApp.getUi().alert(
+			"Please select a shape to initialize as root graph node.",
+		);
+	}
+
+	const els = range.getPageElements();
+	if (els.length !== 1) {
+		return SlidesApp.getUi().alert("Please select exactly ONE shape.");
+	}
+
+	const element = els[0];
+	if (element.getPageElementType() !== SlidesApp.PageElementType.SHAPE) {
+		return SlidesApp.getUi().alert("Selected item must be a SHAPE.");
+	}
+
+	const shape = element.asShape();
+	const rootId = generateGraphId("", "A1", []);
+	setShapeGraphId(shape, rootId);
+
+	SlidesApp.getUi().alert(
+		"Root graph shape initialized",
+		`Shape is now: ${rootId}`,
+	);
+}
+
+/**
+ * Updates connection between two existing graph shapes
+ * Also handles establishing the parent-child relationship in their IDs
+ * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
+ * @param {string} startArrow - Start arrow style
+ * @param {string} endArrow - End arrow style
+ */
+function connectExistingGraphShapes(
+	lineType = "STRAIGHT",
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
+	const pres = SlidesApp.getActivePresentation();
+	const selection = pres.getSelection();
+	const range = selection.getPageElementRange();
+
+	if (!range) {
+		return SlidesApp.getUi().alert("Please select exactly TWO graph shapes.");
+	}
+
+	const els = range.getPageElements();
+	if (els.length !== 2) {
+		return SlidesApp.getUi().alert("Please select exactly TWO graph shapes.");
+	}
+
+	if (
+		els[0].getPageElementType() !== SlidesApp.PageElementType.SHAPE ||
+		els[1].getPageElementType() !== SlidesApp.PageElementType.SHAPE
+	) {
+		return SlidesApp.getUi().alert("Both selected items must be SHAPES.");
+	}
+
+	const shapeA = els[0].asShape();
+	const shapeB = els[1].asShape();
+
+	// Get their graph IDs
+	const idA = getShapeGraphId(shapeA);
+	const idB = getShapeGraphId(shapeB);
+
+	if (!idA || !idB) {
+		return SlidesApp.getUi().alert(
+			"Both shapes must have graph IDs. Use 'Initialize Root' first.",
+		);
+	}
+
+	// Parse the IDs to understand the hierarchy
+	const parsedA = parseGraphId(idA);
+	const parsedB = parseGraphId(idB);
+
+	if (!parsedA || !parsedB) {
+		return SlidesApp.getUi().alert(
+			"Invalid graph ID format on one or both shapes.",
+		);
+	}
+
+	// Determine parent-child relationship based on hierarchy level
+	// Lower levels (A < B < C) are parents of higher levels
+	const levelA = parsedA.current.match(/^([A-Z]+)/)?.[1] || "A";
+	const levelB = parsedB.current.match(/^([A-Z]+)/)?.[1] || "A";
+
+	let parentShape, childShape, parentId, childId;
+
+	if (levelA <= levelB) {
+		// A is parent, B is child
+		parentShape = shapeA;
+		childShape = shapeB;
+		parentId = parsedA;
+		childId = parsedB;
+	} else {
+		// B is parent, A is child
+		parentShape = shapeB;
+		childShape = shapeA;
+		parentId = parsedB;
+		childId = parsedA;
+	}
+
+	// Update parent to include this child
+	if (!parentId.children.includes(childId.current)) {
+		const updatedChildren = [...parentId.children, childId.current];
+		const newParentId = generateGraphId(
+			parentId.parent,
+			parentId.current,
+			updatedChildren,
+		);
+		setShapeGraphId(parentShape, newParentId);
+	}
+
+	// Update child to reflect correct parent
+	const newChildId = generateGraphId(
+		parentId.current,
+		childId.current,
+		childId.children,
+	);
+	setShapeGraphId(childShape, newChildId);
+
+	// Create the visual connection using the existing connection logic
+	if (parentShape === shapeA) {
+		return connectSelectedShapesHorizontal(lineType, startArrow, endArrow);
+	} else {
+		return connectSelectedShapesHorizontal(lineType, startArrow, endArrow);
+	}
 }
 
 /**
