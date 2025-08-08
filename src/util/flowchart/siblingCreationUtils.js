@@ -130,18 +130,32 @@ function createSiblingShape(
 		isVerticalLayout = verticalCount > horizontalCount;
 	}
 
-	// Generate new sibling ID
+	// Generate new sibling ID based on parent's children list
 	const parentData = parseGraphId(getShapeGraphId(parentShape));
 	if (!parentData) {
 		return SlidesApp.getUi().alert("Parent shape has invalid graph ID format.");
 	}
 
-	// Find the highest numbered sibling to determine the next number
+	// Get the level from current selected shape (e.g., "C1" -> "C")
 	const currentLevel = parsed.current.match(/^([A-Z]+)/)?.[1] || "A";
+
+	// Find the highest numbered sibling from parent's children list
 	let maxSiblingNumber = 0;
 
+	// Check parent's children list first (most reliable source)
+	for (const childId of parentData.children) {
+		const childLevel = childId.match(/^([A-Z]+)(\d+)$/);
+		if (childLevel && childLevel[1] === currentLevel) {
+			const number = Number.parseInt(childLevel[2]);
+			if (number > maxSiblingNumber) {
+				maxSiblingNumber = number;
+			}
+		}
+	}
+
+	// Also check actual shapes on slide as backup
 	for (const sibling of siblingShapes) {
-		const siblingLevel = sibling.data.current.match(/^([A-Z]+)(\\d+)$/);
+		const siblingLevel = sibling.data.current.match(/^([A-Z]+)(\d+)$/);
 		if (siblingLevel && siblingLevel[1] === currentLevel) {
 			const number = Number.parseInt(siblingLevel[2]);
 			if (number > maxSiblingNumber) {
