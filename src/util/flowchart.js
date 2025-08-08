@@ -1068,35 +1068,11 @@ function createSiblingShape(
 	const selectedWidth = selectedShape.getWidth();
 	const selectedHeight = selectedShape.getHeight();
 
-	let newLeft;
-	let newTop;
-	let adjustedSelectedTop;
-
-	if (isHorizontalLayout && siblingShapes.length > 1) {
-		// Horizontal layout: center group around parent's X center
-		const parentCenterX = parentShape.getLeft() + parentShape.getWidth() / 2;
-		const totalGroupWidth = selectedWidth + horizontalGap + selectedWidth; // current + gap + new sibling
-		const groupStartX = parentCenterX - totalGroupWidth / 2;
-
-		selectedShape.setLeft(groupStartX);
-		newLeft = groupStartX + selectedWidth + horizontalGap;
-		newTop = selectedTop;
-	} else {
-		// Vertical layout (default): center group around parent's Y center
-		const parentCenterY = parentShape.getTop() + parentShape.getHeight() / 2;
-		const totalGroupHeight = selectedHeight + verticalGap + selectedHeight; // current + gap + new sibling
-		const groupStartY = parentCenterY - totalGroupHeight / 2;
-
-		selectedShape.setTop(groupStartY);
-		newLeft = selectedLeft;
-		newTop = groupStartY + selectedHeight + verticalGap;
-	}
-
-	// Create the new sibling shape
+	// Create the new sibling shape first (we'll position it later)
 	const newShape = slide.insertShape(
 		selectedShape.getShapeType(),
-		newLeft,
-		newTop,
+		selectedLeft, // temporary position
+		selectedTop, // temporary position
 		selectedWidth,
 		selectedHeight,
 	);
@@ -1108,6 +1084,47 @@ function createSiblingShape(
 	const newGraphId = generateGraphId(parsed.parent, newSiblingId, []);
 	setShapeGraphId(newShape, newGraphId);
 
+	// Add the new sibling to our shapes array at the correct position
+	// Find the index of the selected shape and insert the new one after it
+	const selectedIndex = siblingShapes.findIndex(
+		(sibling) => sibling.shape === selectedShape,
+	);
+	siblingShapes.splice(selectedIndex + 1, 0, {
+		shape: newShape,
+		data: parseGraphId(newGraphId),
+		left: selectedLeft,
+		top: selectedTop,
+		width: selectedWidth,
+		height: selectedHeight,
+	});
+
+	// Now reposition ALL siblings to be centered around the parent
+	if (isHorizontalLayout && siblingShapes.length > 2) {
+		// Horizontal layout: center all siblings around parent's X center
+		const parentCenterX = parentShape.getLeft() + parentShape.getWidth() / 2;
+		const totalGroupWidth =
+			siblingShapes.length * selectedWidth +
+			(siblingShapes.length - 1) * horizontalGap;
+		const groupStartX = parentCenterX - totalGroupWidth / 2;
+
+		siblingShapes.forEach((sibling, index) => {
+			const newX = groupStartX + index * (selectedWidth + horizontalGap);
+			sibling.shape.setLeft(newX);
+		});
+	} else {
+		// Vertical layout (default): center all siblings around parent's Y center
+		const parentCenterY = parentShape.getTop() + parentShape.getHeight() / 2;
+		const totalGroupHeight =
+			siblingShapes.length * selectedHeight +
+			(siblingShapes.length - 1) * verticalGap;
+		const groupStartY = parentCenterY - totalGroupHeight / 2;
+
+		siblingShapes.forEach((sibling, index) => {
+			const newY = groupStartY + index * (selectedHeight + verticalGap);
+			sibling.shape.setTop(newY);
+		});
+	}
+
 	// Update parent to include the new sibling
 	const updatedChildren = [...parentData.children, newSiblingId];
 	const updatedParentId = generateGraphId(
@@ -1117,20 +1134,9 @@ function createSiblingShape(
 	);
 	setShapeGraphId(parentShape, updatedParentId);
 
-	// Connect new sibling to parent
-	const connectionPairs = {
-		horizontal: { parentSide: "RIGHT", childSide: "LEFT" },
-		vertical: { parentSide: "BOTTOM", childSide: "TOP" },
-	};
-
-	const connectionType =
-		isHorizontalLayout || (!isHorizontalLayout && !isVerticalLayout)
-			? "horizontal"
-			: "vertical";
-	const pair = connectionPairs[connectionType];
-
-	const parentSite = pickConnectionSite(parentShape, pair.parentSide);
-	const childSite = pickConnectionSite(newShape, pair.childSide);
+	// Simple approach: Don't touch existing connections, just connect the new sibling with left/right pattern
+	const parentSite = pickConnectionSite(parentShape, "RIGHT");
+	const childSite = pickConnectionSite(newShape, "LEFT");
 
 	if (parentSite && childSite) {
 		const lineCategory =
