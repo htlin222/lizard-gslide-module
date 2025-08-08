@@ -101,6 +101,7 @@ function createCustomMenu() {
 			.addItem("⇢ 兩者間加上水平線", "insertHorizontalDashedLineBetween")
 			.addItem("🎹 轉換成標注框", "convertShapeToCallout")
 			.addItem("**B** 套用粗體樣式", "applyBoldStyleToSelectedShape")
+			.addItem("🔗 流程圖工具", "showFlowchartSidebar")
 			.addToUi();
 
 		// Create the add new content menu as a top-level menu

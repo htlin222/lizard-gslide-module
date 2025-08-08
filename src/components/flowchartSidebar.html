@@ -1,0 +1,447 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 16px;
+        font-size: 14px;
+        background-color: #f8f9fa;
+      }
+
+      .section {
+        background: white;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      .section-title {
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 12px;
+        color: #1a73e8;
+        border-bottom: 1px solid #e8f0fe;
+        padding-bottom: 8px;
+      }
+
+      .form-group {
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      label {
+        font-weight: 500;
+        flex: 1;
+        margin-right: 10px;
+        color: #333;
+      }
+
+      input[type="number"] {
+        width: 60px;
+        padding: 6px 8px;
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        text-align: center;
+        font-size: 14px;
+      }
+
+      input[type="number"]:focus {
+        outline: none;
+        border-color: #1a73e8;
+        box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+      }
+
+      button {
+        width: 100%;
+        padding: 10px 16px;
+        background-color: #1a73e8;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        transition: background-color 0.2s;
+      }
+
+      button:hover {
+        background-color: #1557b0;
+      }
+
+      button:active {
+        background-color: #0d47a1;
+      }
+
+      button.secondary {
+        background-color: #34a853;
+      }
+
+      button.secondary:hover {
+        background-color: #2d8f47;
+      }
+
+      button.tertiary {
+        background-color: #ea4335;
+      }
+
+      button.tertiary:hover {
+        background-color: #d33b2c;
+      }
+
+      .input-suffix {
+        font-size: 12px;
+        color: #666;
+        margin-left: 5px;
+      }
+
+      .help-text {
+        font-size: 12px;
+        color: #666;
+        margin-top: 4px;
+        line-height: 1.4;
+      }
+
+      .gap-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .gap-controls input {
+        width: 50px;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 8px;
+      }
+
+      .button-group button {
+        flex: 1;
+        margin-bottom: 0;
+      }
+
+      @keyframes slideUp {
+        from {
+          transform: translateY(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideDown {
+        from {
+          transform: translateY(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateY(100%);
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="section">
+      <div class="section-title">⚙️ Line Settings</div>
+      <div class="form-group">
+        <label for="lineType">Line Type:</label>
+        <select
+          id="lineType"
+          style="
+            width: 120px;
+            padding: 6px 8px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 14px;
+          "
+        >
+          <option value="STRAIGHT" selected>Straight</option>
+          <option value="BENT">Bent/Elbow</option>
+          <option value="CURVED">Curved</option>
+        </select>
+      </div>
+      <div class="help-text">This setting applies to all connections</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">🔗 Connect Shapes</div>
+      <div class="help-text">Select exactly two shapes to connect them</div>
+      <br />
+      <div class="button-group">
+        <button onclick="connectShapesVertical()">⬆⬇ Connect Top/Down</button>
+        <button onclick="connectShapesHorizontal()">
+          ⬅➡ Connect Left/Right
+        </button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">➕ Create Child Shapes</div>
+
+      <div class="form-group">
+        <label for="childrenCount">Children Count:</label>
+        <div class="gap-controls">
+          <input type="number" id="childrenCount" min="1" max="10" value="1" />
+          <span class="input-suffix">shapes</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="gap">Gap:</label>
+        <div class="gap-controls">
+          <input type="number" id="gap" min="0" value="20" />
+          <span class="input-suffix">pt</span>
+        </div>
+      </div>
+
+      <div class="help-text">
+        Select one shape to duplicate and connect with lines
+      </div>
+      <br />
+
+      <div class="button-group">
+        <button class="secondary" onclick="createChildTop()">
+          ⬆ Create Top
+        </button>
+        <button class="tertiary" onclick="createChildRight()">
+          ➡ Create Right
+        </button>
+      </div>
+      <div class="button-group" style="margin-top: 8px">
+        <button class="secondary" onclick="createChildBottom()">
+          ⬇ Create Bottom
+        </button>
+        <button class="tertiary" onclick="createChildLeft()">
+          ⬅ Create Left
+        </button>
+      </div>
+    </div>
+
+    <script>
+      function connectShapesVertical() {
+        const lineType = document.getElementById("lineType").value;
+
+        google.script.run
+          .withSuccessHandler(function () {
+            showMessage("Shapes connected vertically!");
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .connectSelectedShapesVertical(lineType);
+      }
+
+      function connectShapesHorizontal() {
+        const lineType = document.getElementById("lineType").value;
+
+        google.script.run
+          .withSuccessHandler(function () {
+            showMessage("Shapes connected horizontally!");
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .connectSelectedShapesHorizontal(lineType);
+      }
+
+      function createChildTop() {
+        const gap = parseInt(document.getElementById("gap").value);
+        const childrenCount = parseInt(
+          document.getElementById("childrenCount").value,
+        );
+        const lineType = document.getElementById("lineType").value;
+
+        if (gap < 0 || isNaN(gap)) {
+          showMessage("Please enter a valid gap value (0 or greater)", true);
+          return;
+        }
+
+        if (childrenCount < 1 || childrenCount > 10 || isNaN(childrenCount)) {
+          showMessage("Please enter a valid children count (1-10)", true);
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function () {
+            const msg =
+              childrenCount === 1
+                ? "Child shape created above successfully!"
+                : `${childrenCount} child shapes created above successfully!`;
+            showMessage(msg);
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .createChildTop(gap, lineType, childrenCount);
+      }
+
+      function createChildRight() {
+        const gap = parseInt(document.getElementById("gap").value);
+        const childrenCount = parseInt(
+          document.getElementById("childrenCount").value,
+        );
+        const lineType = document.getElementById("lineType").value;
+
+        if (gap < 0 || isNaN(gap)) {
+          showMessage("Please enter a valid gap value (0 or greater)", true);
+          return;
+        }
+
+        if (childrenCount < 1 || childrenCount > 10 || isNaN(childrenCount)) {
+          showMessage("Please enter a valid children count (1-10)", true);
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function () {
+            const msg =
+              childrenCount === 1
+                ? "Child shape created to the right successfully!"
+                : `${childrenCount} child shapes created to the right successfully!`;
+            showMessage(msg);
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .createChildRight(gap, lineType, childrenCount);
+      }
+
+      function createChildBottom() {
+        const gap = parseInt(document.getElementById("gap").value);
+        const childrenCount = parseInt(
+          document.getElementById("childrenCount").value,
+        );
+        const lineType = document.getElementById("lineType").value;
+
+        if (gap < 0 || isNaN(gap)) {
+          showMessage("Please enter a valid gap value (0 or greater)", true);
+          return;
+        }
+
+        if (childrenCount < 1 || childrenCount > 10 || isNaN(childrenCount)) {
+          showMessage("Please enter a valid children count (1-10)", true);
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function () {
+            const msg =
+              childrenCount === 1
+                ? "Child shape created below successfully!"
+                : `${childrenCount} child shapes created below successfully!`;
+            showMessage(msg);
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .createChildBottom(gap, lineType, childrenCount);
+      }
+
+      function createChildLeft() {
+        const gap = parseInt(document.getElementById("gap").value);
+        const childrenCount = parseInt(
+          document.getElementById("childrenCount").value,
+        );
+        const lineType = document.getElementById("lineType").value;
+
+        if (gap < 0 || isNaN(gap)) {
+          showMessage("Please enter a valid gap value (0 or greater)", true);
+          return;
+        }
+
+        if (childrenCount < 1 || childrenCount > 10 || isNaN(childrenCount)) {
+          showMessage("Please enter a valid children count (1-10)", true);
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function () {
+            const msg =
+              childrenCount === 1
+                ? "Child shape created to the left successfully!"
+                : `${childrenCount} child shapes created to the left successfully!`;
+            showMessage(msg);
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .createChildLeft(gap, lineType, childrenCount);
+      }
+
+      function showMessage(message, isError = false) {
+        // Create a simple toast message at the bottom of the sidebar
+        const existingToast = document.getElementById("toast-message");
+        if (existingToast) {
+          existingToast.remove();
+        }
+
+        const toast = document.createElement("div");
+        toast.id = "toast-message";
+        toast.style.cssText = `
+        position: fixed;
+        bottom: 16px;
+        left: 16px;
+        right: 16px;
+        background: ${isError ? "#f44336" : "#4caf50"};
+        color: white;
+        padding: 12px 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        text-align: center;
+        animation: slideUp 0.3s ease-out;
+      `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.style.animation = "slideDown 0.3s ease-out";
+            setTimeout(() => {
+              if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+              }
+            }, 300);
+          }
+        }, 3000);
+      }
+
+      // Auto-save gap value to localStorage
+      document.getElementById("gap").addEventListener("change", function () {
+        localStorage.setItem("flowchart_gap", this.value);
+      });
+
+      // Auto-save line type to localStorage
+      document
+        .getElementById("lineType")
+        .addEventListener("change", function () {
+          localStorage.setItem("flowchart_lineType", this.value);
+        });
+
+      // Load saved values
+      window.addEventListener("load", function () {
+        const savedGap = localStorage.getItem("flowchart_gap");
+        if (savedGap) {
+          document.getElementById("gap").value = savedGap;
+        }
+
+        const savedLineType = localStorage.getItem("flowchart_lineType");
+        if (savedLineType) {
+          document.getElementById("lineType").value = savedLineType;
+        }
+      });
+    </script>
+  </body>
+</html>
