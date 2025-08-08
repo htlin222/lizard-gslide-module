@@ -1,0 +1,105 @@
+<script>
+  /**
+   * Shows a status message in the sidebar
+   * @param {string} message - The message to display
+   * @param {string} type - The message type: 'success', 'error', or 'info'
+   */
+  function showStatus(message, type = "info") {
+    const statusElement = document.getElementById("statusMessage");
+    statusElement.textContent = message;
+    statusElement.className = `status-message status-${type}`;
+    statusElement.style.display = "block";
+
+    // Hide after 5 seconds for success/info messages
+    if (type === "success" || type === "info") {
+      setTimeout(() => {
+        statusElement.style.display = "none";
+      }, 5000);
+    }
+  }
+
+  /**
+   * Clears the markdown input
+   */
+  function clearMarkdown() {
+    const input = document.getElementById("markdownInput");
+    input.value = "";
+    input.focus();
+
+    // Hide any existing status messages
+    const statusElement = document.getElementById("statusMessage");
+    statusElement.style.display = "none";
+  }
+
+  /**
+   * Converts the markdown text to slides
+   */
+  function convertMarkdown() {
+    const input = document.getElementById("markdownInput");
+    const button = document.getElementById("convertButton");
+    const markdownText = input.value.trim();
+
+    if (!markdownText) {
+      showStatus("Please enter some Markdown content to convert.", "error");
+      input.focus();
+      return;
+    }
+
+    // Disable button and show processing status
+    button.disabled = true;
+    button.textContent = "Converting...";
+    showStatus("Converting Markdown to slides...", "info");
+
+    // Call the server-side function
+    google.script.run
+      .withSuccessHandler(function (success) {
+        button.disabled = false;
+        button.textContent = "Convert to Slides";
+
+        if (success) {
+          showStatus(
+            "✅ Slides created successfully! Check your presentation.",
+            "success",
+          );
+          // Optionally clear the input after successful conversion
+          // input.value = '';
+        } else {
+          showStatus(
+            "❌ Failed to create slides. Please check your Markdown format.",
+            "error",
+          );
+        }
+      })
+      .withFailureHandler(function (error) {
+        button.disabled = false;
+        button.textContent = "Convert to Slides";
+        showStatus(`❌ Error: ${error.message}`, "error");
+        console.error("Conversion error:", error);
+      })
+      .convertMarkdownToSlides(markdownText);
+  }
+
+  /**
+   * Initialize the sidebar when loaded
+   */
+  document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("markdownInput");
+
+    // Auto-focus the input when sidebar opens
+    input.focus();
+
+    // Add keyboard shortcut for conversion (Ctrl+Enter or Cmd+Enter)
+    input.addEventListener("keydown", function (event) {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        convertMarkdown();
+      }
+    });
+
+    // Show initial help message
+    showStatus(
+      "💡 Tip: Use Ctrl+Enter (Cmd+Enter on Mac) to convert quickly!",
+      "info",
+    );
+  });
+</script>

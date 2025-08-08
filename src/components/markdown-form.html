@@ -1,0 +1,50 @@
+<div class="markdown-container">
+  <label for="markdownInput">Paste your Markdown content below:</label>
+  <textarea
+    id="markdownInput"
+    class="markdown-input"
+    placeholder="# Main Title
+    
+## Slide Title
+- Bullet point one
+- Bullet point two
+
+## Another Slide
+1. Numbered list item
+2. Another numbered item
+
+A. Lettered list item
+B. Another lettered item
+
+> Speaker notes go here
+
+**Bold text** will be formatted
+
+---
+Horizontal lines separate slides"
+  ></textarea>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button" onclick="clearMarkdown()">
+      Clear
+    </button>
+    <button
+      type="button"
+      class="convert-button"
+      id="convertButton"
+      onclick="convertMarkdown()"
+    >
+      Convert to Slides
+    </button>
+  </div>
+</div>
+
+<div class="example-section">
+  <div class="example-title">📝 Quick Reference:</div>
+  <div class="example-text">
+    # Section Header (H1) ## Slide Title (H2) - Bullet points 1. Numbered lists
+    A. Lettered lists **Bold text** > Speaker notes --- (slide separator)
+  </div>
+</div>

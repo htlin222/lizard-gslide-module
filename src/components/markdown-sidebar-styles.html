@@ -1,0 +1,115 @@
+<style>
+  /* Markdown sidebar specific styles */
+  .markdown-container {
+    margin: 10px 0;
+  }
+
+  .markdown-input {
+    width: 100%;
+    height: 300px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    font-family: "Monaco", "Courier New", monospace;
+    font-size: 12px;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+
+  .markdown-input:focus {
+    border-color: #4285f4;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+  }
+
+  .convert-button {
+    width: 100%;
+    background-color: #4285f4;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  .convert-button:hover {
+    background-color: #3367d6;
+  }
+
+  .convert-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+
+  .status-message {
+    margin: 10px 0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: none;
+  }
+
+  .status-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .status-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .status-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+  }
+
+  .example-section {
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #4285f4;
+  }
+
+  .example-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
+    font-size: 13px;
+  }
+
+  .example-text {
+    font-family: "Monaco", "Courier New", monospace;
+    font-size: 11px;
+    color: #666;
+    line-height: 1.4;
+    white-space: pre-line;
+  }
+
+  .clear-button {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+
+  .clear-button:hover {
+    background-color: #5a6268;
+  }
+
+  .button-row {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+  }
+</style>

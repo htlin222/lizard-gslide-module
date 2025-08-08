@@ -108,6 +108,7 @@ function createCustomMenu() {
 			.addItem("👆 在上面加入前一頁的標題", "copyPreviousTitleText")
 			.addItem("👇 新增一頁並加入當前標題", "createNextSlideWithCurrentTitle")
 			.addItem("📝 Markdown 轉換成投影片", "showMarkdownToSlidesDialog")
+			.addItem("📋 Markdown 側邊欄", "showMarkdownSidebar")
 			.addItem("**B** Markdown 粗體格式", "runApplyMarkdownBoldFormatting")
 			.addToUi();
 
@@ -387,8 +388,8 @@ function showMarkdownToSlidesDialog() {
 		const html = HtmlService.createHtmlOutputFromFile(
 			"src/components/md2slides-dialog.html",
 		)
-			.setWidth(600)
-			.setHeight(500)
+			.setWidth(800)
+			.setHeight(700)
 			.setTitle("Markdown to Slides Converter");
 
 		SlidesApp.getUi().showModalDialog(html, "Markdown to Slides");
@@ -397,6 +398,23 @@ function showMarkdownToSlidesDialog() {
 		SlidesApp.getUi().alert(
 			"Error",
 			"Could not open the Markdown to Slides dialog: " + e.message,
+		);
+	}
+}
+
+/**
+ * Shows the Markdown to Slides converter as a fixed right sidebar
+ */
+function showMarkdownSidebar() {
+	try {
+		// Use the modular sidebar approach
+		const sidebar = createMarkdownSidebar();
+		SlidesApp.getUi().showSidebar(sidebar);
+	} catch (e) {
+		console.error("Error showing Markdown sidebar: " + e.message);
+		SlidesApp.getUi().alert(
+			"Error",
+			"Could not open the Markdown sidebar: " + e.message,
 		);
 	}
 }
