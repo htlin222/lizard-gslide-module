@@ -273,15 +273,17 @@ function connectExistingGraphShapes(
 		const updatedChildren = [...parentId.children, childId.current];
 		const newParentId = generateGraphId(
 			parentId.parent,
+			parentId.layout,
 			parentId.current,
 			updatedChildren,
 		);
 		setShapeGraphId(parentShape, newParentId);
 	}
 
-	// Update child to reflect correct parent
+	// Update child to reflect correct parent using parent's layout
 	const newChildId = generateGraphId(
 		parentId.current,
+		parentId.layout,
 		childId.current,
 		childId.children,
 	);
@@ -320,7 +322,8 @@ function initializeRootGraphShape() {
 	}
 
 	const shape = element.asShape();
-	const rootId = generateGraphId("", "A1", []);
+	// Initialize as root with LR layout by default
+	const rootId = generateGraphId("", "LR", "A1", []);
 	setShapeGraphId(shape, rootId);
 
 	SlidesApp.getUi().alert(

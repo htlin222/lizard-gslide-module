@@ -1,42 +1,91 @@
 /**
  * Graph ID management utilities for hierarchical shape naming
  * Handles parsing, generating, and managing graph IDs for flowchart shapes
- * Format: graph[parent][current][children]
+ * Format: graph[parent](LR/TD)[current][children]
+ * - LR = Left-Right (horizontal layout)
+ * - TD = Top-Down (vertical layout)
  */
 
 /**
  * Parses a graph ID to extract its components
  * @param {string} graphId - The graph ID to parse
- * @returns {Object|null} - Object with parent, current, children arrays or null if not a graph ID
+ * @returns {Object|null} - Object with parent, layout, current, children arrays or null if not a graph ID
  */
 function parseGraphId(graphId) {
 	if (!graphId || !graphId.startsWith("graph[")) {
 		return null;
 	}
 
-	// Extract content between brackets using regex
-	const matches = graphId.match(/graph\[([^\]]*)\]\[([^\]]*)\]\[([^\]]*)\]/);
-	if (!matches) {
-		return null;
+	// New format: graph[parent](LR/TD)[current][children]
+	const newFormatMatches = graphId.match(
+		/graph\[([^\]]*)\]\(([^)]*)\)\[([^\]]*)\]\[([^\]]*)\]/,
+	);
+	if (newFormatMatches) {
+		return {
+			parent: newFormatMatches[1] || "",
+			layout: newFormatMatches[2] || "LR", // Default to LR
+			current: newFormatMatches[3] || "",
+			children: newFormatMatches[4]
+				? newFormatMatches[4].split(",").filter((c) => c.trim())
+				: [],
+		};
 	}
 
-	return {
-		parent: matches[1] || "",
-		current: matches[2] || "",
-		children: matches[3] ? matches[3].split(",").filter((c) => c.trim()) : [],
-	};
+	// Legacy format: graph[parent][current][children] - assume LR layout
+	const legacyMatches = graphId.match(
+		/graph\[([^\]]*)\]\[([^\]]*)\]\[([^\]]*)\]/,
+	);
+	if (legacyMatches) {
+		return {
+			parent: legacyMatches[1] || "",
+			layout: "LR", // Default legacy to LR
+			current: legacyMatches[2] || "",
+			children: legacyMatches[3]
+				? legacyMatches[3].split(",").filter((c) => c.trim())
+				: [],
+		};
+	}
+
+	return null;
 }
 
 /**
- * Generates a graph ID from components
+ * Generates a graph ID from components with layout information
  * @param {string} parent - Parent ID
+ * @param {string} layout - Layout type ("LR" or "TD")
  * @param {string} current - Current ID
  * @param {Array} children - Array of child IDs
  * @returns {string} - Generated graph ID
  */
-function generateGraphId(parent, current, children = []) {
-	const childrenStr = children.join(",");
-	return `graph[${parent}][${current}][${childrenStr}]`;
+function generateGraphId(parent, layout, current, children = []) {
+	// Handle legacy calls with 3 parameters (parent, current, children)
+	if (Array.isArray(layout)) {
+		children = layout;
+		current = current || "";
+		layout = "LR"; // Default to LR for legacy calls
+		const temp = parent;
+		parent = "";
+		current = temp;
+	} else if (typeof layout === "string" && !["LR", "TD"].includes(layout)) {
+		// Handle legacy calls: generateGraphId(parent, current, children)
+		children = current || [];
+		current = layout;
+		layout = "LR"; // Default to LR
+	}
+
+	const childrenStr = Array.isArray(children) ? children.join(",") : "";
+	return `graph[${parent}](${layout})[${current}][${childrenStr}]`;
+}
+
+/**
+ * Legacy wrapper for generateGraphId to maintain backwards compatibility
+ * @param {string} parent - Parent ID
+ * @param {string} current - Current ID
+ * @param {Array} children - Array of child IDs
+ * @returns {string} - Generated graph ID with LR layout
+ */
+function generateGraphIdLegacy(parent, current, children = []) {
+	return generateGraphId(parent, "LR", current, children);
 }
 
 /**
@@ -110,8 +159,8 @@ function getShapeGraphId(shape) {
 function updateParentWithChildren(parentShape, newChildIds) {
 	const currentId = getShapeGraphId(parentShape);
 	if (!currentId) {
-		// If parent doesn't have a graph ID, create one
-		const newId = generateGraphId("", "A1", newChildIds);
+		// If parent doesn't have a graph ID, create one with LR layout
+		const newId = generateGraphId("", "LR", "A1", newChildIds);
 		setShapeGraphId(parentShape, newId);
 		return;
 	}
@@ -121,7 +170,12 @@ function updateParentWithChildren(parentShape, newChildIds) {
 
 	// Merge existing children with new ones
 	const allChildren = [...parsed.children, ...newChildIds];
-	const updatedId = generateGraphId(parsed.parent, parsed.current, allChildren);
+	const updatedId = generateGraphId(
+		parsed.parent,
+		parsed.layout,
+		parsed.current,
+		allChildren,
+	);
 	setShapeGraphId(parentShape, updatedId);
 }
 
@@ -131,7 +185,7 @@ function updateParentWithChildren(parentShape, newChildIds) {
  * @returns {string} - Generated root graph ID
  */
 function initializeAsRootGraphShape(shape) {
-	const rootId = generateGraphId("", "A1", []);
+	const rootId = generateGraphId("", "LR", "A1", []);
 	setShapeGraphId(shape, rootId);
 	return rootId;
 }
@@ -201,15 +255,17 @@ function updateGraphShapeRelationship(shapeA, shapeB) {
 		const updatedChildren = [...parentId.children, childId.current];
 		const newParentId = generateGraphId(
 			parentId.parent,
+			parentId.layout,
 			parentId.current,
 			updatedChildren,
 		);
 		setShapeGraphId(parentShape, newParentId);
 	}
 
-	// Update child to reflect correct parent
+	// Update child to reflect correct parent using parent's layout
 	const newChildId = generateGraphId(
 		parentId.current,
+		parentId.layout,
 		childId.current,
 		childId.children,
 	);

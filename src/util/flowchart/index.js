@@ -40,7 +40,7 @@
  *
  * From graphIdUtils.js:
  * - parseGraphId(graphId)
- * - generateGraphId(parent, current, children)
+ * - generateGraphId(parent, layout, current, children)
  * - getNextLevel(parentLevel)
  * - generateSiblingIds(baseLevel, count)
  * - setShapeGraphId(shape, graphId)

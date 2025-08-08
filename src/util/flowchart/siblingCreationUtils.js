@@ -184,8 +184,13 @@ function createSiblingShape(
 	// Copy styling from selected shape
 	copyShapeStyle(selectedShape, newShape);
 
-	// Set the hierarchical graph ID
-	const newGraphId = generateGraphId(parsed.parent, newSiblingId, []);
+	// Set the hierarchical graph ID using the parent's layout
+	const newGraphId = generateGraphId(
+		parsed.parent,
+		parsed.layout,
+		newSiblingId,
+		[],
+	);
 	setShapeGraphId(newShape, newGraphId);
 
 	// Add the new sibling to our shapes array at the correct position
@@ -233,6 +238,7 @@ function createSiblingShape(
 	const updatedChildren = [...parentData.children, newSiblingId];
 	const updatedParentId = generateGraphId(
 		parentData.parent,
+		parentData.layout,
 		parentData.current,
 		updatedChildren,
 	);

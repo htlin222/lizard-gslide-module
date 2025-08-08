@@ -237,7 +237,10 @@ function createChildrenInDirection(
 		const parentCurrentId = parentGraphId
 			? parseGraphId(parentGraphId)?.current || "A1"
 			: "A1";
-		const childGraphId = generateGraphId(parentCurrentId, childId, []);
+
+		// Determine layout based on direction
+		const layout = direction === "TOP" || direction === "BOTTOM" ? "TD" : "LR";
+		const childGraphId = generateGraphId(parentCurrentId, layout, childId, []);
 		setShapeGraphId(childShape, childGraphId);
 
 		createdShapes.push(childShape);
