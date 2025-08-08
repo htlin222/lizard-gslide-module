@@ -76,7 +76,9 @@ function parseMarkdownToStructure(markdownText) {
 
 				// Detect and set list type based on the first list item encountered
 				if (currentSlide.bodyItems.length === 0) {
-					if (/^\d+\.\s/.test(line)) {
+					if (/^\(\d+\)\s/.test(line)) {
+						currentSlide.listType = "numbered_parens";
+					} else if (/^\d+\.\s/.test(line)) {
 						currentSlide.listType = "numbered";
 					} else if (/^[A-Z]\.\s/.test(line)) {
 						currentSlide.listType = "lettered";
@@ -90,6 +92,8 @@ function parseMarkdownToStructure(markdownText) {
 					content = line.substring(2).trim();
 				} else if (line.startsWith("* ")) {
 					content = line.substring(2).trim();
+				} else if (/^\(\d+\)\s/.test(line)) {
+					content = line.substring(line.indexOf(")") + 1).trim();
 				} else if (/^\d+\.\s/.test(line)) {
 					content = line.substring(line.indexOf(".") + 1).trim();
 				} else if (/^[A-Z]\.\s/.test(line)) {
@@ -110,9 +114,12 @@ function parseMarkdownToStructure(markdownText) {
 /**
  * Detects the list type from a markdown line
  * @param {string} line - The line to analyze
- * @return {string} - "numbered", "lettered", "bullet", or "none"
+ * @return {string} - "numbered", "lettered", "numbered_parens", "bullet", or "none"
  */
 function detectListType(line) {
+	if (/^\(\d+\)\s/.test(line)) {
+		return "numbered_parens";
+	}
 	if (/^\d+\.\s/.test(line)) {
 		return "numbered";
 	}
@@ -136,6 +143,9 @@ function removeListMarkers(line) {
 	}
 	if (line.startsWith("* ")) {
 		return line.substring(2).trim();
+	}
+	if (/^\(\d+\)\s/.test(line)) {
+		return line.substring(line.indexOf(")") + 1).trim();
 	}
 	if (/^\d+\.\s/.test(line)) {
 		return line.substring(line.indexOf(".") + 1).trim();

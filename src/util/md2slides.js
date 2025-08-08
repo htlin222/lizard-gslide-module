@@ -89,8 +89,8 @@ function convertMarkdownToSlides(markdownText) {
 			);
 		}
 
-		// Step 6: Apply markdown bold formatting to all slides
-		applyMarkdownBoldToSlides(createdSlides.map((obj) => obj.slide));
+		// Step 6: Apply markdown text formatting to all slides (bold, italic, strikethrough)
+		applyMarkdownFormattingToSlides(createdSlides.map((obj) => obj.slide));
 
 		debugLog(
 			"md2slides",
@@ -119,105 +119,6 @@ function convertMarkdownToSlides(markdownText) {
 // Note: Content management is now handled by contentManager.js module
 
 // Note: List formatting is now handled by listFormatter.js module
-
-/**
- * Apply markdown bold formatting to text enclosed in double asterisks (**text**)
- * in all slides
- * @param {Array} slides - Array of slides to apply formatting to
- */
-function applyMarkdownBoldToSlides(slides) {
-	for (let i = 0; i < slides.length; i++) {
-		try {
-			const slide = slides[i];
-			const shapes = slide.getShapes();
-
-			// Process each shape in the slide
-			for (let j = 0; j < shapes.length; j++) {
-				const shape = shapes[j];
-
-				try {
-					// Only process text boxes and placeholders
-					if (
-						shape.getShapeType() === SlidesApp.ShapeType.TEXT_BOX ||
-						shape.getPlaceholderType
-					) {
-						const textRange = shape.getText();
-						const originalText = textRange.asString();
-
-						// Find all **text** format matches
-						const matches = [...originalText.matchAll(/\*\*(.+?)\*\*/g)];
-
-						if (matches.length === 0) {
-							continue; // No markdown bold formatting found in this element
-						}
-
-						let newText = "";
-						let lastIndex = 0;
-						const formattingRanges = [];
-
-						matches.forEach((match) => {
-							const matchStart = match.index;
-							const matchEnd = match.index + match[0].length;
-							const content = match[1];
-
-							// Add text before the match
-							newText += originalText.substring(lastIndex, matchStart);
-
-							// Record the position of formatted text in the new text
-							const formatStart = newText.length;
-							newText += content;
-							const formatEnd = newText.length;
-
-							// Store range (end is exclusive)
-							formattingRanges.push({ start: formatStart, end: formatEnd });
-
-							lastIndex = matchEnd;
-						});
-
-						// Add remaining original text
-						newText += originalText.substring(lastIndex);
-
-						// Replace text
-						textRange.setText(newText);
-
-						// Apply formatting
-						formattingRanges.forEach(({ start, end }) => {
-							const range = textRange.getRange(start, end);
-							range.getTextStyle().setBold(true);
-
-							// Check if main_color is defined in the global scope
-							try {
-								if (typeof main_color !== "undefined") {
-									range.getTextStyle().setForegroundColor(main_color);
-								}
-							} catch (e) {
-								// If main_color is not defined, we just skip setting the color
-								Logger.log(
-									"Note: main_color not defined, skipping color formatting",
-								);
-							}
-						});
-					}
-				} catch (e) {
-					Logger.log(
-						"Error processing shape for bold formatting: " + e.message,
-					);
-					// Continue with next shape
-				}
-			}
-
-			Logger.log("Applied markdown bold formatting to slide " + (i + 1));
-		} catch (error) {
-			Logger.log(
-				"Error applying markdown bold formatting to slide " +
-					(i + 1) +
-					": " +
-					error.message,
-			);
-			// Continue with next slide
-		}
-	}
-}
 
 /**
  * Registers the md2slides utility in the menu

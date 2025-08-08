@@ -83,16 +83,17 @@ function applyListFormattingToSlide(slideObj) {
 
 /**
  * Gets the appropriate Google Slides list preset for a given list type
- * @param {string} listType - "numbered", "lettered", or "bullet"
+ * @param {string} listType - "numbered", "numbered_parens", "lettered", or "bullet"
  * @return {SlidesApp.ListPreset} The appropriate list preset
  */
 function getListPresetFromType(listType) {
 	switch (listType) {
 		case "numbered":
-			return SlidesApp.ListPreset.NUMBERED_LIST_ARABIC_1;
+			return SlidesApp.ListPreset.DIGIT_ALPHA_ROMAN;
+		case "numbered_parens":
+			return SlidesApp.ListPreset.DIGIT_ALPHA_ROMAN_PARENS;
 		case "lettered":
-			return SlidesApp.ListPreset.LETTERED_LIST_UPPER_ALPHA_PERIOD;
-		case "bullet":
+			return SlidesApp.ListPreset.UPPERALPHA_ALPHA_ROMAN;
 		default:
 			return SlidesApp.ListPreset.DISC_CIRCLE_SQUARE;
 	}
@@ -172,7 +173,7 @@ function tryApplyListFormattingToTextBoxes(shapes, title, listPreset) {
  * Tries to apply manual list formatting by adding list markers
  * @param {Array} shapes - Array of slide shapes
  * @param {string} title - Slide title (to exclude from formatting)
- * @param {string} listType - Type of list ("numbered", "lettered", "bullet")
+ * @param {string} listType - Type of list ("numbered", "numbered_parens", "lettered", "bullet")
  * @return {boolean} Success status
  */
 function tryApplyManualListFormatting(shapes, title, listType) {
@@ -195,9 +196,9 @@ function tryApplyManualListFormatting(shapes, title, listType) {
 						if (line !== "") {
 							const marker = getListMarkerForIndex(k, listType);
 							if (k === 0) {
-								textRange.setText(marker + " " + line);
+								textRange.setText(`${marker} ${line}`);
 							} else {
-								textRange.appendParagraph(marker + " " + line);
+								textRange.appendParagraph(`${marker} ${line}`);
 							}
 						}
 					}
@@ -215,17 +216,18 @@ function tryApplyManualListFormatting(shapes, title, listType) {
 /**
  * Gets the appropriate list marker for a given index and list type
  * @param {number} index - Zero-based index of the list item
- * @param {string} listType - Type of list ("numbered", "lettered", "bullet")
+ * @param {string} listType - Type of list ("numbered", "numbered_parens", "lettered", "bullet")
  * @return {string} The list marker
  */
 function getListMarkerForIndex(index, listType) {
 	switch (listType) {
 		case "numbered":
-			return (index + 1).toString() + ".";
+			return `${(index + 1).toString()}.`;
+		case "numbered_parens":
+			return `(${(index + 1).toString()})`;
 		case "lettered":
 			// Convert index to letter (0=A, 1=B, etc.)
-			return String.fromCharCode(65 + (index % 26)) + ".";
-		case "bullet":
+			return `${String.fromCharCode(65 + (index % 26))}.`;
 		default:
 			return "•";
 	}
@@ -234,9 +236,9 @@ function getListMarkerForIndex(index, listType) {
 /**
  * Validates list type and returns a safe default if invalid
  * @param {string} listType - The list type to validate
- * @return {string} Valid list type ("numbered", "lettered", or "bullet")
+ * @return {string} Valid list type ("numbered", "numbered_parens", "lettered", or "bullet")
  */
 function validateListType(listType) {
-	const validTypes = ["numbered", "lettered", "bullet"];
+	const validTypes = ["numbered", "numbered_parens", "lettered", "bullet"];
 	return validTypes.includes(listType) ? listType : "bullet";
 }
