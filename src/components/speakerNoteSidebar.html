@@ -6,7 +6,7 @@
       body {
         font-family: Arial, sans-serif;
         margin: 0;
-        padding: 12px;
+        padding: 6px;
         background-color: #f8f9fa;
       }
 
@@ -23,9 +23,9 @@
 
       .section {
         background: white;
-        border-radius: 6px;
-        padding: 12px;
-        margin-bottom: 12px;
+        border-radius: 2px;
+        padding: 6px;
+        margin-bottom: 6px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         border: 1px solid #e9ecef;
       }
@@ -89,7 +89,7 @@
 
       textarea {
         resize: vertical;
-        min-height: 80px;
+        min-height: 100px;
       }
 
       .button-group {
@@ -192,19 +192,6 @@
         position: relative;
       }
 
-      .api-key-toggle {
-        position: absolute;
-        right: 8px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0;
-        color: #6c757d;
-        font-size: 12px;
-      }
-
       .footer {
         text-align: center;
         font-size: 11px;
@@ -293,15 +280,16 @@
         <div style="margin-top: 8px">
           <div class="api-key-input">
             <input type="password" id="apiKey" placeholder="sk-..." value="" />
-            <button
-              type="button"
-              class="api-key-toggle"
-              onclick="toggleApiKeyVisibility()"
-            >
-              👁️
-            </button>
           </div>
         </div>
+        <button
+          type="button"
+          style="margin-top: 8px"
+          class="secondary-btn"
+          onclick="toggleApiKeyVisibility()"
+        >
+          Show API KEY
+        </button>
       </details>
     </div>
 
@@ -311,9 +299,9 @@
         id="prompt"
         placeholder="Enter specific instructions for generating speaker notes..."
       >
-依據所提的內容，產生本頁投影片的講者逐字稿，繁體中文，不需翻譯專有名詞</textarea
+依據所提的內容，產生本頁投影片的講者逐字稿，繁體中文，不需翻譯專有名詞，保留原文不需中文對照，另外省略所有客套話，專注在內容的講解</textarea
       >
-      <div class="button-group" style="margin-top: 12px">
+      <div class="button-group" style="margin-top: 6px">
         <button onclick="generateSpeakerNotes()" id="generateBtn">
           <span class="generate-text">🚀 Generate</span>
         </button>
