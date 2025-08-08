@@ -22,7 +22,9 @@ function showSpeakerNoteSidebar() {
  * Creates the Speaker Note sidebar HTML
  */
 function createSpeakerNoteSidebar() {
-	return HtmlService.createHtmlOutputFromFile("speakerNoteSidebar")
+	return HtmlService.createHtmlOutputFromFile(
+		"src/components/speakerNoteSidebar",
+	)
 		.setTitle("AI Speaker Notes Generator")
 		.setWidth(400);
 }
@@ -37,11 +39,12 @@ function getCurrentSlideContent() {
 		const currentSlide = presentation.getSelection().getCurrentPage();
 
 		if (!currentSlide) {
-			throw new Error("No slide selected");
+			throw new Error("Please select a slide first");
 		}
 
-		const slideNumber = presentation.getSlides().indexOf(currentSlide) + 1;
-		const totalSlides = presentation.getSlides().length;
+		const slides = presentation.getSlides();
+		const slideNumber = slides.indexOf(currentSlide) + 1;
+		const totalSlides = slides.length;
 
 		// Get all shapes and their text content
 		const shapes = currentSlide.getShapes();
@@ -124,76 +127,19 @@ function getCurrentSlideContent() {
 function getCurrentSpeakerNotes() {
 	try {
 		const presentation = SlidesApp.getActivePresentation();
-		const slides = presentation.getSlides();
 		const currentSlide = presentation.getSelection().getCurrentPage();
 
 		if (!currentSlide) {
 			return "";
 		}
 
-		// Find the slide index
-		const slideIndex = slides.indexOf(currentSlide);
-		if (slideIndex === -1) {
-			return "";
-		}
+		// Use the simple Apps Script API
+		const slide = currentSlide;
+		const notesPage = slide.getNotesPage();
+		const notesShape = notesPage.getSpeakerNotesShape();
+		const text = notesShape.getText().asString();
 
-		// Use the slide from the slides array and access its notes
-		const slide = slides[slideIndex];
-
-		// Try to get speaker notes text using Slides API
-		const slideId = slide.getObjectId();
-		const presentationId = presentation.getId();
-
-		try {
-			// Use the advanced Slides API
-			const slideData = Slides.Presentations.get({
-				presentationId: presentationId,
-				fields: "slides(objectId,slideProperties.notesPage)",
-			});
-
-			if (slideData && slideData.slides) {
-				const targetSlide = slideData.slides.find(
-					(s) => s.objectId === slideId,
-				);
-				if (
-					targetSlide &&
-					targetSlide.slideProperties &&
-					targetSlide.slideProperties.notesPage
-				) {
-					const notesPageId = targetSlide.slideProperties.notesPage.objectId;
-
-					const notesPage = Slides.Presentations.Pages.get({
-						presentationId: presentationId,
-						pageObjectId: notesPageId,
-					});
-
-					if (notesPage && notesPage.pageElements) {
-						for (const element of notesPage.pageElements) {
-							if (
-								element.shape &&
-								element.shape.placeholder &&
-								element.shape.placeholder.type === "BODY"
-							) {
-								if (element.shape.text && element.shape.text.textElements) {
-									let noteText = "";
-									for (const textElement of element.shape.text.textElements) {
-										if (textElement.textRun) {
-											noteText += textElement.textRun.content;
-										}
-									}
-									return noteText.trim();
-								}
-							}
-						}
-					}
-				}
-			}
-		} catch (apiError) {
-			// API fallback failed, return empty
-			console.log(`API method failed: ${apiError.message}`);
-		}
-
-		return "";
+		return text.trim();
 	} catch (e) {
 		console.error(`Error getting speaker notes: ${e.message}`);
 		return "";
@@ -300,90 +246,30 @@ Please provide speaker notes that:
 function appendToSpeakerNotes(textToAppend) {
 	try {
 		const presentation = SlidesApp.getActivePresentation();
-		const slides = presentation.getSlides();
 		const currentSlide = presentation.getSelection().getCurrentPage();
 
 		if (!currentSlide) {
-			throw new Error("No slide selected");
+			throw new Error("Please select a slide first");
 		}
 
-		// Find the slide index
-		const slideIndex = slides.indexOf(currentSlide);
-		if (slideIndex === -1) {
-			throw new Error("Could not find current slide");
-		}
+		// Get current notes and append new text
+		const slide = currentSlide;
+		const notesPage = slide.getNotesPage();
+		const notesShape = notesPage.getSpeakerNotesShape();
+		const currentText = notesShape.getText().asString();
 
-		const slide = slides[slideIndex];
-		const slideId = slide.getObjectId();
-		const presentationId = presentation.getId();
-
-		// Get current notes
-		const currentNotes = getCurrentSpeakerNotes();
-		const newNotes = currentNotes
-			? `${currentNotes}\n\n${textToAppend}`
+		// Create new text with proper spacing
+		const newText = currentText.trim()
+			? `${currentText.trim()}\n\n${textToAppend}`
 			: textToAppend;
 
-		// Use Slides API to update speaker notes
-		const slideData = Slides.Presentations.get({
-			presentationId: presentationId,
-			fields: "slides(objectId,slideProperties.notesPage)",
-		});
+		// Update the speaker notes
+		notesShape.getText().setText(newText);
 
-		if (slideData?.slides) {
-			const targetSlide = slideData.slides.find((s) => s.objectId === slideId);
-			if (targetSlide?.slideProperties?.notesPage) {
-				const notesPageId = targetSlide.slideProperties.notesPage.objectId;
-
-				// Find the speaker notes shape and update it
-				const notesPage = Slides.Presentations.Pages.get({
-					presentationId: presentationId,
-					pageObjectId: notesPageId,
-				});
-
-				if (notesPage?.pageElements) {
-					for (const element of notesPage.pageElements) {
-						if (
-							element.shape?.placeholder &&
-							element.shape.placeholder.type === "BODY"
-						) {
-							// Update the text using batch update
-							const requests = [
-								{
-									insertText: {
-										objectId: element.objectId,
-										insertionIndex: 0,
-										text: newNotes,
-									},
-								},
-								{
-									deleteText: {
-										objectId: element.objectId,
-										textRange: {
-											startIndex: newNotes.length,
-											endIndex: newNotes.length + (currentNotes?.length || 0),
-										},
-									},
-								},
-							];
-
-							Slides.Presentations.batchUpdate(
-								{
-									requests: requests,
-								},
-								presentationId,
-							);
-
-							return {
-								success: true,
-								message: "Speaker notes updated successfully",
-							};
-						}
-					}
-				}
-			}
-		}
-
-		throw new Error("Could not access speaker notes");
+		return {
+			success: true,
+			message: "Speaker notes updated successfully",
+		};
 	} catch (e) {
 		console.error(`Error appending to speaker notes: ${e.message}`);
 		return {
@@ -401,83 +287,22 @@ function appendToSpeakerNotes(textToAppend) {
 function replaceSpeakerNotes(newText) {
 	try {
 		const presentation = SlidesApp.getActivePresentation();
-		const slides = presentation.getSlides();
 		const currentSlide = presentation.getSelection().getCurrentPage();
 
 		if (!currentSlide) {
-			throw new Error("No slide selected");
+			throw new Error("Please select a slide first");
 		}
 
-		// Find the slide index
-		const slideIndex = slides.indexOf(currentSlide);
-		if (slideIndex === -1) {
-			throw new Error("Could not find current slide");
-		}
+		// Replace the speaker notes with new text
+		const slide = currentSlide;
+		const notesPage = slide.getNotesPage();
+		const notesShape = notesPage.getSpeakerNotesShape();
+		notesShape.getText().setText(newText || "");
 
-		const slide = slides[slideIndex];
-		const slideId = slide.getObjectId();
-		const presentationId = presentation.getId();
-
-		// Use Slides API to update speaker notes
-		const slideData = Slides.Presentations.get({
-			presentationId: presentationId,
-			fields: "slides(objectId,slideProperties.notesPage)",
-		});
-
-		if (slideData?.slides) {
-			const targetSlide = slideData.slides.find((s) => s.objectId === slideId);
-			if (targetSlide?.slideProperties?.notesPage) {
-				const notesPageId = targetSlide.slideProperties.notesPage.objectId;
-
-				// Find the speaker notes shape and update it
-				const notesPage = Slides.Presentations.Pages.get({
-					presentationId: presentationId,
-					pageObjectId: notesPageId,
-				});
-
-				if (notesPage?.pageElements) {
-					for (const element of notesPage.pageElements) {
-						if (
-							element.shape?.placeholder &&
-							element.shape.placeholder.type === "BODY"
-						) {
-							// Replace all text using batch update
-							const requests = [
-								{
-									deleteText: {
-										objectId: element.objectId,
-										textRange: {
-											type: "ALL",
-										},
-									},
-								},
-								{
-									insertText: {
-										objectId: element.objectId,
-										insertionIndex: 0,
-										text: newText || "",
-									},
-								},
-							];
-
-							Slides.Presentations.batchUpdate(
-								{
-									requests: requests,
-								},
-								presentationId,
-							);
-
-							return {
-								success: true,
-								message: "Speaker notes replaced successfully",
-							};
-						}
-					}
-				}
-			}
-		}
-
-		throw new Error("Could not access speaker notes");
+		return {
+			success: true,
+			message: "Speaker notes replaced successfully",
+		};
 	} catch (e) {
 		console.error(`Error replacing speaker notes: ${e.message}`);
 		return {

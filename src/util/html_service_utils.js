@@ -29,7 +29,7 @@ function createModularHtmlTemplate(filename) {
  * @return {HtmlOutput} The HTML output for the sidebar
  */
 function createModularSidebar() {
-	const template = createModularHtmlTemplate("sidebar");
+	const template = createModularHtmlTemplate("src/components/sidebar");
 	return template.evaluate().setTitle("Lizard Slides").setWidth(300);
 }
 
@@ -39,6 +39,6 @@ function createModularSidebar() {
  * @return {HtmlOutput} The HTML output for the markdown sidebar
  */
 function createMarkdownSidebar() {
-	const template = createModularHtmlTemplate("markdown-sidebar");
+	const template = createModularHtmlTemplate("src/components/markdown-sidebar");
 	return template.evaluate().setTitle("Markdown to Slides").setWidth(320);
 }
