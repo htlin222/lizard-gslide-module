@@ -59,13 +59,13 @@
 
       button {
         width: 100%;
-        padding: 10px 16px;
+        padding: 6px 6px;
         background-color: #1a73e8;
         color: white;
         border: none;
         border-radius: 4px;
         cursor: pointer;
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 500;
         margin-bottom: 8px;
         transition: background-color 0.2s;
@@ -154,6 +154,7 @@
   <body>
     <div class="section">
       <div class="section-title">⚙️ Line Settings</div>
+
       <div class="form-group">
         <label for="lineType">Line Type:</label>
         <select
@@ -171,12 +172,60 @@
           <option value="CURVED">Curved</option>
         </select>
       </div>
-      <div class="help-text">This setting applies to all connections</div>
+
+      <div class="form-group">
+        <label for="startArrow">Start Arrow:</label>
+        <select
+          id="startArrow"
+          style="
+            width: 120px;
+            padding: 6px 8px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 14px;
+          "
+        >
+          <option value="NONE" selected>None</option>
+          <option value="FILL_ARROW">Fill Arrow</option>
+          <option value="STEALTH_ARROW">Stealth Arrow</option>
+          <option value="OPEN_ARROW">Open Arrow</option>
+          <option value="FILL_CIRCLE">Fill Circle</option>
+          <option value="OPEN_CIRCLE">Open Circle</option>
+          <option value="FILL_SQUARE">Fill Square</option>
+          <option value="OPEN_SQUARE">Open Square</option>
+          <option value="FILL_DIAMOND">Fill Diamond</option>
+          <option value="OPEN_DIAMOND">Open Diamond</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="endArrow">End Arrow:</label>
+        <select
+          id="endArrow"
+          style="
+            width: 120px;
+            padding: 6px 8px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 14px;
+          "
+        >
+          <option value="NONE">None</option>
+          <option value="FILL_ARROW" selected>Fill Arrow</option>
+          <option value="STEALTH_ARROW">Stealth Arrow</option>
+          <option value="OPEN_ARROW">Open Arrow</option>
+          <option value="FILL_CIRCLE">Fill Circle</option>
+          <option value="OPEN_CIRCLE">Open Circle</option>
+          <option value="FILL_SQUARE">Fill Square</option>
+          <option value="OPEN_SQUARE">Open Square</option>
+          <option value="FILL_DIAMOND">Fill Diamond</option>
+          <option value="OPEN_DIAMOND">Open Diamond</option>
+        </select>
+      </div>
     </div>
 
     <div class="section">
       <div class="section-title">🔗 Connect Shapes</div>
-      <div class="help-text">Select exactly two shapes to connect them</div>
       <br />
       <div class="button-group">
         <button onclick="connectShapesVertical()">⬆⬇ Connect Top/Down</button>
@@ -198,16 +247,21 @@
       </div>
 
       <div class="form-group">
-        <label for="gap">Gap:</label>
+        <label for="horizontalGap">Horizontal Gap:</label>
         <div class="gap-controls">
-          <input type="number" id="gap" min="0" value="20" />
+          <input type="number" id="horizontalGap" min="0" value="20" />
           <span class="input-suffix">pt</span>
         </div>
       </div>
 
-      <div class="help-text">
-        Select one shape to duplicate and connect with lines
+      <div class="form-group">
+        <label for="verticalGap">Vertical Gap:</label>
+        <div class="gap-controls">
+          <input type="number" id="verticalGap" min="0" value="20" />
+          <span class="input-suffix">pt</span>
+        </div>
       </div>
+
       <br />
 
       <div class="button-group">
@@ -231,6 +285,8 @@
     <script>
       function connectShapesVertical() {
         const lineType = document.getElementById("lineType").value;
+        const startArrow = document.getElementById("startArrow").value;
+        const endArrow = document.getElementById("endArrow").value;
 
         google.script.run
           .withSuccessHandler(function () {
@@ -239,11 +295,13 @@
           .withFailureHandler(function (error) {
             showMessage("Error: " + error, true);
           })
-          .connectSelectedShapesVertical(lineType);
+          .connectSelectedShapesVertical(lineType, startArrow, endArrow);
       }
 
       function connectShapesHorizontal() {
         const lineType = document.getElementById("lineType").value;
+        const startArrow = document.getElementById("startArrow").value;
+        const endArrow = document.getElementById("endArrow").value;
 
         google.script.run
           .withSuccessHandler(function () {
@@ -252,18 +310,25 @@
           .withFailureHandler(function (error) {
             showMessage("Error: " + error, true);
           })
-          .connectSelectedShapesHorizontal(lineType);
+          .connectSelectedShapesHorizontal(lineType, startArrow, endArrow);
       }
 
       function createChildTop() {
-        const gap = parseInt(document.getElementById("gap").value);
+        const verticalGap = parseInt(
+          document.getElementById("verticalGap").value,
+        );
         const childrenCount = parseInt(
           document.getElementById("childrenCount").value,
         );
         const lineType = document.getElementById("lineType").value;
+        const startArrow = document.getElementById("startArrow").value;
+        const endArrow = document.getElementById("endArrow").value;
 
-        if (gap < 0 || isNaN(gap)) {
-          showMessage("Please enter a valid gap value (0 or greater)", true);
+        if (verticalGap < 0 || isNaN(verticalGap)) {
+          showMessage(
+            "Please enter a valid vertical gap value (0 or greater)",
+            true,
+          );
           return;
         }
 
@@ -283,18 +348,31 @@
           .withFailureHandler(function (error) {
             showMessage("Error: " + error, true);
           })
-          .createChildTop(gap, lineType, childrenCount);
+          .createChildTop(
+            verticalGap,
+            lineType,
+            childrenCount,
+            startArrow,
+            endArrow,
+          );
       }
 
       function createChildRight() {
-        const gap = parseInt(document.getElementById("gap").value);
+        const horizontalGap = parseInt(
+          document.getElementById("horizontalGap").value,
+        );
         const childrenCount = parseInt(
           document.getElementById("childrenCount").value,
         );
         const lineType = document.getElementById("lineType").value;
+        const startArrow = document.getElementById("startArrow").value;
+        const endArrow = document.getElementById("endArrow").value;
 
-        if (gap < 0 || isNaN(gap)) {
-          showMessage("Please enter a valid gap value (0 or greater)", true);
+        if (horizontalGap < 0 || isNaN(horizontalGap)) {
+          showMessage(
+            "Please enter a valid horizontal gap value (0 or greater)",
+            true,
+          );
           return;
         }
 
@@ -314,18 +392,31 @@
           .withFailureHandler(function (error) {
             showMessage("Error: " + error, true);
           })
-          .createChildRight(gap, lineType, childrenCount);
+          .createChildRight(
+            horizontalGap,
+            lineType,
+            childrenCount,
+            startArrow,
+            endArrow,
+          );
       }
 
       function createChildBottom() {
-        const gap = parseInt(document.getElementById("gap").value);
+        const verticalGap = parseInt(
+          document.getElementById("verticalGap").value,
+        );
         const childrenCount = parseInt(
           document.getElementById("childrenCount").value,
         );
         const lineType = document.getElementById("lineType").value;
+        const startArrow = document.getElementById("startArrow").value;
+        const endArrow = document.getElementById("endArrow").value;
 
-        if (gap < 0 || isNaN(gap)) {
-          showMessage("Please enter a valid gap value (0 or greater)", true);
+        if (verticalGap < 0 || isNaN(verticalGap)) {
+          showMessage(
+            "Please enter a valid vertical gap value (0 or greater)",
+            true,
+          );
           return;
         }
 
@@ -345,18 +436,31 @@
           .withFailureHandler(function (error) {
             showMessage("Error: " + error, true);
           })
-          .createChildBottom(gap, lineType, childrenCount);
+          .createChildBottom(
+            verticalGap,
+            lineType,
+            childrenCount,
+            startArrow,
+            endArrow,
+          );
       }
 
       function createChildLeft() {
-        const gap = parseInt(document.getElementById("gap").value);
+        const horizontalGap = parseInt(
+          document.getElementById("horizontalGap").value,
+        );
         const childrenCount = parseInt(
           document.getElementById("childrenCount").value,
         );
         const lineType = document.getElementById("lineType").value;
+        const startArrow = document.getElementById("startArrow").value;
+        const endArrow = document.getElementById("endArrow").value;
 
-        if (gap < 0 || isNaN(gap)) {
-          showMessage("Please enter a valid gap value (0 or greater)", true);
+        if (horizontalGap < 0 || isNaN(horizontalGap)) {
+          showMessage(
+            "Please enter a valid horizontal gap value (0 or greater)",
+            true,
+          );
           return;
         }
 
@@ -376,7 +480,13 @@
           .withFailureHandler(function (error) {
             showMessage("Error: " + error, true);
           })
-          .createChildLeft(gap, lineType, childrenCount);
+          .createChildLeft(
+            horizontalGap,
+            lineType,
+            childrenCount,
+            startArrow,
+            endArrow,
+          );
       }
 
       function showMessage(message, isError = false) {
@@ -418,10 +528,18 @@
         }, 3000);
       }
 
-      // Auto-save gap value to localStorage
-      document.getElementById("gap").addEventListener("change", function () {
-        localStorage.setItem("flowchart_gap", this.value);
-      });
+      // Auto-save gap values to localStorage
+      document
+        .getElementById("horizontalGap")
+        .addEventListener("change", function () {
+          localStorage.setItem("flowchart_horizontalGap", this.value);
+        });
+
+      document
+        .getElementById("verticalGap")
+        .addEventListener("change", function () {
+          localStorage.setItem("flowchart_verticalGap", this.value);
+        });
 
       // Auto-save line type to localStorage
       document
@@ -430,16 +548,46 @@
           localStorage.setItem("flowchart_lineType", this.value);
         });
 
+      // Auto-save arrow styles to localStorage
+      document
+        .getElementById("startArrow")
+        .addEventListener("change", function () {
+          localStorage.setItem("flowchart_startArrow", this.value);
+        });
+
+      document
+        .getElementById("endArrow")
+        .addEventListener("change", function () {
+          localStorage.setItem("flowchart_endArrow", this.value);
+        });
+
       // Load saved values
       window.addEventListener("load", function () {
-        const savedGap = localStorage.getItem("flowchart_gap");
-        if (savedGap) {
-          document.getElementById("gap").value = savedGap;
+        const savedHorizontalGap = localStorage.getItem(
+          "flowchart_horizontalGap",
+        );
+        if (savedHorizontalGap) {
+          document.getElementById("horizontalGap").value = savedHorizontalGap;
+        }
+
+        const savedVerticalGap = localStorage.getItem("flowchart_verticalGap");
+        if (savedVerticalGap) {
+          document.getElementById("verticalGap").value = savedVerticalGap;
         }
 
         const savedLineType = localStorage.getItem("flowchart_lineType");
         if (savedLineType) {
           document.getElementById("lineType").value = savedLineType;
+        }
+
+        const savedStartArrow = localStorage.getItem("flowchart_startArrow");
+        if (savedStartArrow) {
+          document.getElementById("startArrow").value = savedStartArrow;
+        }
+
+        const savedEndArrow = localStorage.getItem("flowchart_endArrow");
+        if (savedEndArrow) {
+          document.getElementById("endArrow").value = savedEndArrow;
         }
       });
     </script>

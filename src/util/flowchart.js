@@ -64,8 +64,14 @@ function connectSelectedShapesSmart(lineType = "STRAIGHT") {
 /**
  * Connects two selected shapes vertically (top/down)
  * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
+ * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
+ * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
  */
-function connectSelectedShapesVertical(lineType = "STRAIGHT") {
+function connectSelectedShapesVertical(
+	lineType = "STRAIGHT",
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
 	const pres = SlidesApp.getActivePresentation();
 	const selection = pres.getSelection();
 	const range = selection.getPageElementRange();
@@ -120,14 +126,28 @@ function connectSelectedShapesVertical(lineType = "STRAIGHT") {
 	// Convert lineType string to SlidesApp.LineCategory enum
 	const lineCategory =
 		SlidesApp.LineCategory[lineType] || SlidesApp.LineCategory.STRAIGHT;
-	sA.getParentPage().insertLine(lineCategory, siteA, siteB);
+	const line = sA.getParentPage().insertLine(lineCategory, siteA, siteB);
+
+	// Apply arrow styles
+	if (startArrow && startArrow !== "NONE" && SlidesApp.ArrowStyle[startArrow]) {
+		line.setStartArrow(SlidesApp.ArrowStyle[startArrow]);
+	}
+	if (endArrow && endArrow !== "NONE" && SlidesApp.ArrowStyle[endArrow]) {
+		line.setEndArrow(SlidesApp.ArrowStyle[endArrow]);
+	}
 }
 
 /**
  * Connects two selected shapes horizontally (left/right)
  * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
+ * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
+ * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
  */
-function connectSelectedShapesHorizontal(lineType = "STRAIGHT") {
+function connectSelectedShapesHorizontal(
+	lineType = "STRAIGHT",
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
 	const pres = SlidesApp.getActivePresentation();
 	const selection = pres.getSelection();
 	const range = selection.getPageElementRange();
@@ -182,7 +202,15 @@ function connectSelectedShapesHorizontal(lineType = "STRAIGHT") {
 	// Convert lineType string to SlidesApp.LineCategory enum
 	const lineCategory =
 		SlidesApp.LineCategory[lineType] || SlidesApp.LineCategory.STRAIGHT;
-	sA.getParentPage().insertLine(lineCategory, siteA, siteB);
+	const line = sA.getParentPage().insertLine(lineCategory, siteA, siteB);
+
+	// Apply arrow styles
+	if (startArrow && startArrow !== "NONE" && SlidesApp.ArrowStyle[startArrow]) {
+		line.setStartArrow(SlidesApp.ArrowStyle[startArrow]);
+	}
+	if (endArrow && endArrow !== "NONE" && SlidesApp.ArrowStyle[endArrow]) {
+		line.setEndArrow(SlidesApp.ArrowStyle[endArrow]);
+	}
 }
 
 /**
@@ -191,12 +219,16 @@ function connectSelectedShapesHorizontal(lineType = "STRAIGHT") {
  * @param {number} gap - Gap between shapes in points (default 20)
  * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
  * @param {number} count - Number of children to create (default 1)
+ * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
+ * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
  */
 function createChildInDirection(
 	direction,
 	gap = 20,
 	lineType = "STRAIGHT",
 	count = 1,
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
 ) {
 	const pres = SlidesApp.getActivePresentation();
 	const selection = pres.getSelection();
@@ -227,9 +259,27 @@ function createChildInDirection(
 	const originalWidth = originalShape.getWidth();
 	const originalHeight = originalShape.getHeight();
 
-	// Create multiple children
+	// Create multiple children as siblings
 	const createdShapes = [];
-	let previousShape = originalShape;
+
+	// Calculate spacing between siblings
+	let siblingOffset = 0;
+	if (count > 1) {
+		// For horizontal directions (LEFT/RIGHT), space siblings vertically
+		// For vertical directions (TOP/BOTTOM), space siblings horizontally
+		if (direction === "LEFT" || direction === "RIGHT") {
+			// Calculate total height needed for all siblings
+			const totalHeight = count * originalHeight + (count - 1) * gap;
+			// Start position to center the group
+			siblingOffset = -(totalHeight - originalHeight) / 2;
+		} else {
+			// TOP or BOTTOM
+			// Calculate total width needed for all siblings
+			const totalWidth = count * originalWidth + (count - 1) * gap;
+			// Start position to center the group
+			siblingOffset = -(totalWidth - originalWidth) / 2;
+		}
+	}
 
 	for (let i = 0; i < count; i++) {
 		// Calculate position for each child
@@ -238,16 +288,24 @@ function createChildInDirection(
 
 		switch (direction) {
 			case "TOP":
-				childTop = originalTop - (originalHeight + gap) * (i + 1);
+				childTop = originalTop - originalHeight - gap;
+				// Space siblings horizontally
+				childLeft = originalLeft + siblingOffset + i * (originalWidth + gap);
 				break;
 			case "RIGHT":
-				childLeft = originalLeft + (originalWidth + gap) * (i + 1);
+				childLeft = originalLeft + originalWidth + gap;
+				// Space siblings vertically
+				childTop = originalTop + siblingOffset + i * (originalHeight + gap);
 				break;
 			case "BOTTOM":
-				childTop = originalTop + (originalHeight + gap) * (i + 1);
+				childTop = originalTop + originalHeight + gap;
+				// Space siblings horizontally
+				childLeft = originalLeft + siblingOffset + i * (originalWidth + gap);
 				break;
 			case "LEFT":
-				childLeft = originalLeft - (originalWidth + gap) * (i + 1);
+				childLeft = originalLeft - originalWidth - gap;
+				// Space siblings vertically
+				childTop = originalTop + siblingOffset + i * (originalHeight + gap);
 				break;
 		}
 
@@ -263,27 +321,38 @@ function createChildInDirection(
 		// Copy styling from original shape
 		copyShapeStyle(originalShape, childShape);
 
-		// Connect to previous shape
+		// Connect to parent shape (not previous shape)
 		const connectionPairs = {
-			TOP: { previousSide: "TOP", childSide: "BOTTOM" },
-			RIGHT: { previousSide: "RIGHT", childSide: "LEFT" },
-			BOTTOM: { previousSide: "BOTTOM", childSide: "TOP" },
-			LEFT: { previousSide: "LEFT", childSide: "RIGHT" },
+			TOP: { parentSide: "TOP", childSide: "BOTTOM" },
+			RIGHT: { parentSide: "RIGHT", childSide: "LEFT" },
+			BOTTOM: { parentSide: "BOTTOM", childSide: "TOP" },
+			LEFT: { parentSide: "LEFT", childSide: "RIGHT" },
 		};
 
 		const pair = connectionPairs[direction];
-		const previousSite = pickConnectionSite(previousShape, pair.previousSide);
+		const parentSite = pickConnectionSite(originalShape, pair.parentSide);
 		const childSite = pickConnectionSite(childShape, pair.childSide);
 
-		if (previousSite && childSite) {
+		if (parentSite && childSite) {
 			// Convert lineType string to SlidesApp.LineCategory enum
 			const lineCategory =
 				SlidesApp.LineCategory[lineType] || SlidesApp.LineCategory.STRAIGHT;
-			slide.insertLine(lineCategory, previousSite, childSite);
+			const line = slide.insertLine(lineCategory, parentSite, childSite);
+
+			// Apply arrow styles
+			if (
+				startArrow &&
+				startArrow !== "NONE" &&
+				SlidesApp.ArrowStyle[startArrow]
+			) {
+				line.setStartArrow(SlidesApp.ArrowStyle[startArrow]);
+			}
+			if (endArrow && endArrow !== "NONE" && SlidesApp.ArrowStyle[endArrow]) {
+				line.setEndArrow(SlidesApp.ArrowStyle[endArrow]);
+			}
 		}
 
 		createdShapes.push(childShape);
-		previousShape = childShape;
 	}
 
 	return createdShapes;
@@ -294,9 +363,24 @@ function createChildInDirection(
  * @param {number} gap - Gap between shapes in points (default 20)
  * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
  * @param {number} count - Number of children to create (default 1)
+ * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
+ * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
  */
-function createChildTop(gap = 20, lineType = "STRAIGHT", count = 1) {
-	return createChildInDirection("TOP", gap, lineType, count);
+function createChildTop(
+	gap = 20,
+	lineType = "STRAIGHT",
+	count = 1,
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
+	return createChildInDirection(
+		"TOP",
+		gap,
+		lineType,
+		count,
+		startArrow,
+		endArrow,
+	);
 }
 
 /**
@@ -304,9 +388,24 @@ function createChildTop(gap = 20, lineType = "STRAIGHT", count = 1) {
  * @param {number} gap - Gap between shapes in points (default 20)
  * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
  * @param {number} count - Number of children to create (default 1)
+ * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
+ * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
  */
-function createChildRight(gap = 20, lineType = "STRAIGHT", count = 1) {
-	return createChildInDirection("RIGHT", gap, lineType, count);
+function createChildRight(
+	gap = 20,
+	lineType = "STRAIGHT",
+	count = 1,
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
+	return createChildInDirection(
+		"RIGHT",
+		gap,
+		lineType,
+		count,
+		startArrow,
+		endArrow,
+	);
 }
 
 /**
@@ -314,9 +413,24 @@ function createChildRight(gap = 20, lineType = "STRAIGHT", count = 1) {
  * @param {number} gap - Gap between shapes in points (default 20)
  * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
  * @param {number} count - Number of children to create (default 1)
+ * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
+ * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
  */
-function createChildBottom(gap = 20, lineType = "STRAIGHT", count = 1) {
-	return createChildInDirection("BOTTOM", gap, lineType, count);
+function createChildBottom(
+	gap = 20,
+	lineType = "STRAIGHT",
+	count = 1,
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
+	return createChildInDirection(
+		"BOTTOM",
+		gap,
+		lineType,
+		count,
+		startArrow,
+		endArrow,
+	);
 }
 
 /**
@@ -324,9 +438,24 @@ function createChildBottom(gap = 20, lineType = "STRAIGHT", count = 1) {
  * @param {number} gap - Gap between shapes in points (default 20)
  * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
  * @param {number} count - Number of children to create (default 1)
+ * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
+ * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
  */
-function createChildLeft(gap = 20, lineType = "STRAIGHT", count = 1) {
-	return createChildInDirection("LEFT", gap, lineType, count);
+function createChildLeft(
+	gap = 20,
+	lineType = "STRAIGHT",
+	count = 1,
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
+	return createChildInDirection(
+		"LEFT",
+		gap,
+		lineType,
+		count,
+		startArrow,
+		endArrow,
+	);
 }
 
 /**
