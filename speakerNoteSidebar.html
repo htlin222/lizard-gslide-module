@@ -1,0 +1,623 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 12px;
+        background-color: #f8f9fa;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #3d6869 0%, #2c4f50 100%);
+        color: white;
+        padding: 10px 12px;
+        margin: -12px -12px 16px -12px;
+        font-size: 14px;
+        font-weight: bold;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .section {
+        background: white;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e9ecef;
+      }
+
+      .section-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: #3d6869;
+        font-size: 13px;
+      }
+
+      .slide-info {
+        background: #e8f4f8;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: #2c4f50;
+      }
+
+      .content-preview {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        max-height: 120px;
+        overflow-y: auto;
+        font-size: 11px;
+        margin-bottom: 12px;
+        white-space: pre-wrap;
+        color: #495057;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: bold;
+        color: #495057;
+        font-size: 13px;
+      }
+
+      input[type="text"],
+      input[type="password"],
+      textarea {
+        width: 100%;
+        padding: 8px;
+        border: 2px solid #dee2e6;
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-size: 13px;
+        transition: border-color 0.2s;
+      }
+
+      input[type="text"]:focus,
+      input[type="password"]:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #3d6869;
+        box-shadow: 0 0 0 2px rgba(61, 104, 105, 0.1);
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      button {
+        background: #3d6869;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: bold;
+        transition: all 0.2s;
+        flex: 1;
+      }
+
+      button:hover {
+        background: #2c4f50;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      button:disabled {
+        background: #ced4da;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .secondary-btn {
+        background: #6c757d;
+      }
+
+      .secondary-btn:hover {
+        background: #5a6268;
+      }
+
+      .success-btn {
+        background: #28a745;
+      }
+
+      .success-btn:hover {
+        background: #218838;
+      }
+
+      .preview-section {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 2px solid #dee2e6;
+      }
+
+      .generated-notes {
+        background: #f8f9fa;
+        border: 2px solid #3d6869;
+        border-radius: 6px;
+        padding: 12px;
+        margin: 12px 0;
+        font-size: 13px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 20px;
+        color: #6c757d;
+      }
+
+      .error {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 10px;
+        border-radius: 4px;
+        margin: 8px 0;
+        font-size: 12px;
+      }
+
+      .success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        padding: 10px;
+        border-radius: 4px;
+        margin: 8px 0;
+        font-size: 12px;
+      }
+
+      .api-key-input {
+        position: relative;
+      }
+
+      .api-key-toggle {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        color: #6c757d;
+        font-size: 12px;
+      }
+
+      .footer {
+        text-align: center;
+        font-size: 11px;
+        color: #6c757d;
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid #dee2e6;
+      }
+
+      details {
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 8px;
+      }
+
+      summary {
+        font-weight: bold;
+        cursor: pointer;
+        user-select: none;
+        font-size: 13px;
+      }
+
+      summary:hover {
+        color: #3d6869;
+      }
+
+      .generating {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .generating::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        animation: shimmer 1.5s infinite;
+      }
+
+      @keyframes shimmer {
+        0% {
+          left: -100%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+
+      .generate-text {
+        transition: opacity 0.2s;
+      }
+
+      .generating .generate-text {
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Current Slide Info -->
+    <div class="section">
+      <div id="slideInfo" class="slide-info" style="display: none"></div>
+      <div id="contentPreview" class="content-preview">
+        Loading slide content...
+      </div>
+      <button
+        onclick="refreshSlideContent()"
+        class="secondary-btn"
+        style="width: 100%; margin-top: 8px"
+      >
+        Refresh Slide
+      </button>
+    </div>
+
+    <!-- OpenAI API Configuration -->
+    <div class="section">
+      <details>
+        <summary>🔑 API Key</summary>
+        <div style="margin-top: 8px">
+          <div class="api-key-input">
+            <input type="password" id="apiKey" placeholder="sk-..." value="" />
+            <button
+              type="button"
+              class="api-key-toggle"
+              onclick="toggleApiKeyVisibility()"
+            >
+              👁️
+            </button>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <!-- Prompt Configuration -->
+    <div class="section">
+      <label for="prompt">✏️ Custom Instructions (optional):</label>
+      <textarea
+        id="prompt"
+        placeholder="Enter specific instructions for generating speaker notes..."
+      >
+Create engaging speaker notes that help me present this slide effectively. Include key talking points, explanations, and suggested transitions.</textarea
+      >
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="section">
+      <div class="button-group">
+        <button onclick="generateSpeakerNotes()" id="generateBtn">
+          <span class="generate-text">🚀 Generate</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Generated Content Preview -->
+    <div class="section" id="previewSection" style="display: none">
+      <div class="section-title">📝 Generated Speaker Notes</div>
+      <div id="generatedNotes" class="generated-notes"></div>
+      <div class="button-group">
+        <button onclick="appendNotes()" class="success-btn" id="appendBtn">
+          Append to Notes
+        </button>
+        <button onclick="replaceNotes()" id="replaceBtn">Replace Notes</button>
+      </div>
+    </div>
+
+    <!-- Current Speaker Notes -->
+    <div class="section">
+      <div class="section-title">📋 Current Speaker Notes</div>
+      <div id="currentNotes" class="content-preview">
+        Loading current notes...
+      </div>
+      <button
+        onclick="refreshCurrentNotes()"
+        class="secondary-btn"
+        style="width: 100%; margin-top: 8px"
+      >
+        Refresh Current Notes
+      </button>
+    </div>
+
+    <script>
+      let currentSlideContent = null;
+      let generatedText = null;
+
+      // Initialize the sidebar
+      document.addEventListener("DOMContentLoaded", function () {
+        loadSlideContent();
+        loadCurrentNotes();
+
+        // Load saved API key
+        const savedApiKey = localStorage.getItem("openai_api_key");
+        if (savedApiKey) {
+          document.getElementById("apiKey").value = savedApiKey;
+        }
+      });
+
+      function toggleApiKeyVisibility() {
+        const apiKeyInput = document.getElementById("apiKey");
+        const toggleBtn = document.querySelector(".api-key-toggle");
+
+        if (apiKeyInput.type === "password") {
+          apiKeyInput.type = "text";
+          toggleBtn.textContent = "🙈";
+        } else {
+          apiKeyInput.type = "password";
+          toggleBtn.textContent = "👁️";
+        }
+      }
+
+      function loadSlideContent() {
+        google.script.run
+          .withSuccessHandler(onSlideContentLoaded)
+          .withFailureHandler(onError)
+          .getCurrentSlideContent();
+      }
+
+      function onSlideContentLoaded(slideData) {
+        currentSlideContent = slideData;
+
+        const contentPreview = document.getElementById("contentPreview");
+
+        if (slideData.hasContent) {
+          const infoText = `📝 ${slideData.textContent.length} text elements • 📊 ${slideData.allText.length} characters`;
+          contentPreview.innerHTML = `<div style="font-size: 11px; color: #666; margin-bottom: 8px;">${infoText}</div>${slideData.allText || "No text content found"}`;
+        } else {
+          contentPreview.innerHTML =
+            '<div style="font-size: 11px; color: #666; margin-bottom: 8px;">⚠️ No text elements found</div>This slide appears to be empty or contains no text elements.';
+        }
+      }
+
+      function loadCurrentNotes() {
+        google.script.run
+          .withSuccessHandler(onCurrentNotesLoaded)
+          .withFailureHandler(onError)
+          .getCurrentSpeakerNotes();
+      }
+
+      function onCurrentNotesLoaded(notes) {
+        const currentNotesDiv = document.getElementById("currentNotes");
+        currentNotesDiv.textContent =
+          notes || "No speaker notes found for this slide.";
+      }
+
+      function refreshSlideContent() {
+        const slideInfo = document.getElementById("slideInfo");
+        const contentPreview = document.getElementById("contentPreview");
+
+        slideInfo.innerHTML = "Refreshing slide information...";
+        contentPreview.textContent = "Loading slide content...";
+
+        loadSlideContent();
+        loadCurrentNotes();
+      }
+
+      function refreshCurrentNotes() {
+        const currentNotesDiv = document.getElementById("currentNotes");
+        currentNotesDiv.textContent = "Refreshing speaker notes...";
+        loadCurrentNotes();
+      }
+
+      function generateSpeakerNotes() {
+        const apiKey = document.getElementById("apiKey").value.trim();
+        const prompt = document.getElementById("prompt").value.trim();
+        const generateBtn = document.getElementById("generateBtn");
+
+        if (!apiKey || apiKey === "YOUR_API_KEY") {
+          showError("Please enter a valid OpenAI API key");
+          return;
+        }
+
+        if (!currentSlideContent || !currentSlideContent.hasContent) {
+          showError(
+            "No slide content available. Please select a slide with text content.",
+          );
+          return;
+        }
+
+        // Save API key
+        localStorage.setItem("openai_api_key", apiKey);
+
+        // Show loading state with animation
+        generateBtn.disabled = true;
+        generateBtn.classList.add("generating");
+        const generateText = generateBtn.querySelector(".generate-text");
+        generateText.textContent = "🤖 Generating...";
+
+        const previewSection = document.getElementById("previewSection");
+        const generatedNotesDiv = document.getElementById("generatedNotes");
+
+        previewSection.style.display = "block";
+        generatedNotesDiv.innerHTML =
+          '<div class="loading">🤖 Generating speaker notes with AI...</div>';
+
+        google.script.run
+          .withSuccessHandler(onNotesGenerated)
+          .withFailureHandler(onGenerationError)
+          .callOpenAI(apiKey, currentSlideContent.allText, prompt);
+      }
+
+      function onNotesGenerated(response) {
+        const generateBtn = document.getElementById("generateBtn");
+        const generatedNotesDiv = document.getElementById("generatedNotes");
+        const appendBtn = document.getElementById("appendBtn");
+        const replaceBtn = document.getElementById("replaceBtn");
+
+        // Remove animation and reset button
+        generateBtn.disabled = false;
+        generateBtn.classList.remove("generating");
+        const generateText = generateBtn.querySelector(".generate-text");
+        generateText.textContent = "🚀 Generate";
+
+        if (response.success) {
+          generatedText = response.generatedText;
+          generatedNotesDiv.textContent = generatedText;
+
+          appendBtn.disabled = false;
+          replaceBtn.disabled = false;
+
+          showSuccess("Speaker notes generated successfully!");
+        } else {
+          generatedNotesDiv.innerHTML = `<div class="error">❌ Error: ${response.error}</div>`;
+          appendBtn.disabled = true;
+          replaceBtn.disabled = true;
+        }
+      }
+
+      function onGenerationError(error) {
+        const generateBtn = document.getElementById("generateBtn");
+        const generatedNotesDiv = document.getElementById("generatedNotes");
+
+        // Remove animation and reset button
+        generateBtn.disabled = false;
+        generateBtn.classList.remove("generating");
+        const generateText = generateBtn.querySelector(".generate-text");
+        generateText.textContent = "🚀 Generate";
+
+        generatedNotesDiv.innerHTML = `<div class="error">❌ Error: ${error.message || error}</div>`;
+        showError(
+          "Failed to generate speaker notes: " + (error.message || error),
+        );
+      }
+
+      function appendNotes() {
+        if (!generatedText) {
+          showError("No generated text to append");
+          return;
+        }
+
+        const appendBtn = document.getElementById("appendBtn");
+        appendBtn.disabled = true;
+        appendBtn.textContent = "Appending...";
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            appendBtn.disabled = false;
+            appendBtn.textContent = "Append to Notes";
+
+            if (result.success) {
+              showSuccess("Notes appended successfully!");
+              loadCurrentNotes(); // Refresh current notes display
+            } else {
+              showError(result.message);
+            }
+          })
+          .withFailureHandler(function (error) {
+            appendBtn.disabled = false;
+            appendBtn.textContent = "Append to Notes";
+            showError("Failed to append notes: " + error.message);
+          })
+          .appendToSpeakerNotes(generatedText);
+      }
+
+      function replaceNotes() {
+        if (!generatedText) {
+          showError("No generated text to replace with");
+          return;
+        }
+
+        const replaceBtn = document.getElementById("replaceBtn");
+        replaceBtn.disabled = true;
+        replaceBtn.textContent = "Replacing...";
+
+        google.script.run
+          .withSuccessHandler(function (result) {
+            replaceBtn.disabled = false;
+            replaceBtn.textContent = "Replace Notes";
+
+            if (result.success) {
+              showSuccess("Notes replaced successfully!");
+              loadCurrentNotes(); // Refresh current notes display
+            } else {
+              showError(result.message);
+            }
+          })
+          .withFailureHandler(function (error) {
+            replaceBtn.disabled = false;
+            replaceBtn.textContent = "Replace Notes";
+            showError("Failed to replace notes: " + error.message);
+          })
+          .replaceSpeakerNotes(generatedText);
+      }
+
+      function showError(message) {
+        // Remove existing messages
+        const existing = document.querySelectorAll(".error, .success");
+        existing.forEach((el) => el.remove());
+
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "error";
+        errorDiv.textContent = "❌ " + message;
+
+        document.body.insertBefore(errorDiv, document.querySelector(".footer"));
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+          if (errorDiv.parentNode) {
+            errorDiv.remove();
+          }
+        }, 5000);
+      }
+
+      function showSuccess(message) {
+        // Remove existing messages
+        const existing = document.querySelectorAll(".error, .success");
+        existing.forEach((el) => el.remove());
+
+        const successDiv = document.createElement("div");
+        successDiv.className = "success";
+        successDiv.textContent = "✅ " + message;
+
+        document.body.insertBefore(
+          successDiv,
+          document.querySelector(".footer"),
+        );
+
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+          if (successDiv.parentNode) {
+            successDiv.remove();
+          }
+        }, 3000);
+      }
+
+      function onError(error) {
+        showError(error.message || error);
+      }
+    </script>
+  </body>
+</html>

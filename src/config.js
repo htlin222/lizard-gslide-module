@@ -109,6 +109,7 @@ function createCustomMenu() {
 			.addItem("👇 新增一頁並加入當前標題", "createNextSlideWithCurrentTitle")
 			.addItem("📝 Markdown 轉換成投影片", "showMarkdownToSlidesDialog")
 			.addItem("📋 Markdown 側邊欄", "showMarkdownSidebar")
+			.addItem("🎤 AI 演講者備註", "showSpeakerNoteSidebar")
 			.addItem("**B** Markdown 粗體格式", "runApplyMarkdownBoldFormatting")
 			.addToUi();
 
