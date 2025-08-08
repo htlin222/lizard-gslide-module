@@ -57,6 +57,29 @@
         margin-bottom: 12px;
         white-space: pre-wrap;
         color: #495057;
+        position: relative;
+      }
+
+      .refresh-btn {
+        position: absolute;
+        bottom: 4px;
+        right: 4px;
+        background: rgba(108, 117, 125, 0.8);
+        color: white;
+        border: none;
+        padding: 2px 6px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: normal;
+        transition: all 0.2s;
+        opacity: 0.7;
+      }
+
+      .refresh-btn:hover {
+        opacity: 1;
+        background: rgba(108, 117, 125, 1);
+        transform: none;
       }
 
       label {
@@ -276,14 +299,8 @@
       <div id="slideInfo" class="slide-info" style="display: none"></div>
       <div id="contentPreview" class="content-preview">
         Loading slide content...
+        <button onclick="refreshSlideContent()" class="refresh-btn">🔄</button>
       </div>
-      <button
-        onclick="refreshSlideContent()"
-        class="secondary-btn"
-        style="width: 100%; margin-top: 8px"
-      >
-        Refresh Slide
-      </button>
     </div>
 
     <!-- OpenAI API Configuration -->
@@ -305,20 +322,15 @@
       </details>
     </div>
 
-    <!-- Prompt Configuration -->
+    <!-- Prompt Configuration and Generate -->
     <div class="section">
-      <label for="prompt">✏️ Custom Instructions (optional):</label>
       <textarea
         id="prompt"
         placeholder="Enter specific instructions for generating speaker notes..."
       >
-Create engaging speaker notes that help me present this slide effectively. Include key talking points, explanations, and suggested transitions.</textarea
+依據所提的內容，產生本頁投影片的講者逐字稿，繁體中文，不需翻譯專有名詞</textarea
       >
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="section">
-      <div class="button-group">
+      <div class="button-group" style="margin-top: 12px">
         <button onclick="generateSpeakerNotes()" id="generateBtn">
           <span class="generate-text">🚀 Generate</span>
         </button>
@@ -327,7 +339,6 @@ Create engaging speaker notes that help me present this slide effectively. Inclu
 
     <!-- Generated Content Preview -->
     <div class="section" id="previewSection" style="display: none">
-      <div class="section-title">📝 Generated Speaker Notes</div>
       <div id="generatedNotes" class="generated-notes"></div>
       <div class="button-group">
         <button onclick="appendNotes()" class="success-btn" id="appendBtn">
@@ -342,14 +353,8 @@ Create engaging speaker notes that help me present this slide effectively. Inclu
       <div class="section-title">📋 Current Speaker Notes</div>
       <div id="currentNotes" class="content-preview">
         Loading current notes...
+        <button onclick="refreshCurrentNotes()" class="refresh-btn">🔄</button>
       </div>
-      <button
-        onclick="refreshCurrentNotes()"
-        class="secondary-btn"
-        style="width: 100%; margin-top: 8px"
-      >
-        Refresh Current Notes
-      </button>
     </div>
 
     <script>
@@ -432,6 +437,9 @@ Create engaging speaker notes that help me present this slide effectively. Inclu
         loadCurrentNotes();
       }
 
+      let timerInterval;
+      let startTime;
+
       function generateSpeakerNotes() {
         const apiKey = document.getElementById("apiKey").value.trim();
         const prompt = document.getElementById("prompt").value.trim();
@@ -452,11 +460,21 @@ Create engaging speaker notes that help me present this slide effectively. Inclu
         // Save API key
         localStorage.setItem("openai_api_key", apiKey);
 
-        // Show loading state with animation
+        // Start timer
+        startTime = Date.now();
+
+        // Show loading state with animation and timer
         generateBtn.disabled = true;
         generateBtn.classList.add("generating");
         const generateText = generateBtn.querySelector(".generate-text");
-        generateText.textContent = "🤖 Generating...";
+
+        // Start timer display
+        timerInterval = setInterval(() => {
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          generateText.textContent = `🤖 Generating... ${elapsed}s`;
+        }, 1000);
+
+        generateText.textContent = "🤖 Generating... 0s";
 
         const previewSection = document.getElementById("previewSection");
         const generatedNotesDiv = document.getElementById("generatedNotes");
@@ -477,6 +495,12 @@ Create engaging speaker notes that help me present this slide effectively. Inclu
         const appendBtn = document.getElementById("appendBtn");
         const replaceBtn = document.getElementById("replaceBtn");
 
+        // Clear timer
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+
         // Remove animation and reset button
         generateBtn.disabled = false;
         generateBtn.classList.remove("generating");
@@ -490,7 +514,9 @@ Create engaging speaker notes that help me present this slide effectively. Inclu
           appendBtn.disabled = false;
           replaceBtn.disabled = false;
 
-          showSuccess("Speaker notes generated successfully!");
+          // Show completion time
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          showSuccess(`Speaker notes generated successfully! (${elapsed}s)`);
         } else {
           generatedNotesDiv.innerHTML = `<div class="error">❌ Error: ${response.error}</div>`;
           appendBtn.disabled = true;
@@ -501,6 +527,12 @@ Create engaging speaker notes that help me present this slide effectively. Inclu
       function onGenerationError(error) {
         const generateBtn = document.getElementById("generateBtn");
         const generatedNotesDiv = document.getElementById("generatedNotes");
+
+        // Clear timer
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
 
         // Remove animation and reset button
         generateBtn.disabled = false;

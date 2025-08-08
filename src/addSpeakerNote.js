@@ -36,12 +36,18 @@ function createSpeakerNoteSidebar() {
 function getCurrentSlideContent() {
 	try {
 		const presentation = SlidesApp.getActivePresentation();
-		const currentSlide = presentation.getSelection().getCurrentPage();
+		const selection = presentation.getSelection();
+		const currentPage = selection.getCurrentPage();
 
-		if (!currentSlide) {
+		if (
+			!currentPage ||
+			currentPage.getPageType() !== SlidesApp.PageType.SLIDE
+		) {
 			throw new Error("Please select a slide first");
 		}
 
+		// Convert currentPage to a Slide object
+		const currentSlide = currentPage.asSlide();
 		const slides = presentation.getSlides();
 		const slideNumber = slides.indexOf(currentSlide) + 1;
 		const totalSlides = slides.length;
@@ -127,19 +133,23 @@ function getCurrentSlideContent() {
 function getCurrentSpeakerNotes() {
 	try {
 		const presentation = SlidesApp.getActivePresentation();
-		const currentSlide = presentation.getSelection().getCurrentPage();
+		const selection = presentation.getSelection();
+		const currentPage = selection.getCurrentPage();
 
-		if (!currentSlide) {
+		if (
+			!currentPage ||
+			currentPage.getPageType() !== SlidesApp.PageType.SLIDE
+		) {
 			return "";
 		}
 
-		// Use the simple Apps Script API
-		const slide = currentSlide;
+		// Convert currentPage to a Slide object
+		const slide = currentPage.asSlide();
 		const notesPage = slide.getNotesPage();
-		const notesShape = notesPage.getSpeakerNotesShape();
-		const text = notesShape.getText().asString();
+		const shape = notesPage.getSpeakerNotesShape();
 
-		return text.trim();
+		const notesText = shape ? shape.getText().asString() : "";
+		return notesText.trim();
 	} catch (e) {
 		console.error(`Error getting speaker notes: ${e.message}`);
 		return "";
@@ -246,17 +256,27 @@ Please provide speaker notes that:
 function appendToSpeakerNotes(textToAppend) {
 	try {
 		const presentation = SlidesApp.getActivePresentation();
-		const currentSlide = presentation.getSelection().getCurrentPage();
+		const selection = presentation.getSelection();
+		const currentPage = selection.getCurrentPage();
 
-		if (!currentSlide) {
+		if (
+			!currentPage ||
+			currentPage.getPageType() !== SlidesApp.PageType.SLIDE
+		) {
 			throw new Error("Please select a slide first");
 		}
 
-		// Get current notes and append new text
-		const slide = currentSlide;
+		// Convert currentPage to a Slide object
+		const slide = currentPage.asSlide();
 		const notesPage = slide.getNotesPage();
-		const notesShape = notesPage.getSpeakerNotesShape();
-		const currentText = notesShape.getText().asString();
+		const shape = notesPage.getSpeakerNotesShape();
+
+		if (!shape) {
+			throw new Error("Could not access speaker notes shape");
+		}
+
+		// Get current notes and append new text
+		const currentText = shape.getText().asString();
 
 		// Create new text with proper spacing
 		const newText = currentText.trim()
@@ -264,7 +284,7 @@ function appendToSpeakerNotes(textToAppend) {
 			: textToAppend;
 
 		// Update the speaker notes
-		notesShape.getText().setText(newText);
+		shape.getText().setText(newText);
 
 		return {
 			success: true,
@@ -287,17 +307,27 @@ function appendToSpeakerNotes(textToAppend) {
 function replaceSpeakerNotes(newText) {
 	try {
 		const presentation = SlidesApp.getActivePresentation();
-		const currentSlide = presentation.getSelection().getCurrentPage();
+		const selection = presentation.getSelection();
+		const currentPage = selection.getCurrentPage();
 
-		if (!currentSlide) {
+		if (
+			!currentPage ||
+			currentPage.getPageType() !== SlidesApp.PageType.SLIDE
+		) {
 			throw new Error("Please select a slide first");
 		}
 
-		// Replace the speaker notes with new text
-		const slide = currentSlide;
+		// Convert currentPage to a Slide object
+		const slide = currentPage.asSlide();
 		const notesPage = slide.getNotesPage();
-		const notesShape = notesPage.getSpeakerNotesShape();
-		notesShape.getText().setText(newText || "");
+		const shape = notesPage.getSpeakerNotesShape();
+
+		if (!shape) {
+			throw new Error("Could not access speaker notes shape");
+		}
+
+		// Replace the speaker notes with new text
+		shape.getText().setText(newText || "");
 
 		return {
 			success: true,
