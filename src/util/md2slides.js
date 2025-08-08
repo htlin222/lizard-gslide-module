@@ -158,6 +158,11 @@ function convertMarkdownToSlides(markdownText) {
 								}
 							}
 
+							// Calculate and apply optimal font size
+							const allBodyText = info.bodyItems.join("\n");
+							const fontSize = getFontSize(allBodyText);
+							textRange.getTextStyle().setFontSize(fontSize);
+
 							// Body content added using BODY placeholder
 							bodyContentAdded = true;
 							break;
@@ -185,6 +190,11 @@ function convertMarkdownToSlides(markdownText) {
 									textRange.appendParagraph(info.bodyItems[k]);
 								}
 							}
+
+							// Calculate and apply optimal font size
+							const allBodyText = info.bodyItems.join("\n");
+							const fontSize = getFontSize(allBodyText);
+							textRange.getTextStyle().setFontSize(fontSize);
 
 							// Body content added using getPlaceholder method
 							bodyContentAdded = true;
@@ -216,6 +226,11 @@ function convertMarkdownToSlides(markdownText) {
 										textRange.appendParagraph(info.bodyItems[k]);
 									}
 								}
+
+								// Calculate and apply optimal font size
+								const allBodyText = info.bodyItems.join("\n");
+								const fontSize = getFontSize(allBodyText);
+								textRange.getTextStyle().setFontSize(fontSize);
 
 								// Body content added using existing text box
 								textBoxFound = true;
@@ -250,6 +265,11 @@ function convertMarkdownToSlides(markdownText) {
 									textRange.appendParagraph(info.bodyItems[k]);
 								}
 							}
+
+							// Calculate and apply optimal font size
+							const allBodyText = info.bodyItems.join("\n");
+							const fontSize = getFontSize(allBodyText);
+							textRange.getTextStyle().setFontSize(fontSize);
 
 							// Body content added using new text box
 							bodyContentAdded = true;
@@ -454,8 +474,8 @@ function parseMarkdownToStructure(markdownText) {
 				// Extract title and remove page numbering pattern if present
 				let title = line.substring(2).trim();
 				// Remove patterns like "Page 1:" or "Page 10:" from the title
-				title = title.replace(/^Page\s+\d+:\s*/i, '');
-				
+				title = title.replace(/^Page\s+\d+:\s*/i, "");
+
 				// Create a new SECTION_HEADER slide
 				currentSlide = {
 					layout: "SECTION_HEADER",
@@ -470,8 +490,8 @@ function parseMarkdownToStructure(markdownText) {
 				// Extract title and remove page numbering pattern if present
 				let title = line.substring(3).trim();
 				// Remove patterns like "Page 1:" or "Page 10:" from the title
-				title = title.replace(/^Page\s+\d+:\s*/i, '');
-				
+				title = title.replace(/^Page\s+\d+:\s*/i, "");
+
 				// Create a new TITLE_AND_BODY slide
 				currentSlide = {
 					layout: "TITLE_AND_BODY",
