@@ -57,29 +57,6 @@
         margin-bottom: 12px;
         white-space: pre-wrap;
         color: #495057;
-        position: relative;
-      }
-
-      .refresh-btn {
-        position: absolute;
-        bottom: 4px;
-        right: 4px;
-        background: rgba(108, 117, 125, 0.8);
-        color: white;
-        border: none;
-        padding: 2px 6px;
-        border-radius: 3px;
-        cursor: pointer;
-        font-size: 10px;
-        font-weight: normal;
-        transition: all 0.2s;
-        opacity: 0.7;
-      }
-
-      .refresh-btn:hover {
-        opacity: 1;
-        background: rgba(108, 117, 125, 1);
-        transform: none;
       }
 
       label {
@@ -299,8 +276,14 @@
       <div id="slideInfo" class="slide-info" style="display: none"></div>
       <div id="contentPreview" class="content-preview">
         Loading slide content...
-        <button onclick="refreshSlideContent()" class="refresh-btn">🔄</button>
       </div>
+      <button
+        onclick="refreshSlideContent()"
+        class="secondary-btn"
+        style="width: 100%; margin-top: 8px"
+      >
+        Refresh Slide
+      </button>
     </div>
 
     <!-- OpenAI API Configuration -->
@@ -353,8 +336,14 @@
       <div class="section-title">📋 Current Speaker Notes</div>
       <div id="currentNotes" class="content-preview">
         Loading current notes...
-        <button onclick="refreshCurrentNotes()" class="refresh-btn">🔄</button>
       </div>
+      <button
+        onclick="refreshCurrentNotes()"
+        class="secondary-btn"
+        style="width: 100%; margin-top: 8px"
+      >
+        Refresh Current Notes
+      </button>
     </div>
 
     <script>
