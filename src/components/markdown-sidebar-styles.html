@@ -1,18 +1,30 @@
 <style>
   /* Markdown sidebar specific styles */
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
   .markdown-container {
-    margin: 10px 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    padding-bottom: 0;
   }
 
   .markdown-input {
     width: 100%;
-    height: 300px;
+    flex: 1;
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 10px;
     font-family: "Monaco", "Courier New", monospace;
     font-size: 14px;
-    resize: vertical;
+    resize: none;
     box-sizing: border-box;
   }
 
@@ -83,50 +95,13 @@
     border: 1px solid #bee5eb;
   }
 
-  .quick-reference {
-    margin: 15px 0;
-  }
-
-  .quick-reference summary {
-    cursor: pointer;
-    padding: 8px 10px;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    border-left: 4px solid #4285f4;
-    font-weight: bold;
-    color: #333;
-    font-size: 13px;
-    user-select: none;
-  }
-
-  .quick-reference summary:hover {
-    background-color: #e9ecef;
-  }
-
-  .quick-reference[open] summary {
-    border-radius: 4px 4px 0 0;
-    margin-bottom: 0;
-  }
-
-  .reference-content {
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 0 0 4px 4px;
-    border-left: 4px solid #4285f4;
-    font-family: "Monaco", "Courier New", monospace;
-    font-size: 11px;
-    color: #666;
-    line-height: 1.4;
-    white-space: pre-line;
-  }
-
   .clear-button {
     background-color: #6c757d;
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 12px 16px;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
     margin-right: 10px;
   }
@@ -138,6 +113,9 @@
   .button-row {
     display: flex;
     align-items: center;
-    margin-top: 10px;
+    padding: 10px;
+    background: white;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
   }
 </style>
