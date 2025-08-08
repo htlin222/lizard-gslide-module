@@ -32,6 +32,37 @@
   }
 
   /**
+   * Pastes content from clipboard
+   */
+  function pasteFromClipboard() {
+    const input = document.getElementById("markdownInput");
+
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard
+        .readText()
+        .then((text) => {
+          input.value = text;
+          input.focus();
+          showStatus("📋 Content pasted from clipboard!", "success");
+        })
+        .catch((error) => {
+          showStatus(
+            "❌ Could not access clipboard. Please paste manually (Ctrl+V)",
+            "error",
+          );
+          input.focus();
+        });
+    } else {
+      // Fallback for browsers without clipboard API
+      showStatus(
+        "💡 Please paste manually using Ctrl+V (Cmd+V on Mac)",
+        "info",
+      );
+      input.focus();
+    }
+  }
+
+  /**
    * Converts the markdown text to slides
    */
   function convertMarkdown() {
@@ -54,7 +85,7 @@
     google.script.run
       .withSuccessHandler(function (success) {
         button.disabled = false;
-        button.textContent = "Convert to Slides";
+        button.textContent = "Convert";
 
         if (success) {
           showStatus(
@@ -72,7 +103,7 @@
       })
       .withFailureHandler(function (error) {
         button.disabled = false;
-        button.textContent = "Convert to Slides";
+        button.textContent = "Convert";
         showStatus(`❌ Error: ${error.message}`, "error");
         console.error("Conversion error:", error);
       })

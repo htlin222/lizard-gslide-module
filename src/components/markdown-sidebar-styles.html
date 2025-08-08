@@ -11,7 +11,7 @@
     border-radius: 4px;
     padding: 10px;
     font-family: "Monaco", "Courier New", monospace;
-    font-size: 12px;
+    font-size: 14px;
     resize: vertical;
     box-sizing: border-box;
   }
@@ -23,7 +23,7 @@
   }
 
   .convert-button {
-    width: 100%;
+    flex: 1;
     background-color: #4285f4;
     color: white;
     border: none;
@@ -31,7 +31,21 @@
     border-radius: 4px;
     font-size: 14px;
     cursor: pointer;
-    margin-top: 10px;
+    margin-left: 10px;
+  }
+
+  .paste-button {
+    background-color: #34a853;
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .paste-button:hover {
+    background-color: #2d8f47;
   }
 
   .convert-button:hover {
@@ -69,22 +83,36 @@
     border: 1px solid #bee5eb;
   }
 
-  .example-section {
+  .quick-reference {
     margin: 15px 0;
-    padding: 10px;
+  }
+
+  .quick-reference summary {
+    cursor: pointer;
+    padding: 8px 10px;
     background-color: #f8f9fa;
     border-radius: 4px;
     border-left: 4px solid #4285f4;
-  }
-
-  .example-title {
     font-weight: bold;
-    margin-bottom: 8px;
     color: #333;
     font-size: 13px;
+    user-select: none;
   }
 
-  .example-text {
+  .quick-reference summary:hover {
+    background-color: #e9ecef;
+  }
+
+  .quick-reference[open] summary {
+    border-radius: 4px 4px 0 0;
+    margin-bottom: 0;
+  }
+
+  .reference-content {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 0 0 4px 4px;
+    border-left: 4px solid #4285f4;
     font-family: "Monaco", "Courier New", monospace;
     font-size: 11px;
     color: #666;

@@ -1,5 +1,4 @@
 <div class="markdown-container">
-  <label for="markdownInput">Paste your Markdown content below:</label>
   <textarea
     id="markdownInput"
     class="markdown-input"
@@ -30,21 +29,24 @@ Horizontal lines separate slides"
     <button type="button" class="clear-button" onclick="clearMarkdown()">
       Clear
     </button>
+    <button type="button" class="paste-button" onclick="pasteFromClipboard()">
+      Paste
+    </button>
     <button
       type="button"
       class="convert-button"
       id="convertButton"
       onclick="convertMarkdown()"
     >
-      Convert to Slides
+      Convert
     </button>
   </div>
 </div>
 
-<div class="example-section">
-  <div class="example-title">📝 Quick Reference:</div>
-  <div class="example-text">
+<details class="quick-reference">
+  <summary>📝 Quick Reference</summary>
+  <div class="reference-content">
     # Section Header (H1) ## Slide Title (H2) - Bullet points 1. Numbered lists
     A. Lettered lists **Bold text** > Speaker notes --- (slide separator)
   </div>
-</div>
+</details>
