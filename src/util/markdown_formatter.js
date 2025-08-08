@@ -110,3 +110,27 @@ function getFontSize(text) {
 		Math.min(baseFont, Math.floor(baseFont * Math.pow(baseCapacity / N, 0.3))),
 	);
 }
+
+/**
+ * Calculates the optimal title font size based on text length
+ * Linear formula: 24pt at 27 chars to 20pt at 70 chars
+ *
+ * @param {string} text - The title text to calculate font size for
+ * @return {number} The calculated font size (between 18 and 24)
+ */
+function getTitleFontSize(text) {
+	const N = text.length; // Character count
+
+	// Linear formula: y = mx + b
+	// Point 1: (27, 24), Point 2: (70, 20)
+	// Slope: m = (20 - 24) / (70 - 27) = -4 / 43 ≈ -0.093
+	// y-intercept: b = 24 - (-0.093 * 27) = 24 + 2.51 ≈ 26.51
+
+	const slope = -4 / 43;
+	const yIntercept = 26.51;
+
+	const calculatedSize = slope * N + yIntercept;
+
+	// Clamp between reasonable bounds
+	return Math.max(18, Math.min(24, Math.round(calculatedSize)));
+}
