@@ -280,6 +280,26 @@
           ⬅ Create Left
         </button>
       </div>
+
+      <br />
+      <button
+        class="secondary"
+        onclick="createSibling()"
+        style="width: 100%; background-color: #ff9800"
+      >
+        👥 Create Sibling
+      </button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">🔧 Debug Tools</div>
+      <button
+        class="tertiary"
+        onclick="showTitlePlaceholders()"
+        style="width: 100%; background-color: #9c27b0"
+      >
+        🐛 Show Title Placeholders
+      </button>
     </div>
 
     <script>
@@ -487,6 +507,60 @@
             startArrow,
             endArrow,
           );
+      }
+
+      function createSibling() {
+        const horizontalGap = parseInt(
+          document.getElementById("horizontalGap").value,
+        );
+        const verticalGap = parseInt(
+          document.getElementById("verticalGap").value,
+        );
+        const lineType = document.getElementById("lineType").value;
+        const startArrow = document.getElementById("startArrow").value;
+        const endArrow = document.getElementById("endArrow").value;
+
+        if (horizontalGap < 0 || isNaN(horizontalGap)) {
+          showMessage(
+            "Please enter a valid horizontal gap value (0 or greater)",
+            true,
+          );
+          return;
+        }
+
+        if (verticalGap < 0 || isNaN(verticalGap)) {
+          showMessage(
+            "Please enter a valid vertical gap value (0 or greater)",
+            true,
+          );
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function () {
+            showMessage("Sibling shape created successfully!");
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .createSiblingShape(
+            horizontalGap,
+            verticalGap,
+            lineType,
+            startArrow,
+            endArrow,
+          );
+      }
+
+      function showTitlePlaceholders() {
+        google.script.run
+          .withSuccessHandler(function (result) {
+            showMessage(result);
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .debugShowTitlePlaceholders();
       }
 
       function showMessage(message, isError = false) {

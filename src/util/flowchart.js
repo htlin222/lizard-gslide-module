@@ -610,79 +610,34 @@ function generateSiblingIds(baseLevel, count) {
 }
 
 /**
- * Updates a shape's title with a new graph ID
+ * Updates a shape's text with a new graph ID
  * @param {GoogleAppsScript.Slides.Shape} shape - Shape to update
  * @param {string} graphId - New graph ID to set
  */
 function setShapeGraphId(shape, graphId) {
 	try {
-		// Set the shape's alt title for identification
-		shape.setTitle(graphId);
-
-		// Try to use title placeholder if it exists
-		const slide = shape.getParentPage();
-		try {
-			const titlePlaceholder = slide.getPlaceholder(
-				SlidesApp.PlaceholderType.TITLE,
-			);
-			if (titlePlaceholder) {
-				titlePlaceholder.asShape().getText().setText(graphId);
-			}
-		} catch (placeholderError) {
-			// If no title placeholder, set the shape's own text as fallback
-			try {
-				shape.getText().setText(graphId);
-			} catch (textError) {
-				console.log(`Warning: Could not set shape text: ${textError.message}`);
-			}
-		}
+		// Set the shape's text content to the graph ID
+		shape.getText().setText(graphId);
 	} catch (e) {
-		console.log(`Warning: Could not set shape title: ${e.message}`);
+		console.log(`Warning: Could not set shape text: ${e.message}`);
 	}
 }
 
 /**
- * Gets the graph ID from a shape's title or text
+ * Gets the graph ID from a shape's text content
  * @param {GoogleAppsScript.Slides.Shape} shape - Shape to read from
  * @returns {string|null} - Graph ID or null if not found
  */
 function getShapeGraphId(shape) {
 	try {
-		// First try to get from alt title
-		const title = shape.getTitle();
-		if (title && title.startsWith("graph[")) {
-			return title;
-		}
-
-		// Try to get from title placeholder
-		const slide = shape.getParentPage();
-		try {
-			const titlePlaceholder = slide.getPlaceholder(
-				SlidesApp.PlaceholderType.TITLE,
-			);
-			if (titlePlaceholder) {
-				const placeholderText = titlePlaceholder
-					.asShape()
-					.getText()
-					.asString()
-					.trim();
-				if (placeholderText && placeholderText.startsWith("graph[")) {
-					return placeholderText;
-				}
-			}
-		} catch (placeholderError) {
-			// Title placeholder not found, continue to next fallback
-		}
-
-		// Fallback to shape's own text content
+		// Get the shape's text content
 		const text = shape.getText().asString().trim();
 		if (text && text.startsWith("graph[")) {
 			return text;
 		}
-
 		return null;
 	} catch (e) {
-		console.log(`Warning: Could not get shape title: ${e.message}`);
+		console.log(`Warning: Could not get shape text: ${e.message}`);
 		return null;
 	}
 }
@@ -905,4 +860,295 @@ function copyShapeStyle(sourceShape, targetShape) {
 	} catch (e) {
 		console.log("Warning: Could not copy all style properties: " + e.message);
 	}
+}
+
+/**
+ * Debug function to show placeholder text for the currently selected shape
+ * @returns {string} Debug information about the selected shape's placeholder text
+ */
+function debugShowTitlePlaceholders() {
+	try {
+		const pres = SlidesApp.getActivePresentation();
+		const selection = pres.getSelection();
+		const range = selection.getPageElementRange();
+
+		if (!range) {
+			return "Please select a shape to debug its placeholder text.";
+		}
+
+		const els = range.getPageElements();
+		if (els.length !== 1) {
+			return "Please select exactly ONE shape.";
+		}
+
+		const element = els[0];
+		if (element.getPageElementType() !== SlidesApp.PageElementType.SHAPE) {
+			return "Selected item must be a SHAPE.";
+		}
+
+		const shape = element.asShape();
+		const debugInfo = [];
+
+		// Check the selected shape's placeholder text
+		debugInfo.push("🔍 Selected Shape Debug:");
+
+		// Shape text content
+		const textContent = shape.getText().asString().trim();
+		debugInfo.push(`Text Content: "${textContent || "(empty)"}"`);
+
+		// Graph ID from our helper function
+		const graphId = getShapeGraphId(shape);
+		debugInfo.push(`Detected Graph ID: "${graphId || "(none)"}"`);
+
+		const result = debugInfo.join("\n");
+
+		// Also log to console for debugging
+		console.log(`Debug Selected Shape:\n${result}`);
+
+		return result;
+	} catch (e) {
+		const errorMsg = `Error in debugShowTitlePlaceholders: ${e.message}`;
+		console.error(errorMsg);
+		return errorMsg;
+	}
+}
+
+/**
+ * Creates a sibling shape next to the selected shape
+ * Analyzes existing sibling positions and places the new sibling appropriately
+ * @param {number} horizontalGap - Horizontal gap in points
+ * @param {number} verticalGap - Vertical gap in points
+ * @param {string} lineType - Type of line to use
+ * @param {string} startArrow - Start arrow style
+ * @param {string} endArrow - End arrow style
+ */
+function createSiblingShape(
+	horizontalGap = 20,
+	verticalGap = 20,
+	lineType = "STRAIGHT",
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
+	const pres = SlidesApp.getActivePresentation();
+	const selection = pres.getSelection();
+	const range = selection.getPageElementRange();
+
+	if (!range) {
+		return SlidesApp.getUi().alert(
+			"Please select a shape to create a sibling for.",
+		);
+	}
+
+	const els = range.getPageElements();
+	if (els.length !== 1) {
+		return SlidesApp.getUi().alert("Please select exactly ONE shape.");
+	}
+
+	const element = els[0];
+	if (element.getPageElementType() !== SlidesApp.PageElementType.SHAPE) {
+		return SlidesApp.getUi().alert("Selected item must be a SHAPE.");
+	}
+
+	const selectedShape = element.asShape();
+	const selectedGraphId = getShapeGraphId(selectedShape);
+
+	if (!selectedGraphId) {
+		return SlidesApp.getUi().alert(
+			"Selected shape must have a graph ID. Please create it as part of a flowchart first.",
+		);
+	}
+
+	const parsed = parseGraphId(selectedGraphId);
+	if (!parsed || !parsed.parent) {
+		return SlidesApp.getUi().alert(
+			"Selected shape must have a parent. Cannot create sibling for root shapes.",
+		);
+	}
+
+	// Find the parent shape
+	const slide = selectedShape.getParentPage();
+	const allShapes = slide.getShapes();
+	let parentShape = null;
+	const siblingShapes = [];
+
+	// Find parent and all sibling shapes
+	for (const shape of allShapes) {
+		const graphId = getShapeGraphId(shape);
+		if (graphId) {
+			const shapeData = parseGraphId(graphId);
+			if (shapeData) {
+				// Check if this is the parent
+				if (shapeData.current === parsed.parent) {
+					parentShape = shape;
+				}
+				// Check if this is a sibling (same parent, different current ID)
+				if (
+					shapeData.parent === parsed.parent &&
+					shapeData.current !== parsed.current
+				) {
+					siblingShapes.push({
+						shape: shape,
+						data: shapeData,
+						left: shape.getLeft(),
+						top: shape.getTop(),
+						width: shape.getWidth(),
+						height: shape.getHeight(),
+					});
+				}
+			}
+		}
+	}
+
+	if (!parentShape) {
+		return SlidesApp.getUi().alert(
+			"Could not find parent shape. The hierarchy may be broken.",
+		);
+	}
+
+	// Add the selected shape to the sibling list for position analysis
+	siblingShapes.push({
+		shape: selectedShape,
+		data: parsed,
+		left: selectedShape.getLeft(),
+		top: selectedShape.getTop(),
+		width: selectedShape.getWidth(),
+		height: selectedShape.getHeight(),
+	});
+
+	// Determine the layout pattern (horizontal or vertical)
+	let isHorizontalLayout = false;
+	let isVerticalLayout = false;
+
+	if (siblingShapes.length > 1) {
+		// Check if siblings are arranged horizontally (similar Y positions)
+		const firstSibling = siblingShapes[0];
+		const tolerance = 10; // pixels
+
+		let horizontalCount = 0;
+		let verticalCount = 0;
+
+		for (let i = 1; i < siblingShapes.length; i++) {
+			const sibling = siblingShapes[i];
+			const deltaY = Math.abs(sibling.top - firstSibling.top);
+			const deltaX = Math.abs(sibling.left - firstSibling.left);
+
+			if (deltaY < tolerance) horizontalCount++;
+			if (deltaX < tolerance) verticalCount++;
+		}
+
+		isHorizontalLayout = horizontalCount > verticalCount;
+		isVerticalLayout = verticalCount > horizontalCount;
+	}
+
+	// Generate new sibling ID
+	const parentData = parseGraphId(getShapeGraphId(parentShape));
+	if (!parentData) {
+		return SlidesApp.getUi().alert("Parent shape has invalid graph ID format.");
+	}
+
+	// Find the highest numbered sibling to determine the next number
+	const currentLevel = parsed.current.match(/^([A-Z]+)/)?.[1] || "A";
+	let maxSiblingNumber = 0;
+
+	for (const sibling of siblingShapes) {
+		const siblingLevel = sibling.data.current.match(/^([A-Z]+)(\d+)$/);
+		if (siblingLevel && siblingLevel[1] === currentLevel) {
+			const number = Number.parseInt(siblingLevel[2]);
+			if (number > maxSiblingNumber) {
+				maxSiblingNumber = number;
+			}
+		}
+	}
+
+	const newSiblingId = `${currentLevel}${maxSiblingNumber + 1}`;
+
+	// Calculate position for new sibling and move selected shape
+	const selectedLeft = selectedShape.getLeft();
+	const selectedTop = selectedShape.getTop();
+	const selectedWidth = selectedShape.getWidth();
+	const selectedHeight = selectedShape.getHeight();
+
+	let newLeft;
+	let newTop;
+	let adjustedSelectedTop;
+
+	if (isHorizontalLayout && siblingShapes.length > 1) {
+		// Horizontal layout: center group around parent's X center
+		const parentCenterX = parentShape.getLeft() + parentShape.getWidth() / 2;
+		const totalGroupWidth = selectedWidth + horizontalGap + selectedWidth; // current + gap + new sibling
+		const groupStartX = parentCenterX - totalGroupWidth / 2;
+
+		selectedShape.setLeft(groupStartX);
+		newLeft = groupStartX + selectedWidth + horizontalGap;
+		newTop = selectedTop;
+	} else {
+		// Vertical layout (default): center group around parent's Y center
+		const parentCenterY = parentShape.getTop() + parentShape.getHeight() / 2;
+		const totalGroupHeight = selectedHeight + verticalGap + selectedHeight; // current + gap + new sibling
+		const groupStartY = parentCenterY - totalGroupHeight / 2;
+
+		selectedShape.setTop(groupStartY);
+		newLeft = selectedLeft;
+		newTop = groupStartY + selectedHeight + verticalGap;
+	}
+
+	// Create the new sibling shape
+	const newShape = slide.insertShape(
+		selectedShape.getShapeType(),
+		newLeft,
+		newTop,
+		selectedWidth,
+		selectedHeight,
+	);
+
+	// Copy styling from selected shape
+	copyShapeStyle(selectedShape, newShape);
+
+	// Set the hierarchical graph ID
+	const newGraphId = generateGraphId(parsed.parent, newSiblingId, []);
+	setShapeGraphId(newShape, newGraphId);
+
+	// Update parent to include the new sibling
+	const updatedChildren = [...parentData.children, newSiblingId];
+	const updatedParentId = generateGraphId(
+		parentData.parent,
+		parentData.current,
+		updatedChildren,
+	);
+	setShapeGraphId(parentShape, updatedParentId);
+
+	// Connect new sibling to parent
+	const connectionPairs = {
+		horizontal: { parentSide: "RIGHT", childSide: "LEFT" },
+		vertical: { parentSide: "BOTTOM", childSide: "TOP" },
+	};
+
+	const connectionType =
+		isHorizontalLayout || (!isHorizontalLayout && !isVerticalLayout)
+			? "horizontal"
+			: "vertical";
+	const pair = connectionPairs[connectionType];
+
+	const parentSite = pickConnectionSite(parentShape, pair.parentSide);
+	const childSite = pickConnectionSite(newShape, pair.childSide);
+
+	if (parentSite && childSite) {
+		const lineCategory =
+			SlidesApp.LineCategory[lineType] || SlidesApp.LineCategory.STRAIGHT;
+		const line = slide.insertLine(lineCategory, parentSite, childSite);
+
+		// Apply arrow styles
+		if (
+			startArrow &&
+			startArrow !== "NONE" &&
+			SlidesApp.ArrowStyle[startArrow]
+		) {
+			line.setStartArrow(SlidesApp.ArrowStyle[startArrow]);
+		}
+		if (endArrow && endArrow !== "NONE" && SlidesApp.ArrowStyle[endArrow]) {
+			line.setEndArrow(SlidesApp.ArrowStyle[endArrow]);
+		}
+	}
+
+	return newShape;
 }
