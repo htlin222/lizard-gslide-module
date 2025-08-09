@@ -105,30 +105,9 @@ function createSiblingShape(
 		height: selectedShape.getHeight(),
 	});
 
-	// Determine the layout pattern (horizontal or vertical)
-	let isHorizontalLayout = false;
-	let isVerticalLayout = false;
-
-	if (siblingShapes.length > 1) {
-		// Check if siblings are arranged horizontally (similar Y positions)
-		const firstSibling = siblingShapes[0];
-		const tolerance = 10; // pixels
-
-		let horizontalCount = 0;
-		let verticalCount = 0;
-
-		for (let i = 1; i < siblingShapes.length; i++) {
-			const sibling = siblingShapes[i];
-			const deltaY = Math.abs(sibling.top - firstSibling.top);
-			const deltaX = Math.abs(sibling.left - firstSibling.left);
-
-			if (deltaY < tolerance) horizontalCount++;
-			if (deltaX < tolerance) verticalCount++;
-		}
-
-		isHorizontalLayout = horizontalCount > verticalCount;
-		isVerticalLayout = verticalCount > horizontalCount;
-	}
+	// Determine layout from the selected shape's graph ID layout annotation
+	const isHorizontalLayout = parsed.layout === "LR";
+	const isVerticalLayout = parsed.layout === "TD";
 
 	// Generate new sibling ID based on parent's children list
 	const parentData = parseGraphId(getShapeGraphId(parentShape));
@@ -209,19 +188,7 @@ function createSiblingShape(
 
 	// Now reposition ALL siblings to be centered around the parent
 	if (isHorizontalLayout && siblingShapes.length > 2) {
-		// Horizontal layout: center all siblings around parent's X center
-		const parentCenterX = parentShape.getLeft() + parentShape.getWidth() / 2;
-		const totalGroupWidth =
-			siblingShapes.length * selectedWidth +
-			(siblingShapes.length - 1) * horizontalGap;
-		const groupStartX = parentCenterX - totalGroupWidth / 2;
-
-		siblingShapes.forEach((sibling, index) => {
-			const newX = groupStartX + index * (selectedWidth + horizontalGap);
-			sibling.shape.setLeft(newX);
-		});
-	} else {
-		// Vertical layout (default): center all siblings around parent's Y center
+		// Horizontal layout (LR): siblings spread vertically, all at same X position
 		const parentCenterY = parentShape.getTop() + parentShape.getHeight() / 2;
 		const totalGroupHeight =
 			siblingShapes.length * selectedHeight +
@@ -231,6 +198,24 @@ function createSiblingShape(
 		siblingShapes.forEach((sibling, index) => {
 			const newY = groupStartY + index * (selectedHeight + verticalGap);
 			sibling.shape.setTop(newY);
+			// Keep all siblings at the same X position (aligned vertically)
+		});
+	} else {
+		// Vertical layout (TD): siblings spread horizontally, all at same Y position
+		const parentCenterX = parentShape.getLeft() + parentShape.getWidth() / 2;
+		const totalGroupWidth =
+			siblingShapes.length * selectedWidth +
+			(siblingShapes.length - 1) * horizontalGap;
+		const groupStartX = parentCenterX - totalGroupWidth / 2;
+
+		// For TD layout, all siblings should be at the same Y position
+		const siblingY =
+			parentShape.getTop() + parentShape.getHeight() + verticalGap;
+
+		siblingShapes.forEach((sibling, index) => {
+			const newX = groupStartX + index * (selectedWidth + horizontalGap);
+			sibling.shape.setLeft(newX);
+			sibling.shape.setTop(siblingY); // All siblings at same Y level
 		});
 	}
 
@@ -244,9 +229,20 @@ function createSiblingShape(
 	);
 	setShapeGraphId(parentShape, updatedParentId);
 
-	// Simple approach: Don't touch existing connections, just connect the new sibling with left/right pattern
-	const parentSite = pickConnectionSite(parentShape, "RIGHT");
-	const childSite = pickConnectionSite(newShape, "LEFT");
+	// Connect based on layout: LR uses RIGHT/LEFT, TD uses BOTTOM/TOP
+	let parentSide, childSide;
+	if (isHorizontalLayout) {
+		// LR layout: parent connects from RIGHT, child connects from LEFT
+		parentSide = "RIGHT";
+		childSide = "LEFT";
+	} else {
+		// TD layout: parent connects from BOTTOM, child connects from TOP
+		parentSide = "BOTTOM";
+		childSide = "TOP";
+	}
+
+	const parentSite = pickConnectionSite(parentShape, parentSide);
+	const childSite = pickConnectionSite(newShape, childSide);
 
 	if (parentSite && childSite) {
 		const lineCategory =

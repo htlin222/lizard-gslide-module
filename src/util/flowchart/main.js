@@ -322,8 +322,8 @@ function initializeRootGraphShape() {
 	}
 
 	const shape = element.asShape();
-	// Initialize as root with LR layout by default
-	const rootId = generateGraphId("", "LR", "A1", []);
+	// Initialize as root without layout annotation
+	const rootId = generateGraphId("", "", "A1", []);
 	setShapeGraphId(shape, rootId);
 
 	SlidesApp.getUi().alert(
