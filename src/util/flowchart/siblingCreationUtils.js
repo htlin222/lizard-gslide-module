@@ -105,15 +105,29 @@ function createSiblingShape(
 		height: selectedShape.getHeight(),
 	});
 
-	// Determine layout from the selected shape's graph ID layout annotation
-	const isHorizontalLayout = parsed.layout === "LR";
-	const isVerticalLayout = parsed.layout === "TD";
-
 	// Generate new sibling ID based on parent's children list
 	const parentData = parseGraphId(getShapeGraphId(parentShape));
 	if (!parentData) {
 		return SlidesApp.getUi().alert("Parent shape has invalid graph ID format.");
 	}
+
+	// Determine layout from the parent's perspective
+	// If parent has children, check the layout annotation in the first child's graph ID
+	// Otherwise, use the selected shape's layout as fallback
+	let layoutToUse = parsed.layout || "TD"; // Default to TD if no layout specified
+
+	// The layout should be consistent across all siblings
+	// Check existing siblings to determine the actual layout being used
+	if (siblingShapes.length > 0) {
+		// Use the layout from existing siblings
+		const firstSibling = siblingShapes[0];
+		if (firstSibling.data && firstSibling.data.layout) {
+			layoutToUse = firstSibling.data.layout;
+		}
+	}
+
+	const isHorizontalLayout = layoutToUse === "LR";
+	const isVerticalLayout = layoutToUse === "TD";
 
 	// Get the level from current selected shape (e.g., "C1" -> "C")
 	const currentLevel = parsed.current.match(/^([A-Z]+)/)?.[1] || "A";
@@ -163,10 +177,10 @@ function createSiblingShape(
 	// Copy styling from selected shape
 	copyShapeStyle(selectedShape, newShape);
 
-	// Set the hierarchical graph ID using the parent's layout
+	// Set the hierarchical graph ID using the determined layout
 	const newGraphId = generateGraphId(
 		parsed.parent,
-		parsed.layout,
+		layoutToUse,
 		newSiblingId,
 		[],
 	);
@@ -187,7 +201,7 @@ function createSiblingShape(
 	});
 
 	// Now reposition ALL siblings to be centered around the parent
-	if (isHorizontalLayout && siblingShapes.length > 2) {
+	if (isHorizontalLayout) {
 		// Horizontal layout (LR): siblings spread vertically, all at same X position
 		const parentCenterY = parentShape.getTop() + parentShape.getHeight() / 2;
 		const totalGroupHeight =
@@ -195,10 +209,14 @@ function createSiblingShape(
 			(siblingShapes.length - 1) * verticalGap;
 		const groupStartY = parentCenterY - totalGroupHeight / 2;
 
+		// All siblings should be positioned to the right of the parent
+		const siblingX =
+			parentShape.getLeft() + parentShape.getWidth() + horizontalGap;
+
 		siblingShapes.forEach((sibling, index) => {
 			const newY = groupStartY + index * (selectedHeight + verticalGap);
 			sibling.shape.setTop(newY);
-			// Keep all siblings at the same X position (aligned vertically)
+			sibling.shape.setLeft(siblingX); // Set all siblings at the same X position
 		});
 	} else {
 		// Vertical layout (TD): siblings spread horizontally, all at same Y position
