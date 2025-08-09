@@ -251,3 +251,185 @@ function createChildrenInDirection(
 
 	return createdShapes;
 }
+
+/**
+ * Creates multiple child shapes in a specific direction with custom text for each shape
+ * @param {string} direction - Direction to create children ("TOP", "RIGHT", "BOTTOM", "LEFT")
+ * @param {number} gap - Gap between shapes in points (default 20)
+ * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
+ * @param {number} count - Number of children to create (default 1)
+ * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
+ * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
+ * @param {Array} texts - Array of text strings for each child shape
+ * @returns {Array} - Array of created child shapes
+ */
+function createChildrenInDirectionWithText(
+	direction,
+	gap = 20,
+	lineType = "STRAIGHT",
+	count = 1,
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+	texts = [],
+) {
+	const pres = SlidesApp.getActivePresentation();
+	const selection = pres.getSelection();
+	const range = selection.getPageElementRange();
+
+	const validation = validateParentElement(range);
+	if (validation.error) {
+		SlidesApp.getUi().alert(validation.error);
+		return [];
+	}
+
+	const parentShape = validation.shape;
+	const parentProperties = {
+		left: parentShape.getLeft(),
+		top: parentShape.getTop(),
+		width: parentShape.getWidth(),
+		height: parentShape.getHeight(),
+	};
+
+	// Use text count if texts are provided, otherwise use count parameter
+	const actualCount = texts.length > 0 ? texts.length : count;
+
+	// Calculate positions for all children
+	const positions = calculateChildPositions(
+		parentProperties,
+		direction,
+		gap,
+		actualCount,
+	);
+
+	const slide = parentShape.getParentPage();
+	const createdShapes = [];
+
+	// Create each child shape with its text
+	for (let i = 0; i < actualCount; i++) {
+		const position = positions[i];
+		const childText = texts[i] || ""; // Empty text if no custom text provided
+
+		const childShape = createSingleChildWithText(
+			parentShape,
+			slide,
+			position,
+			direction,
+			lineType,
+			startArrow,
+			endArrow,
+			childText,
+		);
+
+		if (childShape) {
+			createdShapes.push(childShape);
+		}
+	}
+
+	return createdShapes;
+}
+
+/**
+ * Creates a single child shape with custom text and styling
+ * @param {GoogleAppsScript.Slides.Shape} parentShape - Parent shape
+ * @param {GoogleAppsScript.Slides.Slide} slide - Slide to create shape on
+ * @param {Object} position - Position object {left, top}
+ * @param {string} direction - Direction of child creation
+ * @param {string} lineType - Type of line to use
+ * @param {string} startArrow - Start arrow style
+ * @param {string} endArrow - End arrow style
+ * @param {string} text - Text to set in the child shape
+ * @returns {GoogleAppsScript.Slides.Shape} - Created child shape
+ */
+function createSingleChildWithText(
+	parentShape,
+	slide,
+	position,
+	direction,
+	lineType,
+	startArrow,
+	endArrow,
+	text,
+) {
+	// Create new shape at calculated position
+	const childShape = slide.insertShape(
+		parentShape.getShapeType(),
+		position.left,
+		position.top,
+		parentShape.getWidth(),
+		parentShape.getHeight(),
+	);
+
+	// Copy styling from parent (except graph ID)
+	copyShapeStyle(parentShape, childShape);
+
+	// Set the custom text for this child shape (only if text is provided)
+	try {
+		if (text && text.trim() !== "") {
+			childShape.getText().setText(text);
+		}
+		// If no text provided, leave the shape empty (don't set any text)
+	} catch (e) {
+		console.log(`Warning: Could not set child shape text: ${e.message}`);
+	}
+
+	// Set up graph ID for flowchart hierarchy
+	const parentGraphId = getShapeGraphId(parentShape);
+	if (parentGraphId) {
+		const parentData = parseGraphId(parentGraphId);
+		if (parentData) {
+			// Generate child ID based on existing children
+			const nextLevel = getNextLevel(
+				parentData.current.match(/^([A-Z]+)/)?.[1] || "A",
+			);
+			const childNumber = parentData.children.length + 1;
+			const childId = `${nextLevel}${childNumber}`;
+
+			// Set graph ID for child (using parent's layout)
+			const childGraphId = generateGraphId(
+				parentData.current,
+				parentData.layout,
+				childId,
+				[],
+			);
+			setShapeGraphId(childShape, childGraphId);
+
+			// Update parent to include this child
+			const updatedChildren = [...parentData.children, childId];
+			const updatedParentId = generateGraphId(
+				parentData.parent,
+				parentData.layout,
+				parentData.current,
+				updatedChildren,
+			);
+			setShapeGraphId(parentShape, updatedParentId);
+		}
+	}
+
+	// Create connection line
+	const connectionSides = getConnectionSides(direction);
+	const parentSite = pickConnectionSite(
+		parentShape,
+		connectionSides.parentSide,
+	);
+	const childSite = pickConnectionSite(childShape, connectionSides.childSide);
+
+	if (parentSite && childSite) {
+		const lineCategory =
+			SlidesApp.LineCategory[lineType] || SlidesApp.LineCategory.STRAIGHT;
+		const line = slide.insertLine(lineCategory, parentSite, childSite);
+
+		// Apply arrow styles
+		if (
+			startArrow &&
+			startArrow !== "NONE" &&
+			SlidesApp.ArrowStyle[startArrow]
+		) {
+			line.setStartArrow(SlidesApp.ArrowStyle[startArrow]);
+		}
+		if (endArrow && endArrow !== "NONE" && SlidesApp.ArrowStyle[endArrow]) {
+			line.setEndArrow(SlidesApp.ArrowStyle[endArrow]);
+		}
+	}
+
+	return childShape;
+}

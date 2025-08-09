@@ -1,0 +1,608 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>配色方案生成器</title>
+    <style>
+      body {
+        font-family: "Roboto", "Arial", sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #f8f9fa;
+        color: #333;
+      }
+
+      .container {
+        max-width: 320px;
+        margin: 0 auto;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 25px;
+      }
+
+      .header h1 {
+        font-size: 18px;
+        font-weight: 500;
+        margin: 0;
+        color: #1976d2;
+      }
+
+      .input-group {
+        margin-bottom: 20px;
+      }
+
+      .input-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+        font-size: 14px;
+        color: #666;
+      }
+
+      .input-field {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        box-sizing: border-box;
+        transition: border-color 0.3s;
+      }
+
+      .input-field:focus {
+        outline: none;
+        border-color: #1976d2;
+        box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+      }
+
+      .color-preview {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        margin-left: 10px;
+        display: inline-block;
+        vertical-align: middle;
+        background: #fff;
+        transition: all 0.3s;
+      }
+
+      .hex-input-container {
+        display: flex;
+        align-items: center;
+      }
+
+      .hex-input-container .input-field {
+        flex: 1;
+      }
+
+      .generate-btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #1976d2, #1565c0);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-bottom: 20px;
+      }
+
+      .generate-btn:hover {
+        background: linear-gradient(135deg, #1565c0, #0d47a1);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+      }
+
+      .generate-btn:active {
+        transform: translateY(0);
+      }
+
+      .generate-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .color-palette {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        min-height: 100px;
+        display: none;
+      }
+
+      .color-palette.show {
+        display: block;
+      }
+
+      .color-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        padding: 8px;
+        border-radius: 6px;
+        transition: background-color 0.3s;
+      }
+
+      .color-item:hover {
+        background: #f5f5f5;
+      }
+
+      .color-swatch {
+        width: 40px;
+        height: 40px;
+        border-radius: 6px;
+        margin-right: 12px;
+        border: 2px solid #eee;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .color-swatch:hover {
+        transform: scale(1.05);
+      }
+
+      .color-info {
+        flex: 1;
+      }
+
+      .color-hex {
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 2px;
+        font-family: "Courier New", monospace;
+      }
+
+      .color-name {
+        font-size: 12px;
+        color: #666;
+      }
+
+      .color-actions {
+        display: flex;
+        gap: 5px;
+      }
+
+      .action-btn {
+        padding: 6px 10px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .action-btn:hover {
+        background: #f0f0f0;
+        border-color: #ccc;
+      }
+
+      .action-btn.copy {
+        color: #1976d2;
+      }
+
+      .action-btn.apply {
+        color: #4caf50;
+      }
+
+      .apply-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .apply-btn {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .apply-btn.selected {
+        background: #4caf50;
+        color: white;
+        border-color: #4caf50;
+      }
+
+      .apply-btn.create-page {
+        background: #ff9800;
+        color: white;
+        border-color: #ff9800;
+      }
+
+      .apply-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .message {
+        padding: 12px;
+        border-radius: 6px;
+        margin: 15px 0;
+        font-size: 14px;
+        display: none;
+      }
+
+      .message.success {
+        background: #e8f5e8;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+      }
+
+      .message.error {
+        background: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+        color: #666;
+      }
+
+      .loading.show {
+        display: block;
+      }
+
+      .spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #1976d2;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 8px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .scheme-info {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🎨 配色方案生成器</h1>
+      </div>
+
+      <div class="input-group">
+        <label for="hexInput">主色 HEX 值</label>
+        <div class="hex-input-container">
+          <input
+            type="text"
+            id="hexInput"
+            class="input-field"
+            placeholder="例如: #3D6869 或 3D6869"
+            value="#3D6869"
+          />
+          <div class="color-preview" id="colorPreview"></div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="schemeSelect">配色風格</label>
+        <select id="schemeSelect" class="input-field">
+          <option value="monochromatic">單色系 (Monochromatic)</option>
+          <option value="analogous">類似色 (Analogous)</option>
+          <option value="complementary">互補色 (Complementary)</option>
+          <option value="split-complementary">
+            分裂互補色 (Split Complementary)
+          </option>
+          <option value="triadic">三分色 (Triadic)</option>
+          <option value="tetradic">四方色 (Tetradic)</option>
+          <option value="golden-ratio">黃金比例 (Golden Ratio)</option>
+        </select>
+        <div class="scheme-info" id="schemeInfo">
+          基於不同的亮度和飽和度變化產生協調的單色系配色
+        </div>
+      </div>
+
+      <button class="generate-btn" id="generateBtn" onclick="generatePalette()">
+        生成配色方案
+      </button>
+
+      <div class="message" id="messageArea"></div>
+
+      <div class="loading" id="loadingArea">
+        <div class="spinner"></div>
+        正在生成配色方案...
+      </div>
+
+      <div class="color-palette" id="colorPalette">
+        <div id="paletteColors"></div>
+        <div class="apply-buttons">
+          <button
+            class="apply-btn selected"
+            id="applySelectedBtn"
+            onclick="applyToSelected()"
+          >
+            套用到選中物件
+          </button>
+          <button
+            class="apply-btn create-page"
+            id="createPageBtn"
+            onclick="createColorPage()"
+          >
+            建立色卡頁面
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentColors = [];
+      let currentScheme = "";
+
+      // 配色方案說明
+      const schemeDescriptions = {
+        monochromatic: "基於不同的亮度和飽和度變化產生協調的單色系配色",
+        analogous: "使用色相環上相鄰的顏色，產生和諧自然的配色效果",
+        complementary: "使用色相環對面的顏色，產生強烈對比和視覺衝擊",
+        "split-complementary": "使用互補色兩側的顏色，既有對比又保持和諧",
+        triadic: "使用色相環上等距的三個顏色，產生鮮明且平衡的效果",
+        tetradic: "使用兩對互補色，提供豐富的配色選擇和平衡感",
+        "golden-ratio": "基於黃金比例角度計算，產生自然優美的配色組合",
+      };
+
+      // 初始化
+      document.addEventListener("DOMContentLoaded", function () {
+        updateColorPreview();
+        updateSchemeInfo();
+      });
+
+      // 更新顏色預覽
+      function updateColorPreview() {
+        const hex = document.getElementById("hexInput").value.trim();
+        const preview = document.getElementById("colorPreview");
+
+        if (isValidHex(hex)) {
+          const normalizedHex = normalizeHex(hex);
+          preview.style.backgroundColor = normalizedHex;
+          preview.style.borderColor = "#4caf50";
+        } else {
+          preview.style.backgroundColor = "#fff";
+          preview.style.borderColor = "#ddd";
+        }
+      }
+
+      // 更新配色方案說明
+      function updateSchemeInfo() {
+        const scheme = document.getElementById("schemeSelect").value;
+        const info = document.getElementById("schemeInfo");
+        info.textContent = schemeDescriptions[scheme] || "";
+      }
+
+      // 驗證 HEX 格式
+      function isValidHex(hex) {
+        const hexRegex = /^#?([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+        return hexRegex.test(hex);
+      }
+
+      // 標準化 HEX 格式
+      function normalizeHex(hex) {
+        hex = hex.replace("#", "");
+        if (hex.length === 3) {
+          hex = hex
+            .split("")
+            .map((char) => char + char)
+            .join("");
+        }
+        return "#" + hex.toUpperCase();
+      }
+
+      // 顯示訊息
+      function showMessage(message, type = "success") {
+        const messageArea = document.getElementById("messageArea");
+        messageArea.textContent = message;
+        messageArea.className = `message ${type}`;
+        messageArea.style.display = "block";
+
+        setTimeout(() => {
+          messageArea.style.display = "none";
+        }, 3000);
+      }
+
+      // 顯示載入狀態
+      function showLoading(show) {
+        const loading = document.getElementById("loadingArea");
+        const btn = document.getElementById("generateBtn");
+
+        if (show) {
+          loading.classList.add("show");
+          btn.disabled = true;
+        } else {
+          loading.classList.remove("show");
+          btn.disabled = false;
+        }
+      }
+
+      // 生成配色方案
+      function generatePalette() {
+        const hex = document.getElementById("hexInput").value.trim();
+        const scheme = document.getElementById("schemeSelect").value;
+
+        // 驗證輸入
+        if (!hex) {
+          showMessage("請輸入主色 HEX 值", "error");
+          return;
+        }
+
+        if (!isValidHex(hex)) {
+          showMessage(
+            "請輸入有效的 HEX 顏色格式（例如：#FF0000 或 FF0000）",
+            "error",
+          );
+          return;
+        }
+
+        showLoading(true);
+
+        // 呼叫 Apps Script 函數
+        google.script.run
+          .withSuccessHandler(onGenerateSuccess)
+          .withFailureHandler(onGenerateFailure)
+          .generateColorScheme(hex, scheme);
+      }
+
+      // 生成成功回調
+      function onGenerateSuccess(result) {
+        showLoading(false);
+
+        if (result.success) {
+          currentColors = result.colors;
+          currentScheme =
+            document.getElementById("schemeSelect").selectedOptions[0].text;
+          displayColorPalette(result.colors);
+          showMessage(result.message, "success");
+        } else {
+          showMessage(result.message, "error");
+        }
+      }
+
+      // 生成失敗回調
+      function onGenerateFailure(error) {
+        showLoading(false);
+        showMessage("生成配色方案時發生錯誤: " + error.message, "error");
+      }
+
+      // 顯示配色方案
+      function displayColorPalette(colors) {
+        const palette = document.getElementById("colorPalette");
+        const paletteColors = document.getElementById("paletteColors");
+
+        paletteColors.innerHTML = "";
+
+        colors.forEach((color, index) => {
+          const colorItem = document.createElement("div");
+          colorItem.className = "color-item";
+
+          colorItem.innerHTML = `
+                    <div class="color-swatch" style="background-color: ${color}" 
+                         onclick="copyColorToClipboard('${color}')"></div>
+                    <div class="color-info">
+                        <div class="color-hex">${color}</div>
+                        <div class="color-name">顏色 ${index + 1}</div>
+                    </div>
+                    <div class="color-actions">
+                        <button class="action-btn copy" onclick="copyColorToClipboard('${color}')">
+                            複製
+                        </button>
+                        <button class="action-btn apply" onclick="applySingleColor('${color}')">
+                            套用
+                        </button>
+                    </div>
+                `;
+
+          paletteColors.appendChild(colorItem);
+        });
+
+        palette.classList.add("show");
+      }
+
+      // 複製顏色到剪貼簿
+      function copyColorToClipboard(color) {
+        navigator.clipboard
+          .writeText(color)
+          .then(() => {
+            showMessage(`已複製 ${color} 到剪貼簿`, "success");
+          })
+          .catch(() => {
+            // 備用方案
+            const textArea = document.createElement("textarea");
+            textArea.value = color;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textArea);
+            showMessage(`已複製 ${color} 到剪貼簿`, "success");
+          });
+      }
+
+      // 套用單一顏色到選中物件
+      function applySingleColor(color) {
+        google.script.run
+          .withSuccessHandler((result) => {
+            showMessage(result.message, result.success ? "success" : "error");
+          })
+          .withFailureHandler((error) => {
+            showMessage("套用顏色時發生錯誤: " + error.message, "error");
+          })
+          .applyColorToSelected(color);
+      }
+
+      // 套用到選中物件
+      function applyToSelected() {
+        if (currentColors.length === 0) {
+          showMessage("請先生成配色方案", "error");
+          return;
+        }
+
+        showMessage("請選擇要套用的顏色並點擊「套用」按鈕", "success");
+      }
+
+      // 建立色卡頁面
+      function createColorPage() {
+        if (currentColors.length === 0) {
+          showMessage("請先生成配色方案", "error");
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler((result) => {
+            showMessage(result.message, result.success ? "success" : "error");
+          })
+          .withFailureHandler((error) => {
+            showMessage("建立色卡頁面時發生錯誤: " + error.message, "error");
+          })
+          .createColorPalettePage(currentColors, currentScheme);
+      }
+
+      // 事件監聽器
+      document
+        .getElementById("hexInput")
+        .addEventListener("input", updateColorPreview);
+      document
+        .getElementById("schemeSelect")
+        .addEventListener("change", updateSchemeInfo);
+
+      // 支援 Enter 鍵生成
+      document
+        .getElementById("hexInput")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") {
+            generatePalette();
+          }
+        });
+    </script>
+  </body>
+</html>

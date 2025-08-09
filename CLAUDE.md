@@ -69,6 +69,14 @@ clasp open
 - **src/components/** - HTML components for sidebar interface
   - Modular HTML files included via `<?!= include() ?>` syntax
   - Contains configuration forms and style buttons
+  - **flowchartSidebar.html** - Interactive flowchart creation interface
+
+- **src/util/flowchart/** - Flowchart and hierarchical shape management
+  - **main.js** - Main API functions for flowchart operations
+  - **graphIdUtils.js** - Graph ID parsing, generation, and management
+  - **childCreationUtils.js** - Child shape creation with positioning and styling
+  - **siblingCreationUtils.js** - Sibling shape creation with layout consistency
+  - **index.js** - Function exports and documentation
 
 ### Key Architecture Patterns
 
@@ -76,6 +84,8 @@ clasp open
 2. **Batch API Updates**: Uses `runRequestProcessors()` pattern to collect multiple API requests and send them as a batch
 3. **HTML Service**: Uses server-side HTML templates with `<?!= include() ?>` for modular components
 4. **Configuration Management**: Uses PropertiesService for persistent configuration storage
+5. **Graph ID System**: Uses shape title (alt text) to store hierarchical graph IDs for flowchart management
+6. **Flowchart Architecture**: Supports both LR (Left-Right) and TD (Top-Down) layout patterns
 
 ### Menu System
 
@@ -99,6 +109,16 @@ Configuration is managed through:
 - `runRequestProcessors(...)` - Batches multiple API requests for efficiency
 - `createCustomMenu()` - Creates the custom menu structure
 - `applyThemeToCurrentPresentation()` - Applies theme from template presentation
+
+### Flowchart System Functions
+
+- `createChildTop/Right/Bottom/Left()` - Creates child shapes in specified direction
+- `createChildTopWithText()` - Creates child shapes with custom text content
+- `createSiblingShape()` - Creates sibling shapes with proper positioning
+- `showSelectedShapeGraphId()` - Displays Graph ID information for debugging
+- `parseGraphId()` - Parses Graph ID format: `graph[parent](layout)[current][children]`
+- `generateGraphId()` - Generates hierarchical Graph IDs with layout support
+- `getShapeGraphId()` / `setShapeGraphId()` - Graph ID management via shape titles
 
 ## Development Notes
 
@@ -127,3 +147,32 @@ const sourcePresentationId = "1qAZzq-..."; // Template presentation ID
 - PropertiesService for data persistence
 - SlidesApp and Slides API for slide manipulation
 - No require() or import statements - everything is global
+
+## Flowchart Features
+
+### Graph ID System
+
+- Stores hierarchical information in shape titles (alt text) instead of visible text
+- Format: `graph[parent](layout)[current][children]`
+- Examples:
+  - Root: `graph[](TD)[A1][]`
+  - Child: `graph[A1](TD)[B1][]`
+  - Parent with children: `graph[A1](LR)[B1][C1,C2]`
+
+### Supported Layouts
+
+- **LR (Left-Right)**: Parent connects to children horizontally
+- **TD (Top-Down)**: Parent connects to children vertically
+- Layout consistency maintained across sibling relationships
+
+### Child Creation Modes
+
+1. **By Count**: Specify number of children to create (empty text)
+2. **By Text**: Multi-line text input, each line becomes text for one child shape
+
+### UI Components
+
+- Collapsible Line Settings (default folded)
+- Tab-based child creation interface
+- Real-time Graph ID inspector
+- Persistent settings via localStorage

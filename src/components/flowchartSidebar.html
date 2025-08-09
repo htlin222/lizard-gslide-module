@@ -150,6 +150,111 @@
         font-family: Arial, sans-serif;
       }
 
+      .tab-container {
+        display: flex;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .tab-button {
+        flex: 1;
+        padding: 8px 12px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        color: #666;
+        margin-bottom: 0;
+        transition: all 0.2s;
+      }
+
+      .tab-button.active {
+        color: #1a73e8;
+        border-bottom-color: #1a73e8;
+        background-color: #f8f9fa;
+      }
+
+      .tab-button:hover {
+        background-color: #f5f5f5;
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      .text-input-area {
+        width: 100%;
+        min-height: 80px;
+        max-height: 120px;
+        padding: 8px;
+        border: 1px solid #dadce0;
+        border-radius: 4px;
+        font-size: 12px;
+        font-family: Arial, sans-serif;
+        resize: vertical;
+        line-height: 1.4;
+      }
+
+      .text-input-area:focus {
+        outline: none;
+        border-color: #1a73e8;
+        box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+      }
+
+      .line-count-info {
+        font-size: 11px;
+        color: #666;
+        margin-top: 4px;
+        text-align: right;
+      }
+
+      details {
+        background: white;
+        border-radius: 8px;
+        padding: 0;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+
+      summary {
+        font-weight: bold;
+        font-size: 16px;
+        color: #1a73e8;
+        border-bottom: 1px solid #e8f0fe;
+        padding: 16px;
+        cursor: pointer;
+        user-select: none;
+        list-style: none;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      summary::before {
+        content: "▶";
+        margin-right: 8px;
+        transition: transform 0.2s;
+      }
+
+      details[open] summary::before {
+        transform: rotate(90deg);
+      }
+
+      summary:hover {
+        background-color: #f8f9fa;
+      }
+
+      .details-content {
+        padding: 16px;
+      }
+
       @keyframes slideUp {
         from {
           transform: translateY(100%);
@@ -174,77 +279,78 @@
     </style>
   </head>
   <body>
-    <div class="section">
-      <div class="section-title">⚙️ Line Settings</div>
+    <details>
+      <summary>⚙️ Line Settings</summary>
+      <div class="details-content">
+        <div class="form-group">
+          <label for="lineType">Line Type:</label>
+          <select
+            id="lineType"
+            style="
+              width: 120px;
+              padding: 6px 8px;
+              border: 1px solid #dadce0;
+              border-radius: 4px;
+              font-size: 14px;
+            "
+          >
+            <option value="STRAIGHT" selected>Straight</option>
+            <option value="BENT">Bent/Elbow</option>
+            <option value="CURVED">Curved</option>
+          </select>
+        </div>
 
-      <div class="form-group">
-        <label for="lineType">Line Type:</label>
-        <select
-          id="lineType"
-          style="
-            width: 120px;
-            padding: 6px 8px;
-            border: 1px solid #dadce0;
-            border-radius: 4px;
-            font-size: 14px;
-          "
-        >
-          <option value="STRAIGHT" selected>Straight</option>
-          <option value="BENT">Bent/Elbow</option>
-          <option value="CURVED">Curved</option>
-        </select>
-      </div>
+        <div class="form-group">
+          <label for="startArrow">Start Arrow:</label>
+          <select
+            id="startArrow"
+            style="
+              width: 120px;
+              padding: 6px 8px;
+              border: 1px solid #dadce0;
+              border-radius: 4px;
+              font-size: 14px;
+            "
+          >
+            <option value="NONE" selected>None</option>
+            <option value="FILL_ARROW">Fill Arrow</option>
+            <option value="STEALTH_ARROW">Stealth Arrow</option>
+            <option value="OPEN_ARROW">Open Arrow</option>
+            <option value="FILL_CIRCLE">Fill Circle</option>
+            <option value="OPEN_CIRCLE">Open Circle</option>
+            <option value="FILL_SQUARE">Fill Square</option>
+            <option value="OPEN_SQUARE">Open Square</option>
+            <option value="FILL_DIAMOND">Fill Diamond</option>
+            <option value="OPEN_DIAMOND">Open Diamond</option>
+          </select>
+        </div>
 
-      <div class="form-group">
-        <label for="startArrow">Start Arrow:</label>
-        <select
-          id="startArrow"
-          style="
-            width: 120px;
-            padding: 6px 8px;
-            border: 1px solid #dadce0;
-            border-radius: 4px;
-            font-size: 14px;
-          "
-        >
-          <option value="NONE" selected>None</option>
-          <option value="FILL_ARROW">Fill Arrow</option>
-          <option value="STEALTH_ARROW">Stealth Arrow</option>
-          <option value="OPEN_ARROW">Open Arrow</option>
-          <option value="FILL_CIRCLE">Fill Circle</option>
-          <option value="OPEN_CIRCLE">Open Circle</option>
-          <option value="FILL_SQUARE">Fill Square</option>
-          <option value="OPEN_SQUARE">Open Square</option>
-          <option value="FILL_DIAMOND">Fill Diamond</option>
-          <option value="OPEN_DIAMOND">Open Diamond</option>
-        </select>
+        <div class="form-group">
+          <label for="endArrow">End Arrow:</label>
+          <select
+            id="endArrow"
+            style="
+              width: 120px;
+              padding: 6px 8px;
+              border: 1px solid #dadce0;
+              border-radius: 4px;
+              font-size: 14px;
+            "
+          >
+            <option value="NONE">None</option>
+            <option value="FILL_ARROW" selected>Fill Arrow</option>
+            <option value="STEALTH_ARROW">Stealth Arrow</option>
+            <option value="OPEN_ARROW">Open Arrow</option>
+            <option value="FILL_CIRCLE">Fill Circle</option>
+            <option value="OPEN_CIRCLE">Open Circle</option>
+            <option value="FILL_SQUARE">Fill Square</option>
+            <option value="OPEN_SQUARE">Open Square</option>
+            <option value="FILL_DIAMOND">Fill Diamond</option>
+            <option value="OPEN_DIAMOND">Open Diamond</option>
+          </select>
+        </div>
       </div>
-
-      <div class="form-group">
-        <label for="endArrow">End Arrow:</label>
-        <select
-          id="endArrow"
-          style="
-            width: 120px;
-            padding: 6px 8px;
-            border: 1px solid #dadce0;
-            border-radius: 4px;
-            font-size: 14px;
-          "
-        >
-          <option value="NONE">None</option>
-          <option value="FILL_ARROW" selected>Fill Arrow</option>
-          <option value="STEALTH_ARROW">Stealth Arrow</option>
-          <option value="OPEN_ARROW">Open Arrow</option>
-          <option value="FILL_CIRCLE">Fill Circle</option>
-          <option value="OPEN_CIRCLE">Open Circle</option>
-          <option value="FILL_SQUARE">Fill Square</option>
-          <option value="OPEN_SQUARE">Open Square</option>
-          <option value="FILL_DIAMOND">Fill Diamond</option>
-          <option value="OPEN_DIAMOND">Open Diamond</option>
-        </select>
-      </div>
-    </div>
+    </details>
 
     <div class="section">
       <div class="section-title">🔗 Connect Shapes</div>
@@ -260,11 +366,48 @@
     <div class="section">
       <div class="section-title">➕ Create Child Shapes</div>
 
-      <div class="form-group">
-        <label for="childrenCount">Children Count:</label>
-        <div class="gap-controls">
-          <input type="number" id="childrenCount" min="1" max="10" value="1" />
-          <span class="input-suffix">shapes</span>
+      <div class="tab-container">
+        <button class="tab-button active" onclick="switchTab('count')">
+          📊 By Count
+        </button>
+        <button class="tab-button" onclick="switchTab('text')">
+          📝 By Text
+        </button>
+      </div>
+
+      <!-- Count Tab -->
+      <div id="countTab" class="tab-content active">
+        <div class="form-group">
+          <label for="childrenCount">Children Count:</label>
+          <div class="gap-controls">
+            <input
+              type="number"
+              id="childrenCount"
+              min="1"
+              max="10"
+              value="1"
+            />
+            <span class="input-suffix">shapes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Text Tab -->
+      <div id="textTab" class="tab-content">
+        <div
+          class="form-group"
+          style="flex-direction: column; align-items: stretch"
+        >
+          <label for="childrenText" style="margin-bottom: 6px"
+            >Children Text (one per line):</label
+          >
+          <textarea
+            id="childrenText"
+            class="text-input-area"
+            placeholder="Enter text for each child shape...&#10;Line 1 = Child 1&#10;Line 2 = Child 2&#10;Line 3 = Child 3"
+            oninput="updateLineCount()"
+          ></textarea>
+          <div id="lineCount" class="line-count-info">0 lines → 0 children</div>
         </div>
       </div>
 
@@ -367,9 +510,8 @@
         const verticalGap = parseInt(
           document.getElementById("verticalGap").value,
         );
-        const childrenCount = parseInt(
-          document.getElementById("childrenCount").value,
-        );
+        const childrenCount = getChildCount();
+        const childrenTexts = getChildrenTextArray();
         const lineType = document.getElementById("lineType").value;
         const startArrow = document.getElementById("startArrow").value;
         const endArrow = document.getElementById("endArrow").value;
@@ -398,12 +540,13 @@
           .withFailureHandler(function (error) {
             showMessage("Error: " + error, true);
           })
-          .createChildTop(
+          .createChildTopWithText(
             verticalGap,
             lineType,
             childrenCount,
             startArrow,
             endArrow,
+            childrenTexts,
           );
       }
 
@@ -411,9 +554,8 @@
         const horizontalGap = parseInt(
           document.getElementById("horizontalGap").value,
         );
-        const childrenCount = parseInt(
-          document.getElementById("childrenCount").value,
-        );
+        const childrenCount = getChildCount();
+        const childrenTexts = getChildrenTextArray();
         const lineType = document.getElementById("lineType").value;
         const startArrow = document.getElementById("startArrow").value;
         const endArrow = document.getElementById("endArrow").value;
@@ -442,12 +584,13 @@
           .withFailureHandler(function (error) {
             showMessage("Error: " + error, true);
           })
-          .createChildRight(
+          .createChildRightWithText(
             horizontalGap,
             lineType,
             childrenCount,
             startArrow,
             endArrow,
+            childrenTexts,
           );
       }
 
@@ -455,9 +598,8 @@
         const verticalGap = parseInt(
           document.getElementById("verticalGap").value,
         );
-        const childrenCount = parseInt(
-          document.getElementById("childrenCount").value,
-        );
+        const childrenCount = getChildCount();
+        const childrenTexts = getChildrenTextArray();
         const lineType = document.getElementById("lineType").value;
         const startArrow = document.getElementById("startArrow").value;
         const endArrow = document.getElementById("endArrow").value;
@@ -486,12 +628,13 @@
           .withFailureHandler(function (error) {
             showMessage("Error: " + error, true);
           })
-          .createChildBottom(
+          .createChildBottomWithText(
             verticalGap,
             lineType,
             childrenCount,
             startArrow,
             endArrow,
+            childrenTexts,
           );
       }
 
@@ -499,9 +642,8 @@
         const horizontalGap = parseInt(
           document.getElementById("horizontalGap").value,
         );
-        const childrenCount = parseInt(
-          document.getElementById("childrenCount").value,
-        );
+        const childrenCount = getChildCount();
+        const childrenTexts = getChildrenTextArray();
         const lineType = document.getElementById("lineType").value;
         const startArrow = document.getElementById("startArrow").value;
         const endArrow = document.getElementById("endArrow").value;
@@ -530,12 +672,13 @@
           .withFailureHandler(function (error) {
             showMessage("Error: " + error, true);
           })
-          .createChildLeft(
+          .createChildLeftWithText(
             horizontalGap,
             lineType,
             childrenCount,
             startArrow,
             endArrow,
+            childrenTexts,
           );
       }
 
@@ -640,6 +783,67 @@
         }
       }
 
+      // Tab switching functionality
+      function switchTab(tabName) {
+        // Remove active class from all tab buttons
+        document.querySelectorAll(".tab-button").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+
+        // Remove active class from all tab content
+        document.querySelectorAll(".tab-content").forEach((content) => {
+          content.classList.remove("active");
+        });
+
+        // Add active class to clicked tab button
+        event.target.classList.add("active");
+
+        // Show corresponding tab content
+        if (tabName === "count") {
+          document.getElementById("countTab").classList.add("active");
+        } else if (tabName === "text") {
+          document.getElementById("textTab").classList.add("active");
+        }
+      }
+
+      // Update line count for text input
+      function updateLineCount() {
+        const textArea = document.getElementById("childrenText");
+        const lines = textArea.value
+          .split("\n")
+          .filter((line) => line.trim() !== "");
+        const lineCountDisplay = document.getElementById("lineCount");
+        lineCountDisplay.textContent = `${lines.length} lines → ${lines.length} children`;
+      }
+
+      // Get child count based on active tab
+      function getChildCount() {
+        const activeTab = document.querySelector(".tab-content.active");
+        if (activeTab.id === "countTab") {
+          // Count tab - use number input
+          return parseInt(document.getElementById("childrenCount").value);
+        } else {
+          // Text tab - count non-empty lines
+          const textArea = document.getElementById("childrenText");
+          const lines = textArea.value
+            .split("\n")
+            .filter((line) => line.trim() !== "");
+          return lines.length;
+        }
+      }
+
+      // Get children text array
+      function getChildrenTextArray() {
+        const activeTab = document.querySelector(".tab-content.active");
+        if (activeTab.id === "textTab") {
+          const textArea = document.getElementById("childrenText");
+          return textArea.value
+            .split("\n")
+            .filter((line) => line.trim() !== "");
+        }
+        return []; // Return empty array for count mode
+      }
+
       function showMessage(message, isError = false) {
         // Create a simple toast message at the bottom of the sidebar
         const existingToast = document.getElementById("toast-message");
@@ -712,6 +916,14 @@
           localStorage.setItem("flowchart_endArrow", this.value);
         });
 
+      // Auto-save children text to localStorage
+      document
+        .getElementById("childrenText")
+        .addEventListener("input", function () {
+          localStorage.setItem("flowchart_childrenText", this.value);
+          updateLineCount();
+        });
+
       // Load saved values
       window.addEventListener("load", function () {
         const savedHorizontalGap = localStorage.getItem(
@@ -739,6 +951,14 @@
         const savedEndArrow = localStorage.getItem("flowchart_endArrow");
         if (savedEndArrow) {
           document.getElementById("endArrow").value = savedEndArrow;
+        }
+
+        const savedChildrenText = localStorage.getItem(
+          "flowchart_childrenText",
+        );
+        if (savedChildrenText) {
+          document.getElementById("childrenText").value = savedChildrenText;
+          updateLineCount();
         }
       });
     </script>

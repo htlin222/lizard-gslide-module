@@ -433,3 +433,115 @@ function clearSelectedShapeGraphId() {
 function debugShowTitlePlaceholders() {
 	return showSelectedShapeGraphId();
 }
+
+/**
+ * Creates child shapes above the selected shape with custom text
+ * @param {number} gap - Gap between shapes in points (default 20)
+ * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
+ * @param {number} count - Number of children to create (default 1)
+ * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
+ * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
+ * @param {Array} texts - Array of text strings for each child shape
+ */
+function createChildTopWithText(
+	gap = 20,
+	lineType = "STRAIGHT",
+	count = 1,
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+	texts = [],
+) {
+	return createChildrenInDirectionWithText(
+		"TOP",
+		gap,
+		lineType,
+		count,
+		startArrow,
+		endArrow,
+		texts,
+	);
+}
+
+/**
+ * Creates child shapes to the right of the selected shape with custom text
+ * @param {number} gap - Gap between shapes in points (default 20)
+ * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
+ * @param {number} count - Number of children to create (default 1)
+ * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
+ * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
+ * @param {Array} texts - Array of text strings for each child shape
+ */
+function createChildRightWithText(
+	gap = 20,
+	lineType = "STRAIGHT",
+	count = 1,
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+	texts = [],
+) {
+	return createChildrenInDirectionWithText(
+		"RIGHT",
+		gap,
+		lineType,
+		count,
+		startArrow,
+		endArrow,
+		texts,
+	);
+}
+
+/**
+ * Creates child shapes below the selected shape with custom text
+ * @param {number} gap - Gap between shapes in points (default 20)
+ * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
+ * @param {number} count - Number of children to create (default 1)
+ * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
+ * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
+ * @param {Array} texts - Array of text strings for each child shape
+ */
+function createChildBottomWithText(
+	gap = 20,
+	lineType = "STRAIGHT",
+	count = 1,
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+	texts = [],
+) {
+	return createChildrenInDirectionWithText(
+		"BOTTOM",
+		gap,
+		lineType,
+		count,
+		startArrow,
+		endArrow,
+		texts,
+	);
+}
+
+/**
+ * Creates child shapes to the left of the selected shape with custom text
+ * @param {number} gap - Gap between shapes in points (default 20)
+ * @param {string} lineType - Type of line to use (STRAIGHT, BENT, or CURVED)
+ * @param {number} count - Number of children to create (default 1)
+ * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
+ * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
+ * @param {Array} texts - Array of text strings for each child shape
+ */
+function createChildLeftWithText(
+	gap = 20,
+	lineType = "STRAIGHT",
+	count = 1,
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+	texts = [],
+) {
+	return createChildrenInDirectionWithText(
+		"LEFT",
+		gap,
+		lineType,
+		count,
+		startArrow,
+		endArrow,
+		texts,
+	);
+}
