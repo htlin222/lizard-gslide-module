@@ -333,17 +333,17 @@ function initializeRootGraphShape() {
 }
 
 /**
- * Debug function to show placeholder text for the currently selected shape
- * @returns {string} Debug information about the selected shape's placeholder text
+ * Shows the Graph ID of the currently selected shape
+ * @returns {string} Graph ID information about the selected shape
  */
-function debugShowTitlePlaceholders() {
+function showSelectedShapeGraphId() {
 	try {
 		const pres = SlidesApp.getActivePresentation();
 		const selection = pres.getSelection();
 		const range = selection.getPageElementRange();
 
 		if (!range) {
-			return "Please select a shape to debug its placeholder text.";
+			return "Please select a shape to show its Graph ID.";
 		}
 
 		const els = range.getPageElements();
@@ -357,28 +357,79 @@ function debugShowTitlePlaceholders() {
 		}
 
 		const shape = element.asShape();
-		const debugInfo = [];
 
-		// Check the selected shape's placeholder text
-		debugInfo.push("🔍 Selected Shape Debug:");
-
-		// Shape text content
-		const textContent = shape.getText().asString().trim();
-		debugInfo.push(`Text Content: "${textContent || "(empty)"}"`);
-
-		// Graph ID from our helper function
+		// Get Graph ID from title (alt text)
 		const graphId = getShapeGraphId(shape);
-		debugInfo.push(`Detected Graph ID: "${graphId || "(none)"}"`);
 
-		const result = debugInfo.join("\n");
-
-		// Also log to console for debugging
-		console.log(`Debug Selected Shape:\n${result}`);
-
-		return result;
+		if (graphId) {
+			// Parse the graph ID to show more details
+			const parsed = parseGraphId(graphId);
+			if (parsed) {
+				const details = [];
+				details.push(`📊 Graph ID: ${graphId}`);
+				details.push(`├─ Parent: ${parsed.parent || "(root)"}`);
+				details.push(`├─ Layout: ${parsed.layout || "(none)"}`);
+				details.push(`├─ Current: ${parsed.current}`);
+				details.push(
+					`└─ Children: ${parsed.children.length > 0 ? parsed.children.join(", ") : "(none)"}`,
+				);
+				return details.join("\n");
+			}
+			return `📊 Graph ID: ${graphId}`;
+		} else {
+			return "No Graph ID found. This shape may not be part of a flowchart.";
+		}
 	} catch (e) {
-		const errorMsg = `Error in debugShowTitlePlaceholders: ${e.message}`;
+		const errorMsg = `Error: ${e.message}`;
 		console.error(errorMsg);
 		return errorMsg;
 	}
+}
+
+/**
+ * Clears the Graph ID from the currently selected shape
+ * @returns {string} Confirmation message
+ */
+function clearSelectedShapeGraphId() {
+	try {
+		const pres = SlidesApp.getActivePresentation();
+		const selection = pres.getSelection();
+		const range = selection.getPageElementRange();
+
+		if (!range) {
+			return "Please select a shape to clear its Graph ID.";
+		}
+
+		const els = range.getPageElements();
+		if (els.length !== 1) {
+			return "Please select exactly ONE shape.";
+		}
+
+		const element = els[0];
+		if (element.getPageElementType() !== SlidesApp.PageElementType.SHAPE) {
+			return "Selected item must be a SHAPE.";
+		}
+
+		const shape = element.asShape();
+
+		// Get current Graph ID for confirmation
+		const currentGraphId = getShapeGraphId(shape);
+
+		if (currentGraphId) {
+			// Clear the title (alt text)
+			shape.setTitle("");
+			return `✅ Graph ID cleared successfully!\nPrevious ID was: ${currentGraphId}`;
+		} else {
+			return "No Graph ID to clear. This shape doesn't have a Graph ID.";
+		}
+	} catch (e) {
+		const errorMsg = `Error: ${e.message}`;
+		console.error(errorMsg);
+		return errorMsg;
+	}
+}
+
+// Keep the old function name for backward compatibility but redirect to new function
+function debugShowTitlePlaceholders() {
+	return showSelectedShapeGraphId();
 }

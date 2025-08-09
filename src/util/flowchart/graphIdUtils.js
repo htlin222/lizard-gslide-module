@@ -131,34 +131,44 @@ function generateSiblingIds(baseLevel, count) {
 }
 
 /**
- * Sets the graph ID on a shape by updating its text content
+ * Sets the graph ID on a shape by updating its title (alt text)
  * @param {GoogleAppsScript.Slides.Shape} shape - Shape to update
  * @param {string} graphId - New graph ID to set
  */
 function setShapeGraphId(shape, graphId) {
 	try {
-		// Set the shape's text content to the graph ID
-		shape.getText().setText(graphId);
+		// Set the shape's title (alt text) to the graph ID
+		// This keeps the graph ID hidden while allowing custom text in the shape
+		shape.setTitle(graphId);
 	} catch (e) {
-		console.log(`Warning: Could not set shape text: ${e.message}`);
+		console.log(`Warning: Could not set shape title: ${e.message}`);
 	}
 }
 
 /**
- * Gets the graph ID from a shape's text content
+ * Gets the graph ID from a shape's title (alt text)
  * @param {GoogleAppsScript.Slides.Shape} shape - Shape to read from
  * @returns {string|null} - Graph ID or null if not found
  */
 function getShapeGraphId(shape) {
 	try {
-		// Get the shape's text content
+		// Get the shape's title (alt text)
+		const title = shape.getTitle();
+		if (title && title.startsWith("graph[")) {
+			return title;
+		}
+		// Fallback: check text content for backward compatibility
+		// This helps migrate old shapes that stored graph ID in text
 		const text = shape.getText().asString().trim();
 		if (text && text.startsWith("graph[")) {
+			// Migrate to title and clear the text
+			shape.setTitle(text);
+			shape.getText().clear();
 			return text;
 		}
 		return null;
 	} catch (e) {
-		console.log(`Warning: Could not get shape text: ${e.message}`);
+		console.log(`Warning: Could not get shape title: ${e.message}`);
 		return null;
 	}
 }

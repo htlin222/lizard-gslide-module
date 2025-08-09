@@ -128,6 +128,28 @@
         margin-bottom: 0;
       }
 
+      .graph-id-display {
+        background-color: #f5f5f5;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        padding: 12px;
+        margin-top: 12px;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-all;
+        min-height: 60px;
+        max-height: 150px;
+        overflow-y: auto;
+      }
+
+      .graph-id-display.empty {
+        color: #999;
+        font-style: italic;
+        font-family: Arial, sans-serif;
+      }
+
       @keyframes slideUp {
         from {
           transform: translateY(100%);
@@ -292,14 +314,22 @@
     </div>
 
     <div class="section">
-      <div class="section-title">🔧 Debug Tools</div>
-      <button
-        class="tertiary"
-        onclick="showTitlePlaceholders()"
-        style="width: 100%; background-color: #9c27b0"
-      >
-        🐛 Show Title Placeholders
-      </button>
+      <div class="section-title">🔧 Graph ID Inspector</div>
+      <div class="button-group">
+        <button onclick="showGraphId()" style="background-color: #2196f3">
+          👁️ Refresh
+        </button>
+        <button
+          class="tertiary"
+          onclick="clearGraphId()"
+          style="background-color: #f44336"
+        >
+          🗑️ Clear
+        </button>
+      </div>
+      <div id="graphIdDisplay" class="graph-id-display empty">
+        Select a shape and click Refresh to view its Graph ID
+      </div>
     </div>
 
     <script>
@@ -552,15 +582,62 @@
           );
       }
 
-      function showTitlePlaceholders() {
+      function showGraphId() {
         google.script.run
           .withSuccessHandler(function (result) {
-            showMessage(result);
+            const display = document.getElementById("graphIdDisplay");
+            if (
+              result.includes("No Graph ID") ||
+              result.includes("Please select")
+            ) {
+              display.className = "graph-id-display empty";
+              display.textContent = result;
+            } else {
+              display.className = "graph-id-display";
+              display.textContent = result;
+            }
+            // Also show a brief success message
+            if (
+              !result.includes("Error") &&
+              !result.includes("Please select")
+            ) {
+              showMessage("Graph ID refreshed!");
+            }
           })
           .withFailureHandler(function (error) {
+            const display = document.getElementById("graphIdDisplay");
+            display.className = "graph-id-display empty";
+            display.textContent = "Error: " + error;
             showMessage("Error: " + error, true);
           })
-          .debugShowTitlePlaceholders();
+          .showSelectedShapeGraphId();
+      }
+
+      function clearGraphId() {
+        // Confirm before clearing
+        if (
+          confirm(
+            "Are you sure you want to clear the Graph ID from the selected shape?",
+          )
+        ) {
+          google.script.run
+            .withSuccessHandler(function (result) {
+              showMessage(result);
+              // Update the display
+              const display = document.getElementById("graphIdDisplay");
+              display.className = "graph-id-display empty";
+              if (result.includes("successfully")) {
+                display.textContent =
+                  "Graph ID cleared. Select another shape and click Refresh.";
+              } else {
+                display.textContent = result;
+              }
+            })
+            .withFailureHandler(function (error) {
+              showMessage("Error: " + error, true);
+            })
+            .clearSelectedShapeGraphId();
+        }
       }
 
       function showMessage(message, isError = false) {
