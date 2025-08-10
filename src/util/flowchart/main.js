@@ -911,3 +911,98 @@ function createChildLeftWithText(
 		texts,
 	);
 }
+
+/**
+ * Adds a background rectangle to encompass all selected elements
+ * Creates a rectangle with specified padding, color, and opacity behind the selected shapes
+ * @param {number} padding - Padding around the selection in points (default 10)
+ * @param {string} bgColor - Background color in hex format (default #f3f3f3)
+ * @param {number} opacity - Opacity from 0.0 to 1.0 (default 0.5)
+ */
+function addBackgroundToSelectedElements(
+	padding = 10,
+	bgColor = "#f3f3f3",
+	opacity = 0.5,
+) {
+	try {
+		const pres = SlidesApp.getActivePresentation();
+		const selection = pres.getSelection();
+		const range = selection.getPageElementRange();
+
+		if (!range) {
+			throw new Error("Please select one or more shapes to add background.");
+		}
+
+		const elements = range.getPageElements();
+		if (elements.length === 0) {
+			throw new Error("No elements selected.");
+		}
+
+		// Filter to only include shapes
+		const shapes = elements.filter(
+			(element) =>
+				element.getPageElementType() === SlidesApp.PageElementType.SHAPE,
+		);
+
+		if (shapes.length === 0) {
+			throw new Error("Please select at least one shape to add background.");
+		}
+
+		// Calculate bounding box of all selected shapes
+		let minLeft = Number.MAX_VALUE;
+		let minTop = Number.MAX_VALUE;
+		let maxRight = Number.MIN_VALUE;
+		let maxBottom = Number.MIN_VALUE;
+
+		shapes.forEach((element) => {
+			const shape = element.asShape();
+			const left = shape.getLeft();
+			const top = shape.getTop();
+			const width = shape.getWidth();
+			const height = shape.getHeight();
+
+			minLeft = Math.min(minLeft, left);
+			minTop = Math.min(minTop, top);
+			maxRight = Math.max(maxRight, left + width);
+			maxBottom = Math.max(maxBottom, top + height);
+		});
+
+		// Calculate background rectangle dimensions with padding
+		const bgLeft = minLeft - padding;
+		const bgTop = minTop - padding;
+		const bgWidth = maxRight - minLeft + padding * 2;
+		const bgHeight = maxBottom - minTop + padding * 2;
+
+		// Get the slide to add the background rectangle
+		const slide = shapes[0].asShape().getParentPage();
+
+		// Create background rectangle
+		const bgRect = slide.insertShape(
+			SlidesApp.ShapeType.RECTANGLE,
+			bgLeft,
+			bgTop,
+			bgWidth,
+			bgHeight,
+		);
+
+		// Style the background rectangle
+		bgRect.getFill().setSolidFill(bgColor, opacity);
+
+		// Set white border as specified
+		bgRect.getBorder().setWeight(1);
+		bgRect.getBorder().getLineFill().setSolidFill("#FFFFFF");
+
+		// Send the background rectangle to the back so it appears behind other shapes
+		bgRect.sendToBack();
+
+		console.log(
+			`Background rectangle created: ${bgWidth}x${bgHeight} at (${bgLeft}, ${bgTop}) with color ${bgColor} and opacity ${opacity}`,
+		);
+
+		return `Background rectangle added successfully! Size: ${Math.round(bgWidth)}×${Math.round(bgHeight)} with ${Math.round(opacity * 100)}% opacity.`;
+	} catch (e) {
+		const errorMsg = `Error creating background: ${e.message}`;
+		console.error(errorMsg);
+		throw new Error(errorMsg);
+	}
+}

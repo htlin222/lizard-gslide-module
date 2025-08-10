@@ -559,6 +559,60 @@
     </div>
 
     <div class="section">
+      <div class="section-title">🎨 Add BG for selected elements</div>
+      <div class="form-group">
+        <label for="bgPadding">Padding:</label>
+        <div class="gap-controls">
+          <input type="number" id="bgPadding" min="0" value="10" />
+          <span class="input-suffix">pt</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="bgColor">Background Color:</label>
+        <input
+          type="color"
+          id="bgColor"
+          value="#f3f3f3"
+          style="
+            width: 60px;
+            height: 30px;
+            padding: 0;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            cursor: pointer;
+          "
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="bgOpacity">Opacity:</label>
+        <div class="gap-controls">
+          <input
+            type="range"
+            id="bgOpacity"
+            min="0"
+            max="100"
+            value="50"
+            style="width: 100px; margin-right: 8px"
+          />
+          <span id="opacityValue" class="input-suffix">50%</span>
+        </div>
+      </div>
+
+      <button
+        onclick="addBackgroundToSelection()"
+        style="background-color: #ff9800"
+      >
+        🎨 Add Background Rectangle
+      </button>
+      <div class="help-text">
+        Select multiple shapes, then click to create a background rectangle that
+        encompasses all selected elements with padding.
+      </div>
+    </div>
+
+    <div class="section">
       <div class="section-title">🔧 Graph ID Inspector</div>
       <div class="button-group">
         <button onclick="showGraphId()" style="background-color: #2196f3">
@@ -1007,6 +1061,41 @@
         return []; // Return empty array for count mode
       }
 
+      function addBackgroundToSelection() {
+        const padding = parseInt(document.getElementById("bgPadding").value);
+        const bgColor = document.getElementById("bgColor").value;
+        const opacity =
+          parseInt(document.getElementById("bgOpacity").value) / 100;
+
+        if (padding < 0 || isNaN(padding)) {
+          showMessage(
+            "Please enter a valid padding value (0 or greater)",
+            true,
+          );
+          return;
+        }
+
+        if (opacity < 0 || opacity > 1 || isNaN(opacity)) {
+          showMessage("Please enter a valid opacity value (0-100%)", true);
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function () {
+            showMessage("Background rectangle added successfully!");
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .addBackgroundToSelectedElements(padding, bgColor, opacity);
+      }
+
+      function updateOpacityDisplay() {
+        const opacitySlider = document.getElementById("bgOpacity");
+        const opacityValue = document.getElementById("opacityValue");
+        opacityValue.textContent = opacitySlider.value + "%";
+      }
+
       function showMessage(message, isError = false) {
         // Create a simple toast message at the bottom of the sidebar
         const existingToast = document.getElementById("toast-message");
@@ -1087,6 +1176,26 @@
           updateLineCount();
         });
 
+      // Auto-save background settings to localStorage and update opacity display
+      document
+        .getElementById("bgPadding")
+        .addEventListener("change", function () {
+          localStorage.setItem("flowchart_bgPadding", this.value);
+        });
+
+      document
+        .getElementById("bgColor")
+        .addEventListener("change", function () {
+          localStorage.setItem("flowchart_bgColor", this.value);
+        });
+
+      document
+        .getElementById("bgOpacity")
+        .addEventListener("input", function () {
+          updateOpacityDisplay();
+          localStorage.setItem("flowchart_bgOpacity", this.value);
+        });
+
       // Load saved values
       window.addEventListener("load", function () {
         const savedHorizontalGap = localStorage.getItem(
@@ -1122,6 +1231,25 @@
         if (savedChildrenText) {
           document.getElementById("childrenText").value = savedChildrenText;
           updateLineCount();
+        }
+
+        // Load background settings
+        const savedBgPadding = localStorage.getItem("flowchart_bgPadding");
+        if (savedBgPadding) {
+          document.getElementById("bgPadding").value = savedBgPadding;
+        }
+
+        const savedBgColor = localStorage.getItem("flowchart_bgColor");
+        if (savedBgColor) {
+          document.getElementById("bgColor").value = savedBgColor;
+        }
+
+        const savedBgOpacity = localStorage.getItem("flowchart_bgOpacity");
+        if (savedBgOpacity) {
+          document.getElementById("bgOpacity").value = savedBgOpacity;
+          updateOpacityDisplay();
+        } else {
+          updateOpacityDisplay(); // Initialize display even if no saved value
         }
       });
     </script>
