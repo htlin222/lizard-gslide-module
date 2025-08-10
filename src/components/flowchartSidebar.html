@@ -278,6 +278,39 @@
           opacity: 0;
         }
       }
+
+      .quadrant-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 2px;
+        width: 80px;
+      }
+
+      .quadrant-button {
+        background-color: teal;
+        color: white;
+        border: none;
+        padding: 2px;
+        border-radius: 2px;
+        cursor: pointer;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .quadrant-label {
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #666;
+        font-size: 12px;
+        height: 40px;
+      }
     </style>
   </head>
   <body>
@@ -371,33 +404,11 @@
 
       <div style="display: flex; gap: 4px; justify-content: center">
         <!-- 左側 2x2 表格 -->
-        <div
-          style="
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 2px;
-            width: 80px;
-          "
-        >
-          <button
-            onclick="connectLLQRUQ_TopLeft()"
-            style="
-              background-color: #ea4335;
-              color: white;
-              border: none;
-              padding: 2px;
-              border-radius: 2px;
-              cursor: pointer;
-              min-height: 40px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <div class="quadrant-grid">
+          <button onclick="connectLLQRUQ_TopLeft()" class="quadrant-button">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
               <path
-                d="M12 18 L12 12 L18 12"
+                d="M18 27 L18 18 L27 18"
                 stroke="white"
                 stroke-width="2"
                 fill="none"
@@ -406,52 +417,12 @@
               />
             </svg>
           </button>
-          <div
-            style="
-              background-color: #f0f0f0;
-              border: 1px solid #ccc;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-weight: bold;
-              color: #666;
-              font-size: 12px;
-            "
-          >
-            B
-          </div>
-          <div
-            style="
-              background-color: #f0f0f0;
-              border: 1px solid #ccc;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-weight: bold;
-              color: #666;
-              font-size: 12px;
-            "
-          >
-            A
-          </div>
-          <button
-            onclick="connectLLQRUQ_RightBottom()"
-            style="
-              background-color: #ea4335;
-              color: white;
-              border: none;
-              padding: 4px;
-              border-radius: 2px;
-              cursor: pointer;
-              min-height: 40px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <div class="quadrant-label">B</div>
+          <div class="quadrant-label">A</div>
+          <button onclick="connectLLQRUQ_RightBottom()" class="quadrant-button">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
               <path
-                d="M6 12 L12 12 L12 6"
+                d="M9 18 L18 18 L18 9"
                 stroke="white"
                 stroke-width="2"
                 fill="none"
@@ -463,47 +434,12 @@
         </div>
 
         <!-- 右側 2x2 表格 -->
-        <div
-          style="
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 2px;
-            width: 80px;
-          "
-        >
-          <div
-            style="
-              background-color: #f0f0f0;
-              border: 1px solid #ccc;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-weight: bold;
-              color: #666;
-              font-size: 12px;
-            "
-          >
-            A
-          </div>
-          <button
-            onclick="connectLUQRLQ_RightTop()"
-            style="
-              background-color: #ea4335;
-              color: white;
-              border: none;
-              padding: 4px;
-              border-radius: 2px;
-              cursor: pointer;
-              min-height: 40px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <div class="quadrant-grid">
+          <div class="quadrant-label">A</div>
+          <button onclick="connectLUQRLQ_RightTop()" class="quadrant-button">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
               <path
-                d="M6 12 L12 12 L12 18"
+                d="M9 18 L18 18 L18 27"
                 stroke="white"
                 stroke-width="2"
                 fill="none"
@@ -512,24 +448,10 @@
               />
             </svg>
           </button>
-          <button
-            onclick="connectLUQRLQ_BottomLeft()"
-            style="
-              background-color: #ea4335;
-              color: white;
-              border: none;
-              padding: 4px;
-              border-radius: 2px;
-              cursor: pointer;
-              min-height: 40px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <button onclick="connectLUQRLQ_BottomLeft()" class="quadrant-button">
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
               <path
-                d="M12 6 L12 12 L18 12"
+                d="M18 9 L18 18 L27 18"
                 stroke="white"
                 stroke-width="2"
                 fill="none"
@@ -538,20 +460,7 @@
               />
             </svg>
           </button>
-          <div
-            style="
-              background-color: #f0f0f0;
-              border: 1px solid #ccc;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              font-weight: bold;
-              color: #666;
-              font-size: 12px;
-            "
-          >
-            B
-          </div>
+          <div class="quadrant-label">B</div>
         </div>
       </div>
     </div>
