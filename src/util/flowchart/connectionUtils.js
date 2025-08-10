@@ -223,6 +223,9 @@ function connectLLQRUQ_TopLeft(
 		rightShape = shapeA;
 	}
 
+	// Update Graph IDs to establish relationship
+	updateGraphShapeRelationship(leftShape, rightShape);
+
 	const line = createSpecificConnection(
 		leftShape,
 		rightShape,
@@ -272,6 +275,9 @@ function connectLLQRUQ_RightBottom(
 		leftShape = shapeB;
 		rightShape = shapeA;
 	}
+
+	// Update Graph IDs to establish relationship
+	updateGraphShapeRelationship(leftShape, rightShape);
 
 	const line = createSpecificConnection(
 		leftShape,
@@ -323,6 +329,9 @@ function connectLUQRLQ_RightTop(
 		rightShape = shapeA;
 	}
 
+	// Update Graph IDs to establish relationship
+	updateGraphShapeRelationship(leftShape, rightShape);
+
 	const line = createSpecificConnection(
 		leftShape,
 		rightShape,
@@ -372,6 +381,9 @@ function connectLUQRLQ_BottomLeft(
 		leftShape = shapeB;
 		rightShape = shapeA;
 	}
+
+	// Update Graph IDs to establish relationship
+	updateGraphShapeRelationship(leftShape, rightShape);
 
 	const line = createSpecificConnection(
 		leftShape,
