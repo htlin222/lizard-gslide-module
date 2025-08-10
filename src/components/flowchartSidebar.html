@@ -11,23 +11,6 @@
         background-color: #f8f9fa;
       }
 
-      .section {
-        background: white;
-        border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 16px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      }
-
-      .section-title {
-        font-weight: bold;
-        font-size: 16px;
-        margin-bottom: 12px;
-        color: #1a73e8;
-        border-bottom: 1px solid #e8f0fe;
-        padding-bottom: 8px;
-      }
-
       .form-group {
         margin-bottom: 12px;
         display: flex;
@@ -59,40 +42,48 @@
 
       button {
         width: 100%;
-        padding: 6px 6px;
-        background-color: #1a73e8;
-        color: white;
-        border: none;
-        border-radius: 4px;
+        padding: 8px 12px;
+        background-color: white;
+        color: #24292f;
+        border: 1px solid #d1d9e0;
+        border-radius: 6px;
         cursor: pointer;
         font-size: 12px;
         font-weight: 500;
         margin-bottom: 8px;
-        transition: background-color 0.2s;
+        transition: all 0.2s ease;
       }
 
       button:hover {
-        background-color: #1557b0;
+        background-color: #f6f8fa;
+        border-color: #8c959f;
       }
 
       button:active {
-        background-color: #0d47a1;
+        background-color: #eaeef2;
+        border-color: #8c959f;
       }
 
       button.secondary {
-        background-color: #34a853;
+        background-color: white;
+        color: #24292f;
+        border: 1px solid #d1d9e0;
       }
 
       button.secondary:hover {
-        background-color: #2d8f47;
+        background-color: #f6f8fa;
+        border-color: #8c959f;
       }
 
       button.tertiary {
-        background-color: #ea4335;
+        background-color: white;
+        color: #24292f;
+        border: 1px solid #d1d9e0;
       }
 
       button.tertiary:hover {
-        background-color: #d33b2c;
+        background-color: #f6f8fa;
+        border-color: #8c959f;
       }
 
       .input-suffix {
@@ -218,43 +209,70 @@
 
       details {
         background: white;
+        border: 1px solid #e1e5e9;
         border-radius: 8px;
         padding: 0;
-        margin-bottom: 16px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 8px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+      }
+
+      details:hover {
+        border-color: #d0d7de;
+      }
+
+      details[open] {
+        border-color: #1a73e8;
+        box-shadow: 0 2px 8px rgba(26, 115, 232, 0.1);
       }
 
       summary {
-        font-weight: bold;
-        font-size: 16px;
-        color: #1a73e8;
-        border-bottom: 1px solid #e8f0fe;
-        padding: 16px;
+        font-weight: 500;
+        font-size: 14px;
+        color: #24292f;
+        padding: 12px 16px;
         cursor: pointer;
         user-select: none;
         list-style: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s ease;
+        border: none;
+        background: transparent;
       }
 
       summary::-webkit-details-marker {
         display: none;
       }
 
-      summary::before {
-        content: "▶";
-        margin-right: 8px;
-        transition: transform 0.2s;
+      summary::after {
+        content: "";
+        width: 16px;
+        height: 16px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23656d76'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")
+          no-repeat center;
+        transition: transform 0.2s ease;
+        flex-shrink: 0;
       }
 
-      details[open] summary::before {
-        transform: rotate(90deg);
+      details[open] summary::after {
+        transform: rotate(180deg);
       }
 
       summary:hover {
-        background-color: #f8f9fa;
+        background-color: #f6f8fa;
+        color: #1a73e8;
+      }
+
+      details[open] summary {
+        border-bottom: 1px solid #e1e5e9;
+        background-color: #f6f8fa;
       }
 
       .details-content {
         padding: 16px;
+        background: white;
       }
 
       @keyframes slideUp {
@@ -310,6 +328,62 @@
         color: #666;
         font-size: 12px;
         height: 40px;
+      }
+
+      /* Progress bar styles for child creation buttons */
+      .button-progress {
+        position: relative;
+        overflow: hidden;
+        pointer-events: none;
+        opacity: 0.7;
+      }
+
+      .button-progress::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(0, 0, 0, 0.1),
+          transparent
+        );
+        animation: buttonProgress 3s ease-in-out;
+      }
+
+      .button-progress::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 2px;
+        width: 0%;
+        background: #24292f;
+        animation: buttonProgressBar 3s ease-in-out;
+      }
+
+      @keyframes buttonProgress {
+        0% {
+          left: -100%;
+        }
+        50% {
+          left: 100%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+
+      @keyframes buttonProgressBar {
+        0% {
+          width: 0%;
+        }
+        100% {
+          width: 100%;
+        }
       }
     </style>
   </head>
@@ -387,249 +461,338 @@
       </div>
     </details>
 
-    <div class="section">
-      <div class="section-title">🔗 Connect Shapes</div>
-      <br />
-      <div class="button-group">
-        <button onclick="connectShapesVertical()">⬆⬇ Connect Top/Down</button>
-        <button onclick="connectShapesHorizontal()">
-          ⬅➡ Connect Left/Right
-        </button>
-      </div>
-
-      <br />
-      <div style="font-size: 12px; color: #666; margin-bottom: 8px">
-        Quadrant-based connections:
-      </div>
-
-      <div style="display: flex; gap: 4px; justify-content: center">
-        <!-- 左側 2x2 表格 -->
-        <div class="quadrant-grid">
-          <button onclick="connectLLQRUQ_TopLeft()" class="quadrant-button">
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-              <path
-                d="M18 27 L18 18 L27 18"
-                stroke="white"
-                stroke-width="2"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
+    <details>
+      <summary>🔗 Connect Shapes</summary>
+      <div class="details-content">
+        <div class="button-group">
+          <button onclick="connectShapesVertical()">
+            ⬆⬇ Connect Top/Down
           </button>
-          <div class="quadrant-label">B</div>
-          <div class="quadrant-label">A</div>
-          <button onclick="connectLLQRUQ_RightBottom()" class="quadrant-button">
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-              <path
-                d="M9 18 L18 18 L18 9"
-                stroke="white"
-                stroke-width="2"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
+          <button onclick="connectShapesHorizontal()">
+            ⬅➡ Connect Left/Right
           </button>
         </div>
 
-        <!-- 右側 2x2 表格 -->
-        <div class="quadrant-grid">
-          <div class="quadrant-label">A</div>
-          <button onclick="connectLUQRLQ_RightTop()" class="quadrant-button">
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-              <path
-                d="M9 18 L18 18 L18 27"
-                stroke="white"
-                stroke-width="2"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-          <button onclick="connectLUQRLQ_BottomLeft()" class="quadrant-button">
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-              <path
-                d="M18 9 L18 18 L27 18"
-                stroke="white"
-                stroke-width="2"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-          <div class="quadrant-label">B</div>
+        <br />
+        <div style="font-size: 12px; color: #666; margin-bottom: 8px">
+          Quadrant-based connections:
         </div>
-      </div>
-    </div>
 
-    <div class="section">
-      <div class="section-title">➕ Create Child Shapes</div>
+        <div style="display: flex; gap: 4px; justify-content: center">
+          <!-- 左側 2x2 表格 -->
+          <div class="quadrant-grid">
+            <button onclick="connectLLQRUQ_TopLeft()" class="quadrant-button">
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                <path
+                  d="M18 27 L18 18 L27 18"
+                  stroke="white"
+                  stroke-width="2"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <div class="quadrant-label">B</div>
+            <div class="quadrant-label">A</div>
+            <button
+              onclick="connectLLQRUQ_RightBottom()"
+              class="quadrant-button"
+            >
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                <path
+                  d="M9 18 L18 18 L18 9"
+                  stroke="white"
+                  stroke-width="2"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
 
-      <div class="tab-container">
-        <button class="tab-button active" onclick="switchTab('count')">
-          📊 By Count
-        </button>
-        <button class="tab-button" onclick="switchTab('text')">
-          📝 By Text
-        </button>
-      </div>
-
-      <!-- Count Tab -->
-      <div id="countTab" class="tab-content active">
-        <div class="form-group">
-          <label for="childrenCount">Children Count:</label>
-          <div class="gap-controls">
-            <input
-              type="number"
-              id="childrenCount"
-              min="1"
-              max="10"
-              value="1"
-            />
-            <span class="input-suffix">shapes</span>
+          <!-- 右側 2x2 表格 -->
+          <div class="quadrant-grid">
+            <div class="quadrant-label">A</div>
+            <button onclick="connectLUQRLQ_RightTop()" class="quadrant-button">
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                <path
+                  d="M9 18 L18 18 L18 27"
+                  stroke="white"
+                  stroke-width="2"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <button
+              onclick="connectLUQRLQ_BottomLeft()"
+              class="quadrant-button"
+            >
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                <path
+                  d="M18 9 L18 18 L27 18"
+                  stroke="white"
+                  stroke-width="2"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <div class="quadrant-label">B</div>
           </div>
         </div>
       </div>
+    </details>
 
-      <!-- Text Tab -->
-      <div id="textTab" class="tab-content">
-        <div
-          class="form-group"
-          style="flex-direction: column; align-items: stretch"
-        >
-          <label for="childrenText" style="margin-bottom: 6px"
-            >Children Text (one per line):</label
+    <details>
+      <summary>➕ Create Child Shapes</summary>
+      <div class="details-content">
+        <div class="tab-container">
+          <button class="tab-button active" onclick="switchTab('count')">
+            📊 By Count
+          </button>
+          <button class="tab-button" onclick="switchTab('text')">
+            📝 By Text
+          </button>
+        </div>
+
+        <!-- Count Tab -->
+        <div id="countTab" class="tab-content active">
+          <div class="form-group">
+            <label for="childrenCount">Children Count:</label>
+            <div class="gap-controls">
+              <input
+                type="number"
+                id="childrenCount"
+                min="1"
+                max="10"
+                value="1"
+              />
+              <span class="input-suffix">shapes</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text Tab -->
+        <div id="textTab" class="tab-content">
+          <div
+            class="form-group"
+            style="flex-direction: column; align-items: stretch"
           >
-          <textarea
-            id="childrenText"
-            class="text-input-area"
-            placeholder="Enter text for each child shape...&#10;Line 1 = Child 1&#10;Line 2 = Child 2&#10;Line 3 = Child 3"
-            oninput="updateLineCount()"
-          ></textarea>
-          <div id="lineCount" class="line-count-info">0 lines → 0 children</div>
+            <label for="childrenText" style="margin-bottom: 6px"
+              >Children Text (one per line):</label
+            >
+            <textarea
+              id="childrenText"
+              class="text-input-area"
+              placeholder="Enter text for each child shape...&#10;Line 1 = Child 1&#10;Line 2 = Child 2&#10;Line 3 = Child 3"
+              oninput="updateLineCount()"
+            ></textarea>
+            <div id="lineCount" class="line-count-info">
+              0 lines → 0 children
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label for="horizontalGap">Horizontal Gap:</label>
-        <div class="gap-controls">
-          <input type="number" id="horizontalGap" min="0" value="20" />
-          <span class="input-suffix">pt</span>
+        <div class="form-group">
+          <label for="horizontalGap">Horizontal Gap:</label>
+          <div class="gap-controls">
+            <input type="number" id="horizontalGap" min="0" value="20" />
+            <span class="input-suffix">pt</span>
+          </div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label for="verticalGap">Vertical Gap:</label>
-        <div class="gap-controls">
-          <input type="number" id="verticalGap" min="0" value="20" />
-          <span class="input-suffix">pt</span>
+        <div class="form-group">
+          <label for="verticalGap">Vertical Gap:</label>
+          <div class="gap-controls">
+            <input type="number" id="verticalGap" min="0" value="20" />
+            <span class="input-suffix">pt</span>
+          </div>
         </div>
-      </div>
 
-      <br />
+        <br />
 
-      <div class="button-group">
-        <button class="secondary" onclick="createChildTop()">
-          ⬆ Create Top
-        </button>
-        <button class="tertiary" onclick="createChildRight()">
-          ➡ Create Right
-        </button>
-      </div>
-      <div class="button-group" style="margin-top: 8px">
-        <button class="secondary" onclick="createChildBottom()">
-          ⬇ Create Bottom
-        </button>
-        <button class="tertiary" onclick="createChildLeft()">
-          ⬅ Create Left
-        </button>
-      </div>
-
-      <br />
-      <button
-        class="secondary"
-        onclick="createSibling()"
-        style="width: 100%; background-color: #ff9800"
-      >
-        👥 Create Sibling
-      </button>
-    </div>
-
-    <div class="section">
-      <div class="section-title">🎨 Add BG for selected elements</div>
-      <div class="form-group">
-        <label for="bgPadding">Padding:</label>
-        <div class="gap-controls">
-          <input type="number" id="bgPadding" min="0" value="10" />
-          <span class="input-suffix">pt</span>
+        <div class="button-group">
+          <button class="secondary" onclick="createChildTop()">
+            ⬆ Create Top
+          </button>
+          <button class="tertiary" onclick="createChildRight()">
+            ➡ Create Right
+          </button>
         </div>
-      </div>
+        <div class="button-group" style="margin-top: 8px">
+          <button class="secondary" onclick="createChildBottom()">
+            ⬇ Create Bottom
+          </button>
+          <button class="tertiary" onclick="createChildLeft()">
+            ⬅ Create Left
+          </button>
+        </div>
 
-      <div class="form-group">
-        <label for="bgColor">Background Color:</label>
-        <input
-          type="color"
-          id="bgColor"
-          value="#f3f3f3"
-          style="
-            width: 60px;
-            height: 30px;
-            padding: 0;
-            border: 1px solid #dadce0;
-            border-radius: 4px;
-            cursor: pointer;
-          "
-        />
+        <br />
+        <button onclick="createSibling()">👥 Create Sibling</button>
       </div>
+    </details>
 
-      <div class="form-group">
-        <label for="bgOpacity">Opacity:</label>
-        <div class="gap-controls">
+    <details>
+      <summary>🎨 Add BG for selected elements</summary>
+      <div class="details-content">
+        <div class="form-group">
+          <label for="bgPadding">Padding:</label>
+          <div class="gap-controls">
+            <input type="number" id="bgPadding" min="0" value="10" />
+            <span class="input-suffix">pt</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="bgColor">Background Color:</label>
           <input
-            type="range"
-            id="bgOpacity"
-            min="0"
-            max="100"
-            value="50"
-            style="width: 100px; margin-right: 8px"
+            type="color"
+            id="bgColor"
+            value="#f3f3f3"
+            style="
+              width: 60px;
+              height: 30px;
+              padding: 0;
+              border: 1px solid #dadce0;
+              border-radius: 4px;
+              cursor: pointer;
+            "
           />
-          <span id="opacityValue" class="input-suffix">50%</span>
+        </div>
+
+        <div class="form-group">
+          <label for="bgOpacity">Opacity:</label>
+          <div class="gap-controls">
+            <input
+              type="range"
+              id="bgOpacity"
+              min="0"
+              max="100"
+              value="50"
+              style="width: 100px; margin-right: 8px"
+            />
+            <span id="opacityValue" class="input-suffix">50%</span>
+          </div>
+        </div>
+
+        <button onclick="addBackgroundToSelection()">
+          🎨 Add Background Rectangle
+        </button>
+        <div class="help-text">
+          Select multiple shapes, then click to create a background rectangle
+          that encompasses all selected elements with padding.
         </div>
       </div>
+    </details>
 
-      <button
-        onclick="addBackgroundToSelection()"
-        style="background-color: #ff9800"
-      >
-        🎨 Add Background Rectangle
-      </button>
-      <div class="help-text">
-        Select multiple shapes, then click to create a background rectangle that
-        encompasses all selected elements with padding.
-      </div>
-    </div>
+    <details>
+      <summary>📊 Add Stage Bar</summary>
+      <div class="details-content">
+        <div class="form-group">
+          <label for="stageY">Y Position:</label>
+          <div class="gap-controls">
+            <input type="number" id="stageY" min="0" value="100" />
+            <span class="input-suffix">pt</span>
+          </div>
+        </div>
 
-    <div class="section">
-      <div class="section-title">🔧 Graph ID Inspector</div>
-      <div class="button-group">
-        <button onclick="showGraphId()" style="background-color: #2196f3">
-          👁️ Refresh
-        </button>
-        <button
-          class="tertiary"
-          onclick="clearGraphId()"
-          style="background-color: #f44336"
-        >
-          🗑️ Clear
-        </button>
+        <div class="form-group">
+          <label for="stageOffsetX">X Offset:</label>
+          <div class="gap-controls">
+            <input type="number" id="stageOffsetX" value="-20" />
+            <span class="input-suffix">pt</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="stageExtraWidth">Extra Width:</label>
+          <div class="gap-controls">
+            <input type="number" id="stageExtraWidth" min="0" value="30" />
+            <span class="input-suffix">pt</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="stageHeight">Height:</label>
+          <div class="gap-controls">
+            <input type="number" id="stageHeight" min="5" value="15" />
+            <span class="input-suffix">pt</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="stageColor">Stage Color:</label>
+          <input
+            type="color"
+            id="stageColor"
+            value="#3D6869"
+            style="
+              width: 60px;
+              height: 30px;
+              padding: 0;
+              border: 1px solid #dadce0;
+              border-radius: 4px;
+              cursor: pointer;
+            "
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="stageOpacity">Opacity:</label>
+          <div class="gap-controls">
+            <input
+              type="range"
+              id="stageOpacity"
+              min="0"
+              max="100"
+              value="100"
+              style="width: 100px; margin-right: 8px"
+            />
+            <span id="stageOpacityValue" class="input-suffix">100%</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="stageText">Text (optional):</label>
+          <input
+            type="text"
+            id="stageText"
+            placeholder="Enter stage text..."
+            style="
+              width: 150px;
+              padding: 6px 8px;
+              border: 1px solid #dadce0;
+              border-radius: 4px;
+              font-size: 14px;
+            "
+          />
+        </div>
+
+        <button onclick="addStageBarToSelection()">📊 Add Stage Bar</button>
+        <div class="help-text">
+          Select shapes, then click to create a HOME_PLATE stage bar above them.
+        </div>
       </div>
-      <div id="graphIdDisplay" class="graph-id-display empty">
-        Select a shape and click Refresh to view its Graph ID
+    </details>
+
+    <details>
+      <summary>🔧 Graph ID Inspector</summary>
+      <div class="details-content">
+        <div class="button-group">
+          <button onclick="showGraphId()">👁️ Refresh</button>
+          <button onclick="clearGraphId()">🗑️ Clear</button>
+        </div>
+        <div id="graphIdDisplay" class="graph-id-display empty">
+          Select a shape and click Refresh to view its Graph ID
+        </div>
       </div>
-    </div>
+    </details>
 
     <script>
       function connectShapesVertical() {
@@ -637,11 +800,18 @@
         const startArrow = document.getElementById("startArrow").value;
         const endArrow = document.getElementById("endArrow").value;
 
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = "⬆⬇ Connect Top/Down";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
             showMessage("Shapes connected vertically!");
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             showMessage("Error: " + error, true);
           })
           .connectSelectedShapesVertical(lineType, startArrow, endArrow);
@@ -652,11 +822,18 @@
         const startArrow = document.getElementById("startArrow").value;
         const endArrow = document.getElementById("endArrow").value;
 
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = "⬅➡ Connect Left/Right";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
             showMessage("Shapes connected horizontally!");
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             showMessage("Error: " + error, true);
           })
           .connectSelectedShapesHorizontal(lineType, startArrow, endArrow);
@@ -668,11 +845,19 @@
         const startArrow = document.getElementById("startArrow").value;
         const endArrow = document.getElementById("endArrow").value;
 
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = button.innerHTML; // Preserve SVG content
+        button.innerHTML = "...";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
             showMessage("Shapes connected (LLQ→RUQ Top→Left)!");
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             showMessage("Error: " + error, true);
           })
           .connectLLQRUQ_TopLeft(lineType, startArrow, endArrow);
@@ -683,11 +868,19 @@
         const startArrow = document.getElementById("startArrow").value;
         const endArrow = document.getElementById("endArrow").value;
 
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = button.innerHTML; // Preserve SVG content
+        button.innerHTML = "...";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
             showMessage("Shapes connected (LLQ→RUQ Right→Bottom)!");
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             showMessage("Error: " + error, true);
           })
           .connectLLQRUQ_RightBottom(lineType, startArrow, endArrow);
@@ -698,11 +891,19 @@
         const startArrow = document.getElementById("startArrow").value;
         const endArrow = document.getElementById("endArrow").value;
 
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = button.innerHTML; // Preserve SVG content
+        button.innerHTML = "...";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
             showMessage("Shapes connected (LUQ→RLQ Right→Top)!");
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             showMessage("Error: " + error, true);
           })
           .connectLUQRLQ_RightTop(lineType, startArrow, endArrow);
@@ -713,11 +914,19 @@
         const startArrow = document.getElementById("startArrow").value;
         const endArrow = document.getElementById("endArrow").value;
 
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = button.innerHTML; // Preserve SVG content
+        button.innerHTML = "...";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
             showMessage("Shapes connected (LUQ→RLQ Bottom→Left)!");
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             showMessage("Error: " + error, true);
           })
           .connectLUQRLQ_BottomLeft(lineType, startArrow, endArrow);
@@ -746,8 +955,14 @@
           return;
         }
 
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = "⬆ Create Top";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
             const msg =
               childrenCount === 1
                 ? "Child shape created above successfully!"
@@ -755,6 +970,7 @@
             showMessage(msg);
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             showMessage("Error: " + error, true);
           })
           .createChildTopWithText(
@@ -790,8 +1006,14 @@
           return;
         }
 
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = "➡ Create Right";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
             const msg =
               childrenCount === 1
                 ? "Child shape created to the right successfully!"
@@ -799,6 +1021,7 @@
             showMessage(msg);
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             showMessage("Error: " + error, true);
           })
           .createChildRightWithText(
@@ -834,8 +1057,14 @@
           return;
         }
 
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = "⬇ Create Bottom";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
             const msg =
               childrenCount === 1
                 ? "Child shape created below successfully!"
@@ -843,6 +1072,7 @@
             showMessage(msg);
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             showMessage("Error: " + error, true);
           })
           .createChildBottomWithText(
@@ -878,8 +1108,14 @@
           return;
         }
 
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = "⬅ Create Left";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
             const msg =
               childrenCount === 1
                 ? "Child shape created to the left successfully!"
@@ -887,6 +1123,7 @@
             showMessage(msg);
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             showMessage("Error: " + error, true);
           })
           .createChildLeftWithText(
@@ -926,11 +1163,18 @@
           return;
         }
 
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = "👥 Create Sibling";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
             showMessage("Sibling shape created successfully!");
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             showMessage("Error: " + error, true);
           })
           .createSiblingShape(
@@ -943,8 +1187,14 @@
       }
 
       function showGraphId() {
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = "👁️ Refresh";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function (result) {
+            endButtonProgress(button, originalText);
             const display = document.getElementById("graphIdDisplay");
             if (
               result.includes("No Graph ID") ||
@@ -965,6 +1215,7 @@
             }
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             const display = document.getElementById("graphIdDisplay");
             display.className = "graph-id-display empty";
             display.textContent = "Error: " + error;
@@ -974,12 +1225,16 @@
       }
 
       function clearGraphId() {
-        // Confirm before clearing
-        if (
-          confirm(
-            "Are you sure you want to clear the Graph ID from the selected shape?",
-          )
-        ) {
+        const clearButton = document.querySelector(
+          'button[onclick="clearGraphId()"]',
+        );
+
+        // Check if button is already in confirmation state
+        if (clearButton.textContent.trim() === "Sure?") {
+          // User clicked "Sure?" - proceed with clearing
+          clearButton.textContent = "🗑️ Clear";
+          clearButton.style.backgroundColor = "#f44336";
+
           google.script.run
             .withSuccessHandler(function (result) {
               showMessage(result);
@@ -997,6 +1252,18 @@
               showMessage("Error: " + error, true);
             })
             .clearSelectedShapeGraphId();
+        } else {
+          // First click - show confirmation state
+          clearButton.textContent = "Sure?";
+          clearButton.style.backgroundColor = "#ff9800";
+
+          // Set timeout to revert after 5 seconds
+          setTimeout(function () {
+            if (clearButton.textContent.trim() === "Sure?") {
+              clearButton.textContent = "🗑️ Clear";
+              clearButton.style.backgroundColor = "#f44336";
+            }
+          }, 5000);
         }
       }
 
@@ -1080,11 +1347,18 @@
           return;
         }
 
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = "🎨 Add Background Rectangle";
+        startButtonProgress(button, originalText);
+
         google.script.run
           .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
             showMessage("Background rectangle added successfully!");
           })
           .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
             showMessage("Error: " + error, true);
           })
           .addBackgroundToSelectedElements(padding, bgColor, opacity);
@@ -1094,6 +1368,78 @@
         const opacitySlider = document.getElementById("bgOpacity");
         const opacityValue = document.getElementById("opacityValue");
         opacityValue.textContent = opacitySlider.value + "%";
+      }
+
+      function updateStageOpacityDisplay() {
+        const opacitySlider = document.getElementById("stageOpacity");
+        const opacityValue = document.getElementById("stageOpacityValue");
+        opacityValue.textContent = opacitySlider.value + "%";
+      }
+
+      function addStageBarToSelection() {
+        const baseY = parseInt(document.getElementById("stageY").value);
+        const offsetX = parseInt(document.getElementById("stageOffsetX").value);
+        const extraWidth = parseInt(
+          document.getElementById("stageExtraWidth").value,
+        );
+        const height = parseInt(document.getElementById("stageHeight").value);
+        const fillColor = document.getElementById("stageColor").value;
+        const opacity =
+          parseInt(document.getElementById("stageOpacity").value) / 100;
+        const strokeColor = "#FFFFFF"; // Default white stroke
+        const text = document.getElementById("stageText").value;
+        const fontSize = 10; // Default font size
+
+        if (baseY < 0 || isNaN(baseY)) {
+          showMessage("Please enter a valid Y position (0 or greater)", true);
+          return;
+        }
+
+        if (isNaN(offsetX)) {
+          showMessage("Please enter a valid X offset value", true);
+          return;
+        }
+
+        if (extraWidth < 0 || isNaN(extraWidth)) {
+          showMessage("Please enter a valid extra width (0 or greater)", true);
+          return;
+        }
+
+        if (height < 5 || isNaN(height)) {
+          showMessage("Please enter a valid height (5 or greater)", true);
+          return;
+        }
+
+        if (opacity < 0 || opacity > 1 || isNaN(opacity)) {
+          showMessage("Please enter a valid opacity value (0-100%)", true);
+          return;
+        }
+
+        // Get the button and start progress animation
+        const button = event.target;
+        const originalText = "📊 Add Stage Bar";
+        startButtonProgress(button, originalText);
+
+        google.script.run
+          .withSuccessHandler(function () {
+            endButtonProgress(button, originalText);
+            showMessage("Stage bar added successfully!");
+          })
+          .withFailureHandler(function (error) {
+            endButtonProgress(button, originalText);
+            showMessage("Error: " + error, true);
+          })
+          .addStageBar(
+            baseY,
+            offsetX,
+            extraWidth,
+            height,
+            fillColor,
+            opacity,
+            strokeColor,
+            text,
+            fontSize,
+          );
       }
 
       function showMessage(message, isError = false) {
@@ -1196,6 +1542,89 @@
           localStorage.setItem("flowchart_bgOpacity", this.value);
         });
 
+      // Auto-save stage bar settings to localStorage
+      document.getElementById("stageY").addEventListener("change", function () {
+        localStorage.setItem("flowchart_stageY", this.value);
+      });
+
+      document
+        .getElementById("stageOffsetX")
+        .addEventListener("change", function () {
+          localStorage.setItem("flowchart_stageOffsetX", this.value);
+        });
+
+      document
+        .getElementById("stageExtraWidth")
+        .addEventListener("change", function () {
+          localStorage.setItem("flowchart_stageExtraWidth", this.value);
+        });
+
+      document
+        .getElementById("stageHeight")
+        .addEventListener("change", function () {
+          localStorage.setItem("flowchart_stageHeight", this.value);
+        });
+
+      document
+        .getElementById("stageColor")
+        .addEventListener("change", function () {
+          localStorage.setItem("flowchart_stageColor", this.value);
+        });
+
+      document
+        .getElementById("stageOpacity")
+        .addEventListener("input", function () {
+          updateStageOpacityDisplay();
+          localStorage.setItem("flowchart_stageOpacity", this.value);
+        });
+
+      document
+        .getElementById("stageText")
+        .addEventListener("input", function () {
+          localStorage.setItem("flowchart_stageText", this.value);
+        });
+
+      // Button progress animation helpers
+      function startButtonProgress(button, originalText) {
+        button.classList.add("button-progress");
+        // Check if originalText contains HTML (SVG icons)
+        if (originalText.includes("<")) {
+          button.innerHTML = "...";
+        } else {
+          button.textContent = "Creating...";
+        }
+        button.disabled = true;
+      }
+
+      function endButtonProgress(button, originalText) {
+        button.classList.remove("button-progress");
+        // Check if originalText contains HTML (SVG icons)
+        if (originalText.includes("<")) {
+          button.innerHTML = originalText;
+        } else {
+          button.textContent = originalText;
+        }
+        button.disabled = false;
+      }
+
+      // Mutually exclusive accordion behavior
+      function setupMutuallyExclusiveAccordions() {
+        const detailsElements = document.querySelectorAll("details");
+
+        detailsElements.forEach((targetDetail) => {
+          targetDetail.addEventListener("toggle", function () {
+            if (this.open) {
+              // Close all other details when this one opens
+              detailsElements.forEach((otherDetail) => {
+                if (otherDetail !== this && otherDetail.open) {
+                  otherDetail.open = false;
+                }
+              });
+            }
+          });
+        });
+      }
+
       // Load saved values
       window.addEventListener("load", function () {
         const savedHorizontalGap = localStorage.getItem(
@@ -1251,6 +1680,55 @@
         } else {
           updateOpacityDisplay(); // Initialize display even if no saved value
         }
+
+        // Load stage bar settings
+        const savedStageY = localStorage.getItem("flowchart_stageY");
+        if (savedStageY) {
+          document.getElementById("stageY").value = savedStageY;
+        }
+
+        const savedStageOffsetX = localStorage.getItem(
+          "flowchart_stageOffsetX",
+        );
+        if (savedStageOffsetX) {
+          document.getElementById("stageOffsetX").value = savedStageOffsetX;
+        }
+
+        const savedStageExtraWidth = localStorage.getItem(
+          "flowchart_stageExtraWidth",
+        );
+        if (savedStageExtraWidth) {
+          document.getElementById("stageExtraWidth").value =
+            savedStageExtraWidth;
+        }
+
+        const savedStageHeight = localStorage.getItem("flowchart_stageHeight");
+        if (savedStageHeight) {
+          document.getElementById("stageHeight").value = savedStageHeight;
+        }
+
+        const savedStageColor = localStorage.getItem("flowchart_stageColor");
+        if (savedStageColor) {
+          document.getElementById("stageColor").value = savedStageColor;
+        }
+
+        const savedStageOpacity = localStorage.getItem(
+          "flowchart_stageOpacity",
+        );
+        if (savedStageOpacity) {
+          document.getElementById("stageOpacity").value = savedStageOpacity;
+          updateStageOpacityDisplay();
+        } else {
+          updateStageOpacityDisplay(); // Initialize display even if no saved value
+        }
+
+        const savedStageText = localStorage.getItem("flowchart_stageText");
+        if (savedStageText) {
+          document.getElementById("stageText").value = savedStageText;
+        }
+
+        // Setup mutually exclusive accordion behavior
+        setupMutuallyExclusiveAccordions();
       });
     </script>
   </body>

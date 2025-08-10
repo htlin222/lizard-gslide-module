@@ -22,6 +22,7 @@
  * ├── layoutDetection.js     # Layout pattern detection (LR/TD)
  * ├── siblingCreationUtils.js # Sibling shape creation with layout detection
  * ├── backgroundUtils.js     # Background rectangle creation and styling
+ * ├── stageBarUtils.js       # Stage bar (HOME_PLATE) creation for process flows
  * ├── debugUtils.js          # Debug and inspection utilities
  * ├── lineUpdateUtils.js     # Line update and style management
  * ├── main.js                # Main interface functions and sidebar
@@ -76,6 +77,12 @@
  * - calculateShapesBoundingBox(shapes)
  * - createBackgroundRectangle(slide, left, top, width, height, bgColor, opacity)
  * - createCustomBackground(shapes, style)
+ *
+ * From stageBarUtils.js:
+ * - addStageBar(baseY, offsetX, extraWidth, height, fillColor, opacity, strokeColor)
+ * - addDefaultStageBar()
+ * - addThemedStageBar(theme)
+ * - addMultipleStageBar(yPositions, fillColor)
  *
  * From debugUtils.js:
  * - showSelectedShapeGraphId()
