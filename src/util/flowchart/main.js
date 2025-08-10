@@ -366,7 +366,7 @@ function showSelectedShapeGraphId() {
 			const parsed = parseGraphId(graphId);
 			if (parsed) {
 				const details = [];
-				details.push(`📊 Graph ID: ${graphId}`);
+				details.push(`📊 Graph ID:\n${graphId}`);
 				details.push(`├─ Parent: ${parsed.parent || "(root)"}`);
 				details.push(`├─ Layout: ${parsed.layout || "(none)"}`);
 				details.push(`├─ Current: ${parsed.current}`);
@@ -375,7 +375,7 @@ function showSelectedShapeGraphId() {
 				);
 				return details.join("\n");
 			}
-			return `📊 Graph ID: ${graphId}`;
+			return `📊 Graph ID:\n${graphId}`;
 		} else {
 			return "No Graph ID found. This shape may not be part of a flowchart.";
 		}

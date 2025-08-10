@@ -200,55 +200,43 @@ function connectSelectedShapes(
 		}
 	}
 
-	// Get or initialize parent's Graph ID
-	let parentGraphId = getShapeGraphId(parentShape);
+	// Check if both shapes already have Graph IDs
+	const parentGraphId = getShapeGraphId(parentShape);
+	const childGraphId = getShapeGraphId(childShape);
 
-	if (!parentGraphId) {
-		// Initialize parent as root with next available A-level ID
+	// If both shapes already have Graph IDs, just connect them visually without modifying IDs
+	if (parentGraphId && childGraphId) {
+		// Both shapes have Graph IDs - don't modify them, just create the visual connection
+		// This preserves existing hierarchy relationships
+	} else if (!parentGraphId && !childGraphId) {
+		// Neither shape has a Graph ID - initialize parent as root and child as its child
 		const slide = parentShape.getParentPage();
 		const nextRootId = findNextAvailableRootId(slide);
-		parentGraphId = generateGraphId("", "", nextRootId, []);
-		setShapeGraphId(parentShape, parentGraphId);
-	}
+		const newParentGraphId = generateGraphId("", "", nextRootId, ["B1"]);
+		setShapeGraphId(parentShape, newParentGraphId);
 
-	const parentData = parseGraphId(parentGraphId);
-	if (!parentData) {
-		return SlidesApp.getUi().alert("Failed to parse parent Graph ID.");
-	}
-
-	// Handle child's Graph ID
-	const childGraphId = getShapeGraphId(childShape);
-	let childId;
-
-	if (childGraphId) {
-		// Child already has a Graph ID - update its parent reference
-		const childData = parseGraphId(childGraphId);
-		if (childData) {
-			childId = childData.current;
-			// Update child's parent reference and layout
-			const layout = orientation === "horizontal" ? "LR" : "TD";
-			const updatedChildGraphId = generateGraphId(
-				parentData.current,
-				layout,
-				childData.current,
-				childData.children,
-			);
-			setShapeGraphId(childShape, updatedChildGraphId);
+		// Set child's Graph ID
+		const layout = orientation === "horizontal" ? "LR" : "TD";
+		const newChildGraphId = generateGraphId(nextRootId, layout, "B1", []);
+		setShapeGraphId(childShape, newChildGraphId);
+	} else if (parentGraphId && !childGraphId) {
+		// Only parent has Graph ID - create Graph ID for child
+		const parentData = parseGraphId(parentGraphId);
+		if (!parentData) {
+			return SlidesApp.getUi().alert("Failed to parse parent Graph ID.");
 		}
-	} else {
-		// Child doesn't have a Graph ID - create one
+
+		// Generate child ID
 		const nextLevel = getNextLevel(
 			parentData.current.match(/^([A-Z]+)/)?.[1] || "A",
 		);
-
-		// Find the next available number for this level
 		const existingChildren = parentData.children.filter((id) =>
 			id.startsWith(nextLevel),
 		);
 		const nextNumber = existingChildren.length + 1;
-		childId = `${nextLevel}${nextNumber}`;
+		const childId = `${nextLevel}${nextNumber}`;
 
-		// Set child's Graph ID with proper layout
+		// Set child's Graph ID
 		const layout = orientation === "horizontal" ? "LR" : "TD";
 		const newChildGraphId = generateGraphId(
 			parentData.current,
@@ -257,10 +245,8 @@ function connectSelectedShapes(
 			[],
 		);
 		setShapeGraphId(childShape, newChildGraphId);
-	}
 
-	// Update parent to include this child if not already present
-	if (!parentData.children.includes(childId)) {
+		// Update parent to include this child
 		const updatedChildren = [...parentData.children, childId];
 		const updatedParentId = generateGraphId(
 			parentData.parent,
@@ -269,6 +255,13 @@ function connectSelectedShapes(
 			updatedChildren,
 		);
 		setShapeGraphId(parentShape, updatedParentId);
+	} else if (!parentGraphId && childGraphId) {
+		// Only child has Graph ID - initialize parent as root but don't modify child
+		const slide = parentShape.getParentPage();
+		const nextRootId = findNextAvailableRootId(slide);
+		const newParentGraphId = generateGraphId("", "", nextRootId, []);
+		setShapeGraphId(parentShape, newParentGraphId);
+		// Note: We're not updating the child's parent reference to preserve its existing relationships
 	}
 
 	// Create the visual connection
