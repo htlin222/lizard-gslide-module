@@ -301,14 +301,14 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         grid-template-rows: 1fr 1fr;
-        gap: 2px;
+        gap: 0px;
         width: 80px;
       }
 
       .quadrant-button {
-        background-color: teal;
-        color: white;
-        border: none;
+        background-color: white;
+        color: black;
+        border: 1px solid #dadce0;
         padding: 2px;
         border-radius: 2px;
         cursor: pointer;
@@ -327,7 +327,7 @@
         font-weight: bold;
         color: #666;
         font-size: 12px;
-        height: 40px;
+        height: 38px;
       }
 
       /* Progress bar styles for child creation buttons */
@@ -478,14 +478,14 @@
           Quadrant-based connections:
         </div>
 
-        <div style="display: flex; gap: 4px; justify-content: center">
+        <div style="display: flex; gap: 18px; justify-content: center">
           <!-- 左側 2x2 表格 -->
           <div class="quadrant-grid">
             <button onclick="connectLLQRUQ_TopLeft()" class="quadrant-button">
               <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
                 <path
                   d="M18 27 L18 18 L27 18"
-                  stroke="white"
+                  stroke="black"
                   stroke-width="2"
                   fill="none"
                   stroke-linecap="round"
@@ -502,7 +502,7 @@
               <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
                 <path
                   d="M9 18 L18 18 L18 9"
-                  stroke="white"
+                  stroke="black"
                   stroke-width="2"
                   fill="none"
                   stroke-linecap="round"
@@ -519,7 +519,7 @@
               <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
                 <path
                   d="M9 18 L18 18 L18 27"
-                  stroke="white"
+                  stroke="black"
                   stroke-width="2"
                   fill="none"
                   stroke-linecap="round"
@@ -534,7 +534,7 @@
               <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
                 <path
                   d="M18 9 L18 18 L27 18"
-                  stroke="white"
+                  stroke="black"
                   stroke-width="2"
                   fill="none"
                   stroke-linecap="round"
@@ -763,9 +763,9 @@
           <input
             type="text"
             id="stageText"
-            placeholder="Enter stage text..."
+            placeholder="Enter text..."
             style="
-              width: 150px;
+              width: 120px;
               padding: 6px 8px;
               border: 1px solid #dadce0;
               border-radius: 4px;
@@ -848,7 +848,6 @@
         // Get the button and start progress animation
         const button = event.target;
         const originalText = button.innerHTML; // Preserve SVG content
-        button.innerHTML = "...";
         startButtonProgress(button, originalText);
 
         google.script.run
@@ -871,7 +870,6 @@
         // Get the button and start progress animation
         const button = event.target;
         const originalText = button.innerHTML; // Preserve SVG content
-        button.innerHTML = "...";
         startButtonProgress(button, originalText);
 
         google.script.run
@@ -894,7 +892,6 @@
         // Get the button and start progress animation
         const button = event.target;
         const originalText = button.innerHTML; // Preserve SVG content
-        button.innerHTML = "...";
         startButtonProgress(button, originalText);
 
         google.script.run
@@ -917,7 +914,6 @@
         // Get the button and start progress animation
         const button = event.target;
         const originalText = button.innerHTML; // Preserve SVG content
-        button.innerHTML = "...";
         startButtonProgress(button, originalText);
 
         google.script.run

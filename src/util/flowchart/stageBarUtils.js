@@ -106,8 +106,15 @@ function addStageBar(
 			paragraphStyle.setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
 		}
 
-		// Send the stage bar to the back
-		stageBar.sendToBack();
+		// Set title for identification
+		stageBar.setTitle("flowchartstagesbar");
+
+		// Reorder all stage bars on the slide (leftmost on top)
+		// This will handle sending all bars to back in the correct order
+		reorderStageBars(slide);
+
+		// Select the created stage bar
+		stageBar.select();
 
 		console.log(
 			`Stage bar created: ${stageWidth}x${height} at (${stageLeft}, ${stageTop}) with color ${fillColor}`,
@@ -179,4 +186,74 @@ function addMultipleStageBar(
 	});
 
 	return results.join("\n");
+}
+
+/**
+ * Reorders all stage bars on a slide so that leftmost bars appear on top
+ * This creates a proper layering effect for overlapping stage bars
+ * @param {Slide} slide - The slide containing the stage bars
+ */
+function reorderStageBars(slide) {
+	try {
+		// Get all shapes on the slide
+		const shapes = slide.getShapes();
+
+		// Filter to only get stage bars (shapes with title "flowchartstagesbar")
+		const stageBars = [];
+		shapes.forEach((shape) => {
+			if (shape.getTitle() === "flowchartstagesbar") {
+				stageBars.push({
+					shape: shape,
+					x: shape.getLeft(),
+				});
+			}
+		});
+
+		// Always send all stage bars to back, even if there's only one
+		// This ensures they're behind other content
+		if (stageBars.length === 0) {
+			return;
+		}
+
+		// Sort stage bars by X position (left to right)
+		stageBars.sort((a, b) => a.x - b.x);
+
+		// Send stage bars to back from LEFT TO RIGHT (X=100, X=150, X=200, X=300)
+		// The LAST one sent to back (X=300) will be at the very bottom
+		// The FIRST one sent to back (X=100) will be on top of other stage bars
+		for (let i = 0; i < stageBars.length; i++) {
+			stageBars[i].shape.sendToBack();
+		}
+
+		console.log(
+			`Reordered ${stageBars.length} stage bars (leftmost on top, all behind other content)`,
+		);
+	} catch (e) {
+		console.error(`Error reordering stage bars: ${e.message}`);
+		// Don't throw error to avoid interrupting the main flow
+	}
+}
+
+/**
+ * Manually reorder all stage bars on the current slide
+ * Useful for fixing layering after manual adjustments
+ */
+function reorderCurrentSlideStageBars() {
+	try {
+		const pres = SlidesApp.getActivePresentation();
+		const selection = pres.getSelection();
+		const currentPage = selection.getCurrentPage();
+
+		if (!currentPage) {
+			throw new Error("No current slide selected");
+		}
+
+		reorderStageBars(currentPage);
+
+		return "Stage bars reordered successfully (leftmost on top)";
+	} catch (e) {
+		const errorMsg = `Error reordering stage bars: ${e.message}`;
+		console.error(errorMsg);
+		throw new Error(errorMsg);
+	}
 }
