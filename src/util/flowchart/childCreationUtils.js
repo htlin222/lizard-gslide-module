@@ -215,6 +215,7 @@ function createChildrenInDirection(
 	}
 
 	const parentShape = validation.shape;
+	const slide = parentShape.getParentPage();
 	const parentProperties = {
 		left: parentShape.getLeft(),
 		top: parentShape.getTop(),
@@ -222,17 +223,105 @@ function createChildrenInDirection(
 		height: parentShape.getHeight(),
 	};
 
-	// Calculate positions for all children
-	const positions = calculateChildPositions(
-		parentProperties,
-		direction,
-		gap,
-		count,
+	// Handle hierarchical naming and check for existing children
+	let parentGraphId = getShapeGraphId(parentShape);
+	let nextLevel = "B";
+	const existingChildShapes = [];
+	let parentData = null;
+
+	if (parentGraphId) {
+		parentData = parseGraphId(parentGraphId);
+		if (parentData && parentData.current) {
+			const levelMatch = parentData.current.match(/^([A-Z]+)/);
+			if (levelMatch) {
+				const parentLevel = levelMatch[1];
+				nextLevel = getNextLevel(parentLevel);
+			}
+
+			// Check for existing children
+			if (parentData.children && parentData.children.length > 0) {
+				// Find existing child shapes on the slide
+				const allShapes = slide.getShapes();
+				for (const shape of allShapes) {
+					const shapeGraphId = getShapeGraphId(shape);
+					if (shapeGraphId) {
+						const shapeData = parseGraphId(shapeGraphId);
+						if (shapeData && parentData.children.includes(shapeData.current)) {
+							existingChildShapes.push({
+								shape: shape,
+								data: shapeData,
+								left: shape.getLeft(),
+								top: shape.getTop(),
+								width: shape.getWidth(),
+								height: shape.getHeight(),
+							});
+						}
+					}
+				}
+			}
+		}
+	} else {
+		// If parent doesn't have a graph ID, initialize it as root with next available A-level ID
+		const nextRootId = findNextAvailableRootId(slide);
+		parentGraphId = generateGraphId("", "", nextRootId, []);
+		setShapeGraphId(parentShape, parentGraphId);
+		parentData = parseGraphId(parentGraphId);
+		nextLevel = "B";
+	}
+
+	// Determine starting child number based on existing children
+	const existingChildrenOfLevel = parentData.children.filter((id) =>
+		id.startsWith(nextLevel),
 	);
+	const startingNumber = existingChildrenOfLevel.length + 1;
+
+	// Calculate positions for all children
+	let positions;
+	const childIds = [];
+
+	if (existingChildShapes.length > 0) {
+		// If there are existing children, position new ones as siblings
+		positions = [];
+		const layout = direction === "TOP" || direction === "BOTTOM" ? "TD" : "LR";
+
+		// Sort existing children by position to find where to place new ones
+		if (layout === "LR") {
+			// For LR layout, sort by vertical position (top)
+			existingChildShapes.sort((a, b) => a.top - b.top);
+			const lastChild = existingChildShapes[existingChildShapes.length - 1];
+
+			// Place new children below the last existing child
+			for (let i = 0; i < count; i++) {
+				positions.push({
+					left: lastChild.left,
+					top: lastChild.top + (i + 1) * (lastChild.height + gap),
+				});
+			}
+		} else {
+			// For TD layout, sort by horizontal position (left)
+			existingChildShapes.sort((a, b) => a.left - b.left);
+			const lastChild = existingChildShapes[existingChildShapes.length - 1];
+
+			// Place new children to the right of the last existing child
+			for (let i = 0; i < count; i++) {
+				positions.push({
+					left: lastChild.left + (i + 1) * (lastChild.width + gap),
+					top: lastChild.top,
+				});
+			}
+		}
+	} else {
+		// No existing children, use normal positioning
+		positions = calculateChildPositions(
+			parentProperties,
+			direction,
+			gap,
+			count,
+		);
+	}
 
 	// Create all children
 	const createdShapes = [];
-	const childIds = [];
 
 	for (let i = 0; i < count; i++) {
 		const childShape = createSingleChild(
@@ -244,30 +333,8 @@ function createChildrenInDirection(
 			endArrow,
 		);
 
-		// Handle hierarchical naming
-		let parentGraphId = getShapeGraphId(parentShape);
-		let nextLevel = "B";
-
-		if (parentGraphId) {
-			const parsed = parseGraphId(parentGraphId);
-			if (parsed && parsed.current) {
-				const levelMatch = parsed.current.match(/^([A-Z]+)/);
-				if (levelMatch) {
-					const parentLevel = levelMatch[1];
-					nextLevel = getNextLevel(parentLevel);
-				}
-			}
-		} else {
-			// If parent doesn't have a graph ID, initialize it as root with next available A-level ID
-			const slide = parentShape.getParentPage();
-			const nextRootId = findNextAvailableRootId(slide);
-			parentGraphId = generateGraphId("", "", nextRootId, []);
-			setShapeGraphId(parentShape, parentGraphId);
-			nextLevel = "B";
-		}
-
 		// Generate unique child ID
-		const childId = `${nextLevel}${i + 1}`;
+		const childId = `${nextLevel}${startingNumber + i}`;
 		childIds.push(childId);
 
 		// Set graph ID for child
@@ -320,6 +387,7 @@ function createChildrenInDirectionWithText(
 	}
 
 	const parentShape = validation.shape;
+	const slide = parentShape.getParentPage();
 	const parentProperties = {
 		left: parentShape.getLeft(),
 		top: parentShape.getTop(),
@@ -330,15 +398,79 @@ function createChildrenInDirectionWithText(
 	// Use text count if texts are provided, otherwise use count parameter
 	const actualCount = texts.length > 0 ? texts.length : count;
 
-	// Calculate positions for all children
-	const positions = calculateChildPositions(
-		parentProperties,
-		direction,
-		gap,
-		actualCount,
-	);
+	// Check for existing children just like in createChildrenInDirection
+	const parentGraphId = getShapeGraphId(parentShape);
+	const existingChildShapes = [];
+	let parentData = null;
 
-	const slide = parentShape.getParentPage();
+	if (parentGraphId) {
+		parentData = parseGraphId(parentGraphId);
+		if (parentData && parentData.children && parentData.children.length > 0) {
+			// Find existing child shapes on the slide
+			const allShapes = slide.getShapes();
+			for (const shape of allShapes) {
+				const shapeGraphId = getShapeGraphId(shape);
+				if (shapeGraphId) {
+					const shapeData = parseGraphId(shapeGraphId);
+					if (shapeData && parentData.children.includes(shapeData.current)) {
+						existingChildShapes.push({
+							shape: shape,
+							data: shapeData,
+							left: shape.getLeft(),
+							top: shape.getTop(),
+							width: shape.getWidth(),
+							height: shape.getHeight(),
+						});
+					}
+				}
+			}
+		}
+	}
+
+	// Calculate positions for all children
+	let positions;
+
+	if (existingChildShapes.length > 0) {
+		// If there are existing children, position new ones as siblings
+		positions = [];
+		const layout = direction === "TOP" || direction === "BOTTOM" ? "TD" : "LR";
+
+		// Sort existing children by position to find where to place new ones
+		if (layout === "LR") {
+			// For LR layout, sort by vertical position (top)
+			existingChildShapes.sort((a, b) => a.top - b.top);
+			const lastChild = existingChildShapes[existingChildShapes.length - 1];
+
+			// Place new children below the last existing child
+			for (let i = 0; i < actualCount; i++) {
+				positions.push({
+					left: lastChild.left,
+					top: lastChild.top + (i + 1) * (lastChild.height + gap),
+				});
+			}
+		} else {
+			// For TD layout, sort by horizontal position (left)
+			existingChildShapes.sort((a, b) => a.left - b.left);
+			const lastChild = existingChildShapes[existingChildShapes.length - 1];
+
+			// Place new children to the right of the last existing child
+			for (let i = 0; i < actualCount; i++) {
+				positions.push({
+					left: lastChild.left + (i + 1) * (lastChild.width + gap),
+					top: lastChild.top,
+				});
+			}
+		}
+	} else {
+		// No existing children, use normal positioning
+		positions = calculateChildPositions(
+			parentProperties,
+			direction,
+			gap,
+			actualCount,
+		);
+	}
+
 	const createdShapes = [];
 
 	// Create each child shape with its text
