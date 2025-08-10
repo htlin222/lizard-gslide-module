@@ -224,7 +224,23 @@ function connectLLQRUQ_TopLeft(
 	}
 
 	// Update Graph IDs to establish relationship
-	updateGraphShapeRelationship(leftShape, rightShape);
+	const leftGraphId = getShapeGraphId(leftShape);
+	const rightGraphId = getShapeGraphId(rightShape);
+
+	if (!leftGraphId && !rightGraphId) {
+		// Neither shape has a Graph ID - initialize left as root and right as its child
+		const slide = leftShape.getParentPage();
+		const nextRootId = findNextAvailableRootId(slide);
+		const newParentGraphId = generateGraphId("", "", nextRootId, ["B1"]);
+		setShapeGraphId(leftShape, newParentGraphId);
+
+		// Set child's Graph ID (horizontal layout for quadrant connections)
+		const newChildGraphId = generateGraphId(nextRootId, "LR", "B1", []);
+		setShapeGraphId(rightShape, newChildGraphId);
+	} else {
+		// Try to update existing relationship
+		updateGraphShapeRelationship(leftShape, rightShape);
+	}
 
 	const line = createSpecificConnection(
 		leftShape,
@@ -277,7 +293,23 @@ function connectLLQRUQ_RightBottom(
 	}
 
 	// Update Graph IDs to establish relationship
-	updateGraphShapeRelationship(leftShape, rightShape);
+	const leftGraphId = getShapeGraphId(leftShape);
+	const rightGraphId = getShapeGraphId(rightShape);
+
+	if (!leftGraphId && !rightGraphId) {
+		// Neither shape has a Graph ID - initialize left as root and right as its child
+		const slide = leftShape.getParentPage();
+		const nextRootId = findNextAvailableRootId(slide);
+		const newParentGraphId = generateGraphId("", "", nextRootId, ["B1"]);
+		setShapeGraphId(leftShape, newParentGraphId);
+
+		// Set child's Graph ID (horizontal layout for quadrant connections)
+		const newChildGraphId = generateGraphId(nextRootId, "LR", "B1", []);
+		setShapeGraphId(rightShape, newChildGraphId);
+	} else {
+		// Try to update existing relationship
+		updateGraphShapeRelationship(leftShape, rightShape);
+	}
 
 	const line = createSpecificConnection(
 		leftShape,
@@ -330,7 +362,23 @@ function connectLUQRLQ_RightTop(
 	}
 
 	// Update Graph IDs to establish relationship
-	updateGraphShapeRelationship(leftShape, rightShape);
+	const leftGraphId = getShapeGraphId(leftShape);
+	const rightGraphId = getShapeGraphId(rightShape);
+
+	if (!leftGraphId && !rightGraphId) {
+		// Neither shape has a Graph ID - initialize left as root and right as its child
+		const slide = leftShape.getParentPage();
+		const nextRootId = findNextAvailableRootId(slide);
+		const newParentGraphId = generateGraphId("", "", nextRootId, ["B1"]);
+		setShapeGraphId(leftShape, newParentGraphId);
+
+		// Set child's Graph ID (horizontal layout for quadrant connections)
+		const newChildGraphId = generateGraphId(nextRootId, "LR", "B1", []);
+		setShapeGraphId(rightShape, newChildGraphId);
+	} else {
+		// Try to update existing relationship
+		updateGraphShapeRelationship(leftShape, rightShape);
+	}
 
 	const line = createSpecificConnection(
 		leftShape,
@@ -383,7 +431,23 @@ function connectLUQRLQ_BottomLeft(
 	}
 
 	// Update Graph IDs to establish relationship
-	updateGraphShapeRelationship(leftShape, rightShape);
+	const leftGraphId = getShapeGraphId(leftShape);
+	const rightGraphId = getShapeGraphId(rightShape);
+
+	if (!leftGraphId && !rightGraphId) {
+		// Neither shape has a Graph ID - initialize left as root and right as its child
+		const slide = leftShape.getParentPage();
+		const nextRootId = findNextAvailableRootId(slide);
+		const newParentGraphId = generateGraphId("", "", nextRootId, ["B1"]);
+		setShapeGraphId(leftShape, newParentGraphId);
+
+		// Set child's Graph ID (horizontal layout for quadrant connections)
+		const newChildGraphId = generateGraphId(nextRootId, "LR", "B1", []);
+		setShapeGraphId(rightShape, newChildGraphId);
+	} else {
+		// Try to update existing relationship
+		updateGraphShapeRelationship(leftShape, rightShape);
+	}
 
 	const line = createSpecificConnection(
 		leftShape,
