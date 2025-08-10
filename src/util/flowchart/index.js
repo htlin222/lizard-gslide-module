@@ -21,6 +21,9 @@
  * ├── shapeUtils.js          # Common shape operations and styling
  * ├── layoutDetection.js     # Layout pattern detection (LR/TD)
  * ├── siblingCreationUtils.js # Sibling shape creation with layout detection
+ * ├── backgroundUtils.js     # Background rectangle creation and styling
+ * ├── debugUtils.js          # Debug and inspection utilities
+ * ├── lineUpdateUtils.js     # Line update and style management
  * ├── main.js                # Main interface functions and sidebar
  * └── index.js              # This documentation file
  *
@@ -68,6 +71,32 @@
  * From siblingCreationUtils.js:
  * - createSiblingShape(horizontalGap, verticalGap, lineType, startArrow, endArrow)
  *
+ * From backgroundUtils.js:
+ * - addBackgroundToSelectedElements(padding, bgColor, opacity)
+ * - calculateShapesBoundingBox(shapes)
+ * - createBackgroundRectangle(slide, left, top, width, height, bgColor, opacity)
+ * - createCustomBackground(shapes, style)
+ *
+ * From debugUtils.js:
+ * - showSelectedShapeGraphId()
+ * - formatGraphIdInfo(graphId)
+ * - clearSelectedShapeGraphId()
+ * - identifyConnectedShapes()
+ * - initializeRootGraphShape()
+ * - analyzeCurrentSlide()
+ * - debugShowTitlePlaceholders() [alias for showSelectedShapeGraphId]
+ *
+ * From lineUpdateUtils.js:
+ * - updateSelectedLines(lineType, startArrow, endArrow)
+ * - getSelectedElements(selection)
+ * - processLineUpdates(elements, lineType, startArrow, endArrow)
+ * - updateSingleLine(line, lineType, startArrow, endArrow, index)
+ * - extractLineStyle(line, index)
+ * - recreateLine(startShape, endShape, lineType, startArrow, endArrow, lineStyle, index)
+ * - calculateLineOrientation(startShape, endShape)
+ * - applyLineStyle(line, lineStyle)
+ * - formatUpdateResults(results)
+ *
  * From main.js:
  * - showFlowchartSidebar()
  * - connectSelectedShapesSmart(lineType)
@@ -78,9 +107,11 @@
  * - createChildRight(gap, lineType, count, startArrow, endArrow)
  * - createChildBottom(gap, lineType, count, startArrow, endArrow)
  * - createChildLeft(gap, lineType, count, startArrow, endArrow)
+ * - createChildTopWithText(gap, lineType, count, startArrow, endArrow, texts)
+ * - createChildRightWithText(gap, lineType, count, startArrow, endArrow, texts)
+ * - createChildBottomWithText(gap, lineType, count, startArrow, endArrow, texts)
+ * - createChildLeftWithText(gap, lineType, count, startArrow, endArrow, texts)
  * - connectExistingGraphShapes(lineType, startArrow, endArrow)
- * - initializeRootGraphShape()
- * - debugShowTitlePlaceholders()
  */
 
 // This file serves as documentation only.
