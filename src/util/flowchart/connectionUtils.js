@@ -113,6 +113,39 @@ function createConnection(
 }
 
 /**
+ * Finds the next available A-level ID on the current slide
+ * @param {GoogleAppsScript.Slides.Slide} slide - The slide to check
+ * @returns {string} - The next available A-level ID (A1, A2, A3, etc.)
+ */
+function findNextAvailableRootId(slide) {
+	const allShapes = slide.getShapes();
+	const usedRootIds = new Set();
+
+	// Collect all A-level IDs already in use
+	for (const shape of allShapes) {
+		const graphId = getShapeGraphId(shape);
+		if (graphId) {
+			const parsed = parseGraphId(graphId);
+			if (parsed && parsed.current.startsWith("A")) {
+				// Extract the number from IDs like A1, A2, A3
+				const match = parsed.current.match(/^A(\d+)$/);
+				if (match) {
+					usedRootIds.add(parseInt(match[1]));
+				}
+			}
+		}
+	}
+
+	// Find the smallest available number
+	let nextNumber = 1;
+	while (usedRootIds.has(nextNumber)) {
+		nextNumber++;
+	}
+
+	return `A${nextNumber}`;
+}
+
+/**
  * Main function to connect two selected shapes
  * @param {string} orientation - "horizontal" or "vertical"
  * @param {string} lineType - Type of line to use
@@ -140,9 +173,108 @@ function connectSelectedShapes(
 		return SlidesApp.getUi().alert(validation.error);
 	}
 
+	const { shapeA, shapeB } = validation;
+
+	// Determine parent-child relationship based on Graph IDs and position
+	// For horizontal: left shape is parent, right shape is child
+	// For vertical: top shape is parent, bottom shape is child
+	let parentShape, childShape;
+
+	if (orientation === "horizontal") {
+		// Determine based on horizontal position
+		if (shapeA.getLeft() < shapeB.getLeft()) {
+			parentShape = shapeA;
+			childShape = shapeB;
+		} else {
+			parentShape = shapeB;
+			childShape = shapeA;
+		}
+	} else {
+		// vertical orientation - top shape is parent
+		if (shapeA.getTop() < shapeB.getTop()) {
+			parentShape = shapeA;
+			childShape = shapeB;
+		} else {
+			parentShape = shapeB;
+			childShape = shapeA;
+		}
+	}
+
+	// Get or initialize parent's Graph ID
+	let parentGraphId = getShapeGraphId(parentShape);
+
+	if (!parentGraphId) {
+		// Initialize parent as root with next available A-level ID
+		const slide = parentShape.getParentPage();
+		const nextRootId = findNextAvailableRootId(slide);
+		parentGraphId = generateGraphId("", "", nextRootId, []);
+		setShapeGraphId(parentShape, parentGraphId);
+	}
+
+	const parentData = parseGraphId(parentGraphId);
+	if (!parentData) {
+		return SlidesApp.getUi().alert("Failed to parse parent Graph ID.");
+	}
+
+	// Handle child's Graph ID
+	const childGraphId = getShapeGraphId(childShape);
+	let childId;
+
+	if (childGraphId) {
+		// Child already has a Graph ID - update its parent reference
+		const childData = parseGraphId(childGraphId);
+		if (childData) {
+			childId = childData.current;
+			// Update child's parent reference and layout
+			const layout = orientation === "horizontal" ? "LR" : "TD";
+			const updatedChildGraphId = generateGraphId(
+				parentData.current,
+				layout,
+				childData.current,
+				childData.children,
+			);
+			setShapeGraphId(childShape, updatedChildGraphId);
+		}
+	} else {
+		// Child doesn't have a Graph ID - create one
+		const nextLevel = getNextLevel(
+			parentData.current.match(/^([A-Z]+)/)?.[1] || "A",
+		);
+
+		// Find the next available number for this level
+		const existingChildren = parentData.children.filter((id) =>
+			id.startsWith(nextLevel),
+		);
+		const nextNumber = existingChildren.length + 1;
+		childId = `${nextLevel}${nextNumber}`;
+
+		// Set child's Graph ID with proper layout
+		const layout = orientation === "horizontal" ? "LR" : "TD";
+		const newChildGraphId = generateGraphId(
+			parentData.current,
+			layout,
+			childId,
+			[],
+		);
+		setShapeGraphId(childShape, newChildGraphId);
+	}
+
+	// Update parent to include this child if not already present
+	if (!parentData.children.includes(childId)) {
+		const updatedChildren = [...parentData.children, childId];
+		const updatedParentId = generateGraphId(
+			parentData.parent,
+			parentData.layout,
+			parentData.current,
+			updatedChildren,
+		);
+		setShapeGraphId(parentShape, updatedParentId);
+	}
+
+	// Create the visual connection
 	const line = createConnection(
-		validation.shapeA,
-		validation.shapeB,
+		parentShape,
+		childShape,
 		orientation,
 		lineType,
 		startArrow,

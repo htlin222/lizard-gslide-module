@@ -162,6 +162,7 @@
         background: none;
         border: none;
         border-bottom: 2px solid transparent;
+        border-radius: 0;
         cursor: pointer;
         font-size: 12px;
         font-weight: 500;
@@ -189,7 +190,7 @@
       }
 
       .text-input-area {
-        width: 100%;
+        width: calc(100% - 32px);
         min-height: 80px;
         max-height: 120px;
         padding: 8px;
@@ -199,6 +200,7 @@
         font-family: Arial, sans-serif;
         resize: vertical;
         line-height: 1.4;
+        margin: 0 auto;
       }
 
       .text-input-area:focus {

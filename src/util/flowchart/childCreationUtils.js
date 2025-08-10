@@ -4,6 +4,39 @@
  */
 
 /**
+ * Finds the next available A-level ID on the current slide
+ * @param {GoogleAppsScript.Slides.Slide} slide - The slide to check
+ * @returns {string} - The next available A-level ID (A1, A2, A3, etc.)
+ */
+function findNextAvailableRootId(slide) {
+	const allShapes = slide.getShapes();
+	const usedRootIds = new Set();
+
+	// Collect all A-level IDs already in use
+	for (const shape of allShapes) {
+		const graphId = getShapeGraphId(shape);
+		if (graphId) {
+			const parsed = parseGraphId(graphId);
+			if (parsed && parsed.current.startsWith("A")) {
+				// Extract the number from IDs like A1, A2, A3
+				const match = parsed.current.match(/^A(\d+)$/);
+				if (match) {
+					usedRootIds.add(parseInt(match[1]));
+				}
+			}
+		}
+	}
+
+	// Find the smallest available number
+	let nextNumber = 1;
+	while (usedRootIds.has(nextNumber)) {
+		nextNumber++;
+	}
+
+	return `A${nextNumber}`;
+}
+
+/**
  * Validates that element is suitable for child creation
  * @param {GoogleAppsScript.Slides.PageElementRange} range - Selection range
  * @returns {Object} - Validation result with shape or error message
@@ -212,7 +245,7 @@ function createChildrenInDirection(
 		);
 
 		// Handle hierarchical naming
-		const parentGraphId = getShapeGraphId(parentShape);
+		let parentGraphId = getShapeGraphId(parentShape);
 		let nextLevel = "B";
 
 		if (parentGraphId) {
@@ -225,7 +258,11 @@ function createChildrenInDirection(
 				}
 			}
 		} else {
-			// If parent doesn't have a graph ID, make it the root
+			// If parent doesn't have a graph ID, initialize it as root with next available A-level ID
+			const slide = parentShape.getParentPage();
+			const nextRootId = findNextAvailableRootId(slide);
+			parentGraphId = generateGraphId("", "", nextRootId, []);
+			setShapeGraphId(parentShape, parentGraphId);
 			nextLevel = "B";
 		}
 
@@ -373,36 +410,46 @@ function createSingleChildWithText(
 	}
 
 	// Set up graph ID for flowchart hierarchy
-	const parentGraphId = getShapeGraphId(parentShape);
-	if (parentGraphId) {
-		const parentData = parseGraphId(parentGraphId);
-		if (parentData) {
-			// Generate child ID based on existing children
-			const nextLevel = getNextLevel(
-				parentData.current.match(/^([A-Z]+)/)?.[1] || "A",
-			);
-			const childNumber = parentData.children.length + 1;
-			const childId = `${nextLevel}${childNumber}`;
+	let parentGraphId = getShapeGraphId(parentShape);
 
-			// Set graph ID for child (using parent's layout)
-			const childGraphId = generateGraphId(
-				parentData.current,
-				parentData.layout,
-				childId,
-				[],
-			);
-			setShapeGraphId(childShape, childGraphId);
+	// Initialize parent as root if it doesn't have a Graph ID
+	if (!parentGraphId) {
+		const slide = parentShape.getParentPage();
+		const nextRootId = findNextAvailableRootId(slide);
+		parentGraphId = generateGraphId("", "", nextRootId, []);
+		setShapeGraphId(parentShape, parentGraphId);
+	}
 
-			// Update parent to include this child
-			const updatedChildren = [...parentData.children, childId];
-			const updatedParentId = generateGraphId(
-				parentData.parent,
-				parentData.layout,
-				parentData.current,
-				updatedChildren,
-			);
-			setShapeGraphId(parentShape, updatedParentId);
-		}
+	const parentData = parseGraphId(parentGraphId);
+	if (parentData) {
+		// Generate child ID based on existing children
+		const nextLevel = getNextLevel(
+			parentData.current.match(/^([A-Z]+)/)?.[1] || "A",
+		);
+		const childNumber = parentData.children.length + 1;
+		const childId = `${nextLevel}${childNumber}`;
+
+		// Determine layout based on direction
+		const layout = direction === "TOP" || direction === "BOTTOM" ? "TD" : "LR";
+
+		// Set graph ID for child
+		const childGraphId = generateGraphId(
+			parentData.current,
+			layout,
+			childId,
+			[],
+		);
+		setShapeGraphId(childShape, childGraphId);
+
+		// Update parent to include this child
+		const updatedChildren = [...parentData.children, childId];
+		const updatedParentId = generateGraphId(
+			parentData.parent,
+			parentData.layout,
+			parentData.current,
+			updatedChildren,
+		);
+		setShapeGraphId(parentShape, updatedParentId);
 	}
 
 	// Create connection line
