@@ -146,6 +146,249 @@ function findNextAvailableRootId(slide) {
 }
 
 /**
+ * Creates a specific connection between two shapes with explicit sides
+ * @param {GoogleAppsScript.Slides.Shape} shapeA - First shape
+ * @param {GoogleAppsScript.Slides.Shape} shapeB - Second shape
+ * @param {string} sideA - Connection side for shape A (TOP, RIGHT, BOTTOM, LEFT)
+ * @param {string} sideB - Connection side for shape B (TOP, RIGHT, BOTTOM, LEFT)
+ * @param {string} lineType - Type of line (STRAIGHT, BENT, CURVED)
+ * @param {string} startArrow - Start arrow style
+ * @param {string} endArrow - End arrow style
+ * @returns {GoogleAppsScript.Slides.Line|null} - Created line or null if failed
+ */
+function createSpecificConnection(
+	shapeA,
+	shapeB,
+	sideA,
+	sideB,
+	lineType = "BENT",
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
+	const siteA = pickConnectionSite(shapeA, sideA);
+	const siteB = pickConnectionSite(shapeB, sideB);
+
+	if (!siteA || !siteB) {
+		return null;
+	}
+
+	// Convert lineType string to SlidesApp.LineCategory enum
+	const lineCategory =
+		SlidesApp.LineCategory[lineType] || SlidesApp.LineCategory.BENT;
+	const line = shapeA.getParentPage().insertLine(lineCategory, siteA, siteB);
+
+	// Apply arrow styles
+	if (startArrow && startArrow !== "NONE" && SlidesApp.ArrowStyle[startArrow]) {
+		line.setStartArrow(SlidesApp.ArrowStyle[startArrow]);
+	}
+	if (endArrow && endArrow !== "NONE" && SlidesApp.ArrowStyle[endArrow]) {
+		line.setEndArrow(SlidesApp.ArrowStyle[endArrow]);
+	}
+
+	return line;
+}
+
+/**
+ * LLQ+RUQ Connection 1: Top of left shape → Left of right shape
+ */
+function connectLLQRUQ_TopLeft(
+	lineType = "BENT",
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
+	const pres = SlidesApp.getActivePresentation();
+	const selection = pres.getSelection();
+	const range = selection.getPageElementRange();
+
+	if (!range) {
+		return SlidesApp.getUi().alert("Please select exactly TWO shapes.");
+	}
+
+	const elements = range.getPageElements();
+	const validation = validateConnectionElements(elements);
+
+	if (validation.error) {
+		return SlidesApp.getUi().alert(validation.error);
+	}
+
+	const { shapeA, shapeB } = validation;
+
+	// Determine which is left and which is right
+	let leftShape, rightShape;
+	if (shapeA.getLeft() < shapeB.getLeft()) {
+		leftShape = shapeA;
+		rightShape = shapeB;
+	} else {
+		leftShape = shapeB;
+		rightShape = shapeA;
+	}
+
+	const line = createSpecificConnection(
+		leftShape,
+		rightShape,
+		"TOP",
+		"LEFT",
+		lineType,
+		startArrow,
+		endArrow,
+	);
+
+	if (!line) {
+		return SlidesApp.getUi().alert("Could not create connection.");
+	}
+}
+
+/**
+ * LLQ+RUQ Connection 2: Right of left shape → Bottom of right shape
+ */
+function connectLLQRUQ_RightBottom(
+	lineType = "BENT",
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
+	const pres = SlidesApp.getActivePresentation();
+	const selection = pres.getSelection();
+	const range = selection.getPageElementRange();
+
+	if (!range) {
+		return SlidesApp.getUi().alert("Please select exactly TWO shapes.");
+	}
+
+	const elements = range.getPageElements();
+	const validation = validateConnectionElements(elements);
+
+	if (validation.error) {
+		return SlidesApp.getUi().alert(validation.error);
+	}
+
+	const { shapeA, shapeB } = validation;
+
+	// Determine which is left and which is right
+	let leftShape, rightShape;
+	if (shapeA.getLeft() < shapeB.getLeft()) {
+		leftShape = shapeA;
+		rightShape = shapeB;
+	} else {
+		leftShape = shapeB;
+		rightShape = shapeA;
+	}
+
+	const line = createSpecificConnection(
+		leftShape,
+		rightShape,
+		"RIGHT",
+		"BOTTOM",
+		lineType,
+		startArrow,
+		endArrow,
+	);
+
+	if (!line) {
+		return SlidesApp.getUi().alert("Could not create connection.");
+	}
+}
+
+/**
+ * LUQ+RLQ Connection 1: Right of left shape → Top of right shape
+ */
+function connectLUQRLQ_RightTop(
+	lineType = "BENT",
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
+	const pres = SlidesApp.getActivePresentation();
+	const selection = pres.getSelection();
+	const range = selection.getPageElementRange();
+
+	if (!range) {
+		return SlidesApp.getUi().alert("Please select exactly TWO shapes.");
+	}
+
+	const elements = range.getPageElements();
+	const validation = validateConnectionElements(elements);
+
+	if (validation.error) {
+		return SlidesApp.getUi().alert(validation.error);
+	}
+
+	const { shapeA, shapeB } = validation;
+
+	// Determine which is left and which is right
+	let leftShape, rightShape;
+	if (shapeA.getLeft() < shapeB.getLeft()) {
+		leftShape = shapeA;
+		rightShape = shapeB;
+	} else {
+		leftShape = shapeB;
+		rightShape = shapeA;
+	}
+
+	const line = createSpecificConnection(
+		leftShape,
+		rightShape,
+		"RIGHT",
+		"TOP",
+		lineType,
+		startArrow,
+		endArrow,
+	);
+
+	if (!line) {
+		return SlidesApp.getUi().alert("Could not create connection.");
+	}
+}
+
+/**
+ * LUQ+RLQ Connection 2: Bottom of left shape → Left of right shape
+ */
+function connectLUQRLQ_BottomLeft(
+	lineType = "BENT",
+	startArrow = "NONE",
+	endArrow = "FILL_ARROW",
+) {
+	const pres = SlidesApp.getActivePresentation();
+	const selection = pres.getSelection();
+	const range = selection.getPageElementRange();
+
+	if (!range) {
+		return SlidesApp.getUi().alert("Please select exactly TWO shapes.");
+	}
+
+	const elements = range.getPageElements();
+	const validation = validateConnectionElements(elements);
+
+	if (validation.error) {
+		return SlidesApp.getUi().alert(validation.error);
+	}
+
+	const { shapeA, shapeB } = validation;
+
+	// Determine which is left and which is right
+	let leftShape, rightShape;
+	if (shapeA.getLeft() < shapeB.getLeft()) {
+		leftShape = shapeA;
+		rightShape = shapeB;
+	} else {
+		leftShape = shapeB;
+		rightShape = shapeA;
+	}
+
+	const line = createSpecificConnection(
+		leftShape,
+		rightShape,
+		"BOTTOM",
+		"LEFT",
+		lineType,
+		startArrow,
+		endArrow,
+	);
+
+	if (!line) {
+		return SlidesApp.getUi().alert("Could not create connection.");
+	}
+}
+
+/**
  * Main function to connect two selected shapes
  * @param {string} orientation - "horizontal" or "vertical"
  * @param {string} lineType - Type of line to use

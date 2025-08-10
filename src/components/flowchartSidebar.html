@@ -363,6 +363,197 @@
           ⬅➡ Connect Left/Right
         </button>
       </div>
+
+      <br />
+      <div style="font-size: 12px; color: #666; margin-bottom: 8px">
+        Quadrant-based connections:
+      </div>
+
+      <div style="display: flex; gap: 4px; justify-content: center">
+        <!-- 左側 2x2 表格 -->
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 2px;
+            width: 80px;
+          "
+        >
+          <button
+            onclick="connectLLQRUQ_TopLeft()"
+            style="
+              background-color: #ea4335;
+              color: white;
+              border: none;
+              padding: 2px;
+              border-radius: 2px;
+              cursor: pointer;
+              min-height: 40px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 18 L12 12 L18 12"
+                stroke="white"
+                stroke-width="2"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <div
+            style="
+              background-color: #f0f0f0;
+              border: 1px solid #ccc;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: bold;
+              color: #666;
+              font-size: 12px;
+            "
+          >
+            B
+          </div>
+          <div
+            style="
+              background-color: #f0f0f0;
+              border: 1px solid #ccc;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: bold;
+              color: #666;
+              font-size: 12px;
+            "
+          >
+            A
+          </div>
+          <button
+            onclick="connectLLQRUQ_RightBottom()"
+            style="
+              background-color: #ea4335;
+              color: white;
+              border: none;
+              padding: 4px;
+              border-radius: 2px;
+              cursor: pointer;
+              min-height: 40px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M6 12 L12 12 L12 6"
+                stroke="white"
+                stroke-width="2"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- 右側 2x2 表格 -->
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 2px;
+            width: 80px;
+          "
+        >
+          <div
+            style="
+              background-color: #f0f0f0;
+              border: 1px solid #ccc;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: bold;
+              color: #666;
+              font-size: 12px;
+            "
+          >
+            A
+          </div>
+          <button
+            onclick="connectLUQRLQ_RightTop()"
+            style="
+              background-color: #ea4335;
+              color: white;
+              border: none;
+              padding: 4px;
+              border-radius: 2px;
+              cursor: pointer;
+              min-height: 40px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M6 12 L12 12 L12 18"
+                stroke="white"
+                stroke-width="2"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button
+            onclick="connectLUQRLQ_BottomLeft()"
+            style="
+              background-color: #ea4335;
+              color: white;
+              border: none;
+              padding: 4px;
+              border-radius: 2px;
+              cursor: pointer;
+              min-height: 40px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 6 L12 12 L18 12"
+                stroke="white"
+                stroke-width="2"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <div
+            style="
+              background-color: #f0f0f0;
+              border: 1px solid #ccc;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: bold;
+              color: #666;
+              font-size: 12px;
+            "
+          >
+            B
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="section">
@@ -506,6 +697,67 @@
             showMessage("Error: " + error, true);
           })
           .connectSelectedShapesHorizontal(lineType, startArrow, endArrow);
+      }
+
+      // 四象限連接函數
+      function connectLLQRUQ_TopLeft() {
+        const lineType = document.getElementById("lineType").value;
+        const startArrow = document.getElementById("startArrow").value;
+        const endArrow = document.getElementById("endArrow").value;
+
+        google.script.run
+          .withSuccessHandler(function () {
+            showMessage("Shapes connected (LLQ→RUQ Top→Left)!");
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .connectLLQRUQ_TopLeft(lineType, startArrow, endArrow);
+      }
+
+      function connectLLQRUQ_RightBottom() {
+        const lineType = document.getElementById("lineType").value;
+        const startArrow = document.getElementById("startArrow").value;
+        const endArrow = document.getElementById("endArrow").value;
+
+        google.script.run
+          .withSuccessHandler(function () {
+            showMessage("Shapes connected (LLQ→RUQ Right→Bottom)!");
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .connectLLQRUQ_RightBottom(lineType, startArrow, endArrow);
+      }
+
+      function connectLUQRLQ_RightTop() {
+        const lineType = document.getElementById("lineType").value;
+        const startArrow = document.getElementById("startArrow").value;
+        const endArrow = document.getElementById("endArrow").value;
+
+        google.script.run
+          .withSuccessHandler(function () {
+            showMessage("Shapes connected (LUQ→RLQ Right→Top)!");
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .connectLUQRLQ_RightTop(lineType, startArrow, endArrow);
+      }
+
+      function connectLUQRLQ_BottomLeft() {
+        const lineType = document.getElementById("lineType").value;
+        const startArrow = document.getElementById("startArrow").value;
+        const endArrow = document.getElementById("endArrow").value;
+
+        google.script.run
+          .withSuccessHandler(function () {
+            showMessage("Shapes connected (LUQ→RLQ Bottom→Left)!");
+          })
+          .withFailureHandler(function (error) {
+            showMessage("Error: " + error, true);
+          })
+          .connectLUQRLQ_BottomLeft(lineType, startArrow, endArrow);
       }
 
       function createChildTop() {
