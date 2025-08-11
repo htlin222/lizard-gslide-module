@@ -37,6 +37,42 @@ function findNextAvailableRootId(slide) {
 }
 
 /**
+ * Finds the appropriate parent shape for child creation
+ * If a child shape is selected, it finds its parent instead
+ * @param {GoogleAppsScript.Slides.Shape} selectedShape - Initially selected shape
+ * @param {GoogleAppsScript.Slides.Slide} slide - Current slide
+ * @returns {GoogleAppsScript.Slides.Shape} - The appropriate parent shape
+ */
+function findAppropriateParent(selectedShape, slide) {
+	const selectedGraphId = getShapeGraphId(selectedShape);
+	if (!selectedGraphId) {
+		// No graph ID, use as-is
+		return selectedShape;
+	}
+
+	const parsed = parseGraphId(selectedGraphId);
+	if (!parsed || !parsed.parent) {
+		// No parent, this is already a root shape
+		return selectedShape;
+	}
+
+	// This is a child shape, find its parent
+	const allShapes = slide.getShapes();
+	for (const shape of allShapes) {
+		const graphId = getShapeGraphId(shape);
+		if (graphId) {
+			const shapeData = parseGraphId(graphId);
+			if (shapeData && shapeData.current === parsed.parent) {
+				return shape; // Found the parent
+			}
+		}
+	}
+
+	// Parent not found, use the selected shape
+	return selectedShape;
+}
+
+/**
  * Validates that element is suitable for child creation
  * @param {GoogleAppsScript.Slides.PageElementRange} range - Selection range
  * @returns {Object} - Validation result with shape or error message
@@ -202,6 +238,130 @@ function createSingleChild(
 }
 
 /**
+ * Repositions all children of a parent by their layout groups, centering each group to the parent
+ * This uses the same robust logic as the sibling creation for consistency
+ * @param {GoogleAppsScript.Slides.Shape} parentShape - The parent shape
+ * @param {GoogleAppsScript.Slides.Slide} slide - The slide containing the shapes
+ * @param {number} gap - Gap between shapes (used for both horizontal and vertical gaps)
+ */
+function repositionChildrenByLayout(parentShape, slide, gap = 20) {
+	const parentGraphId = getShapeGraphId(parentShape);
+	if (!parentGraphId) return;
+
+	const parentData = parseGraphId(parentGraphId);
+	if (!parentData || !parentData.children || parentData.children.length === 0)
+		return;
+
+	// Find all child shapes on the slide
+	const allShapes = slide.getShapes();
+	const childShapes = [];
+
+	for (const shape of allShapes) {
+		const graphId = getShapeGraphId(shape);
+		if (graphId) {
+			const shapeData = parseGraphId(graphId);
+			if (shapeData && shapeData.parent === parentData.current) {
+				// Find this child's layout from parent's children list
+				let childLayout = "LR"; // default
+				for (const child of parentData.children) {
+					if (child.id === shapeData.current) {
+						childLayout = child.layout || "LR";
+						break;
+					}
+				}
+
+				childShapes.push({
+					shape: shape,
+					data: shapeData,
+					left: shape.getLeft(),
+					top: shape.getTop(),
+					width: shape.getWidth(),
+					height: shape.getHeight(),
+					actualLayout: childLayout,
+				});
+			}
+		}
+	}
+
+	if (childShapes.length === 0) return;
+
+	// Group children by their actual layout from parent's children list
+	const childrenByLayout = new Map();
+	for (const child of childShapes) {
+		const layout = child.actualLayout;
+		if (!childrenByLayout.has(layout)) {
+			childrenByLayout.set(layout, []);
+		}
+		childrenByLayout.get(layout).push(child);
+	}
+
+	// Use the same dimensions for all shapes (from the first child)
+	const firstChild = childShapes[0];
+	const shapeWidth = firstChild.width;
+	const shapeHeight = firstChild.height;
+
+	// Reposition each layout group independently and center them to parent
+	for (const [layout, layoutChildren] of childrenByLayout) {
+		if (layoutChildren.length === 0) continue;
+
+		// Sort children by their current IDs for consistent ordering
+		layoutChildren.sort((a, b) => {
+			const aNum = parseInt(a.data.current.match(/\d+$/)?.[0] || "0");
+			const bNum = parseInt(b.data.current.match(/\d+$/)?.[0] || "0");
+			return aNum - bNum;
+		});
+
+		const isHorizontal = layout === "LR" || layout === "RL";
+		const parentCenterX = parentShape.getLeft() + parentShape.getWidth() / 2;
+		const parentCenterY = parentShape.getTop() + parentShape.getHeight() / 2;
+
+		if (isHorizontal) {
+			// Horizontal layout (LR/RL): children spread vertically, centered to parent's Y
+			const totalGroupHeight =
+				layoutChildren.length * shapeHeight + (layoutChildren.length - 1) * gap;
+			const groupStartY = parentCenterY - totalGroupHeight / 2;
+
+			// Position children based on layout direction
+			let childX;
+			if (layout === "LR") {
+				// LR: children positioned to the right of parent
+				childX = parentShape.getLeft() + parentShape.getWidth() + gap;
+			} else {
+				// RL: children positioned to the left of parent
+				childX = parentShape.getLeft() - shapeWidth - gap;
+			}
+
+			layoutChildren.forEach((child, index) => {
+				const newY = groupStartY + index * (shapeHeight + gap);
+				child.shape.setTop(newY);
+				child.shape.setLeft(childX);
+			});
+		} else {
+			// Vertical layout (TD/DT): children spread horizontally, centered to parent's X
+			const totalGroupWidth =
+				layoutChildren.length * shapeWidth + (layoutChildren.length - 1) * gap;
+			const groupStartX = parentCenterX - totalGroupWidth / 2;
+
+			// Position children based on layout direction
+			let childY;
+			if (layout === "TD") {
+				// TD: children positioned below parent
+				childY = parentShape.getTop() + parentShape.getHeight() + gap;
+			} else {
+				// DT: children positioned above parent
+				childY = parentShape.getTop() - shapeHeight - gap;
+			}
+
+			layoutChildren.forEach((child, index) => {
+				const newX = groupStartX + index * (shapeWidth + gap);
+				child.shape.setLeft(newX);
+				child.shape.setTop(childY);
+			});
+		}
+	}
+}
+
+/**
  * Main function to create child shapes in a specific direction
  * @param {string} direction - Direction to create children (TOP, RIGHT, BOTTOM, LEFT)
  * @param {number} gap - Gap between shapes
@@ -229,8 +389,11 @@ function createChildrenInDirection(
 		return [];
 	}
 
-	const parentShape = validation.shape;
-	const slide = parentShape.getParentPage();
+	const selectedShape = validation.shape;
+	const slide = selectedShape.getParentPage();
+
+	// Use the selected shape directly as the parent for creating children
+	const parentShape = selectedShape;
 	const parentProperties = {
 		left: parentShape.getLeft(),
 		top: parentShape.getTop(),
@@ -300,71 +463,54 @@ function createChildrenInDirection(
 	if (existingChildShapes.length > 0) {
 		// Check if there are existing children with the same layout
 		const layout = getLayoutFromDirection(direction);
+
+		// Pre-calculate parent boundaries for efficiency
+		const parentRect = {
+			left: parentProperties.left,
+			top: parentProperties.top,
+			right: parentProperties.left + parentProperties.width,
+			bottom: parentProperties.top + parentProperties.height,
+		};
+
 		const existingChildrenWithSameLayout = existingChildShapes.filter(
 			(child) => {
 				// Check if this child has the same layout as the new children
-				const childLayout =
-					child.data && child.data.layout
-						? child.data.layout
-						: parentData.layout;
-				return childLayout === layout;
+				if (child.data && child.data.layout) {
+					return child.data.layout === layout;
+				}
+
+				// For children without explicit layout, quickly infer from position
+				const childCenterX = child.left + child.width / 2;
+				const childCenterY = child.top + child.height / 2;
+
+				// Fast layout inference based on position
+				if (layout === "LR" && childCenterX > parentRect.right) return true;
+				if (layout === "RL" && childCenterX < parentRect.left) return true;
+				if (layout === "TD" && childCenterY > parentRect.bottom) return true;
+				if (layout === "DT" && childCenterY < parentRect.top) return true;
+
+				return false;
 			},
 		);
 
-		if (existingChildrenWithSameLayout.length > 0) {
-			// Position new children as siblings to existing ones with same layout
-			positions = [];
-
-			// Sort existing children by position to find where to place new ones
-			if (layout === "LR" || layout === "RL") {
-				// For horizontal layouts, sort by vertical position (top)
-				existingChildrenWithSameLayout.sort((a, b) => a.top - b.top);
-				const lastChild =
-					existingChildrenWithSameLayout[
-						existingChildrenWithSameLayout.length - 1
-					];
-
-				// Place new children below the last existing child
-				for (let i = 0; i < count; i++) {
-					positions.push({
-						left: lastChild.left,
-						top: lastChild.top + (i + 1) * (lastChild.height + gap),
-					});
-				}
-			} else {
-				// TD or DT
-				// For vertical layouts, sort by horizontal position (left)
-				existingChildrenWithSameLayout.sort((a, b) => a.left - b.left);
-				const lastChild =
-					existingChildrenWithSameLayout[
-						existingChildrenWithSameLayout.length - 1
-					];
-
-				// Place new children to the right of the last existing child
-				for (let i = 0; i < count; i++) {
-					positions.push({
-						left: lastChild.left + (i + 1) * (lastChild.width + gap),
-						top: lastChild.top,
-					});
-				}
-			}
-		} else {
-			// No existing children with same layout, use normal positioning
-			positions = calculateChildPositions(
-				parentProperties,
-				direction,
-				gap,
-				count,
-			);
+		// We'll handle positioning after creating all children using the robust sibling logic
+		positions = [];
+		for (let i = 0; i < count; i++) {
+			// Create temporary positions - we'll reposition everything later
+			positions.push({
+				left: parentProperties.left + 50 + i * 20,
+				top: parentProperties.top + 50 + i * 20,
+			});
 		}
 	} else {
-		// No existing children, use normal positioning
-		positions = calculateChildPositions(
-			parentProperties,
-			direction,
-			gap,
-			count,
-		);
+		// No existing children, create temporary positions
+		positions = [];
+		for (let i = 0; i < count; i++) {
+			positions.push({
+				left: parentProperties.left + 50 + i * 20,
+				top: parentProperties.top + 50 + i * 20,
+			});
+		}
 	}
 
 	// Create all children
@@ -400,6 +546,9 @@ function createChildrenInDirection(
 	// Update parent with new children (now includes layout info)
 	updateParentWithChildren(parentShape, childIds);
 
+	// Apply robust positioning: group all children by layout and center them to parent
+	repositionChildrenByLayout(parentShape, slide, gap);
+
 	return createdShapes;
 }
 
@@ -433,8 +582,11 @@ function createChildrenInDirectionWithText(
 		return [];
 	}
 
-	const parentShape = validation.shape;
-	const slide = parentShape.getParentPage();
+	const selectedShape = validation.shape;
+	const slide = selectedShape.getParentPage();
+
+	// Use the selected shape directly as the parent for creating children
+	const parentShape = selectedShape;
 	const parentProperties = {
 		left: parentShape.getLeft(),
 		top: parentShape.getTop(),
@@ -484,14 +636,33 @@ function createChildrenInDirectionWithText(
 	if (existingChildShapes.length > 0) {
 		// Check if there are existing children with the same layout
 		const layout = getLayoutFromDirection(direction);
+
+		// Pre-calculate parent boundaries for efficiency
+		const parentRect = {
+			left: parentProperties.left,
+			top: parentProperties.top,
+			right: parentProperties.left + parentProperties.width,
+			bottom: parentProperties.top + parentProperties.height,
+		};
+
 		const existingChildrenWithSameLayout = existingChildShapes.filter(
 			(child) => {
 				// Check if this child has the same layout as the new children
-				const childLayout =
-					child.data && child.data.layout
-						? child.data.layout
-						: parentData.layout;
-				return childLayout === layout;
+				if (child.data && child.data.layout) {
+					return child.data.layout === layout;
+				}
+
+				// For children without explicit layout, quickly infer from position
+				const childCenterX = child.left + child.width / 2;
+				const childCenterY = child.top + child.height / 2;
+
+				// Fast layout inference based on position
+				if (layout === "LR" && childCenterX > parentRect.right) return true;
+				if (layout === "RL" && childCenterX < parentRect.left) return true;
+				if (layout === "TD" && childCenterY > parentRect.bottom) return true;
+				if (layout === "DT" && childCenterY < parentRect.top) return true;
+
+				return false;
 			},
 		);
 
@@ -573,6 +744,9 @@ function createChildrenInDirectionWithText(
 			createdShapes.push(childShape);
 		}
 	}
+
+	// Apply robust positioning: group all children by layout and center them to parent
+	repositionChildrenByLayout(parentShape, slide, gap);
 
 	return createdShapes;
 }

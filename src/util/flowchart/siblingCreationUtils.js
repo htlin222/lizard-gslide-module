@@ -61,7 +61,7 @@ function createSiblingShape(
 	let parentShape = null;
 	const siblingShapes = [];
 
-	// Find parent and all sibling shapes
+	// Find parent and all existing sibling shapes (including selected shape)
 	for (const shape of allShapes) {
 		const graphId = getShapeGraphId(shape);
 		if (graphId) {
@@ -71,11 +71,8 @@ function createSiblingShape(
 				if (shapeData.current === parsed.parent) {
 					parentShape = shape;
 				}
-				// Check if this is a sibling (same parent, different current ID)
-				if (
-					shapeData.parent === parsed.parent &&
-					shapeData.current !== parsed.current
-				) {
+				// Check if this is a sibling (same parent, including the selected shape)
+				if (shapeData.parent === parsed.parent) {
 					siblingShapes.push({
 						shape: shape,
 						data: shapeData,
@@ -95,39 +92,48 @@ function createSiblingShape(
 		);
 	}
 
-	// Add the selected shape to the sibling list for position analysis
-	siblingShapes.push({
-		shape: selectedShape,
-		data: parsed,
-		left: selectedShape.getLeft(),
-		top: selectedShape.getTop(),
-		width: selectedShape.getWidth(),
-		height: selectedShape.getHeight(),
-	});
-
 	// Generate new sibling ID based on parent's children list
 	const parentData = parseGraphId(getShapeGraphId(parentShape));
 	if (!parentData) {
 		return SlidesApp.getUi().alert("Parent shape has invalid graph ID format.");
 	}
 
-	// Determine layout from the parent's perspective
-	// If parent has children, check the layout annotation in the first child's graph ID
-	// Otherwise, use the selected shape's layout as fallback
-	let layoutToUse = parsed.layout || "TD"; // Default to TD if no layout specified
+	// Get selected shape dimensions early
+	const selectedLeft = selectedShape.getLeft();
+	const selectedTop = selectedShape.getTop();
+	const selectedWidth = selectedShape.getWidth();
+	const selectedHeight = selectedShape.getHeight();
 
-	// The layout should be consistent across all siblings
-	// Check existing siblings to determine the actual layout being used
-	if (siblingShapes.length > 0) {
-		// Use the layout from existing siblings
-		const firstSibling = siblingShapes[0];
-		if (firstSibling.data && firstSibling.data.layout) {
-			layoutToUse = firstSibling.data.layout;
+	// Determine layout from the selected shape's own layout annotation
+	// Look for the selected shape in parent's children to get its layout
+	let layoutToUse = "LR"; // Default
+	for (const child of parentData.children) {
+		if (child.id === parsed.current) {
+			layoutToUse = child.layout || "LR";
+			break;
 		}
 	}
 
-	const isHorizontalLayout = layoutToUse === "LR" || layoutToUse === "RL";
-	const isVerticalLayout = layoutToUse === "TD" || layoutToUse === "DT";
+	// Group existing siblings by their actual layout from parent's children list
+	const siblingsByLayout = new Map();
+	for (const sibling of siblingShapes) {
+		// Find this sibling's layout from parent's children list
+		let siblingLayout = "LR"; // default
+		for (const child of parentData.children) {
+			if (child.id === sibling.data.current) {
+				siblingLayout = child.layout || "LR";
+				break;
+			}
+		}
+
+		if (!siblingsByLayout.has(siblingLayout)) {
+			siblingsByLayout.set(siblingLayout, []);
+		}
+		siblingsByLayout.get(siblingLayout).push({
+			...sibling,
+			actualLayout: siblingLayout, // Store the actual layout
+		});
+	}
 
 	// Get the level from current selected shape (e.g., "C1" -> "C")
 	const currentLevel = parsed.current.match(/^([A-Z]+)/)?.[1] || "A";
@@ -159,12 +165,6 @@ function createSiblingShape(
 
 	const newSiblingId = `${currentLevel}${maxSiblingNumber + 1}`;
 
-	// Calculate position for new sibling and move selected shape
-	const selectedLeft = selectedShape.getLeft();
-	const selectedTop = selectedShape.getTop();
-	const selectedWidth = selectedShape.getWidth();
-	const selectedHeight = selectedShape.getHeight();
-
 	// Create the new sibling shape first (we'll position it later)
 	const newShape = slide.insertShape(
 		selectedShape.getShapeType(),
@@ -186,73 +186,90 @@ function createSiblingShape(
 	);
 	setShapeGraphId(newShape, newGraphId);
 
-	// Add the new sibling to our shapes array at the correct position
-	// Find the index of the selected shape and insert the new one after it
-	const selectedIndex = siblingShapes.findIndex(
-		(sibling) => sibling.shape === selectedShape,
-	);
-	siblingShapes.splice(selectedIndex + 1, 0, {
+	// Create new sibling shape info and add it to the appropriate layout group
+	const newSiblingInfo = {
 		shape: newShape,
 		data: parseGraphId(newGraphId),
 		left: selectedLeft,
 		top: selectedTop,
 		width: selectedWidth,
 		height: selectedHeight,
-	});
+		actualLayout: layoutToUse,
+	};
 
-	// Now reposition ALL siblings to be centered around the parent
-	if (isHorizontalLayout) {
-		// Horizontal layout (LR/RL): siblings spread vertically, all at same X position
-		const parentCenterY = parentShape.getTop() + parentShape.getHeight() / 2;
-		const totalGroupHeight =
-			siblingShapes.length * selectedHeight +
-			(siblingShapes.length - 1) * verticalGap;
-		const groupStartY = parentCenterY - totalGroupHeight / 2;
+	// Add the new sibling to the appropriate layout group
+	if (!siblingsByLayout.has(layoutToUse)) {
+		siblingsByLayout.set(layoutToUse, []);
+	}
+	siblingsByLayout.get(layoutToUse).push(newSiblingInfo);
 
-		// Position siblings based on layout direction
-		let siblingX;
-		if (layoutToUse === "LR") {
-			// LR: siblings positioned to the right of parent
-			siblingX = parentShape.getLeft() + parentShape.getWidth() + horizontalGap;
-		} else {
-			// RL
-			// RL: siblings positioned to the left of parent
-			siblingX = parentShape.getLeft() - selectedWidth - horizontalGap;
-		}
+	// Now reposition siblings by layout groups
+	// Each layout group positions its children independently and centers them to parent
+	for (const [layout, layoutSiblings] of siblingsByLayout) {
+		if (layoutSiblings.length === 0) continue;
 
-		siblingShapes.forEach((sibling, index) => {
-			const newY = groupStartY + index * (selectedHeight + verticalGap);
-			sibling.shape.setTop(newY);
-			sibling.shape.setLeft(siblingX); // Set all siblings at the same X position
+		// Sort siblings by their current IDs for consistent ordering
+		layoutSiblings.sort((a, b) => {
+			const aNum = parseInt(a.data.current.match(/\d+$/)?.[0] || "0");
+			const bNum = parseInt(b.data.current.match(/\d+$/)?.[0] || "0");
+			return aNum - bNum;
 		});
-	} else {
-		// Vertical layout (TD/DT): siblings spread horizontally, all at same Y position
+
+		const isHorizontal = layout === "LR" || layout === "RL";
 		const parentCenterX = parentShape.getLeft() + parentShape.getWidth() / 2;
-		const totalGroupWidth =
-			siblingShapes.length * selectedWidth +
-			(siblingShapes.length - 1) * horizontalGap;
-		const groupStartX = parentCenterX - totalGroupWidth / 2;
+		const parentCenterY = parentShape.getTop() + parentShape.getHeight() / 2;
 
-		// Position siblings based on layout direction
-		let siblingY;
-		if (layoutToUse === "TD") {
-			// TD: siblings positioned below parent
-			siblingY = parentShape.getTop() + parentShape.getHeight() + verticalGap;
+		if (isHorizontal) {
+			// Horizontal layout (LR/RL): siblings spread vertically, centered to parent's Y
+			const totalGroupHeight =
+				layoutSiblings.length * selectedHeight +
+				(layoutSiblings.length - 1) * verticalGap;
+			const groupStartY = parentCenterY - totalGroupHeight / 2;
+
+			// Position siblings based on layout direction
+			let siblingX;
+			if (layout === "LR") {
+				// LR: siblings positioned to the right of parent
+				siblingX =
+					parentShape.getLeft() + parentShape.getWidth() + horizontalGap;
+			} else {
+				// RL: siblings positioned to the left of parent
+				siblingX = parentShape.getLeft() - selectedWidth - horizontalGap;
+			}
+
+			layoutSiblings.forEach((sibling, index) => {
+				const newY = groupStartY + index * (selectedHeight + verticalGap);
+				sibling.shape.setTop(newY);
+				sibling.shape.setLeft(siblingX);
+			});
 		} else {
-			// DT
-			// DT: siblings positioned above parent
-			siblingY = parentShape.getTop() - selectedHeight - verticalGap;
-		}
+			// Vertical layout (TD/DT): siblings spread horizontally, centered to parent's X
+			const totalGroupWidth =
+				layoutSiblings.length * selectedWidth +
+				(layoutSiblings.length - 1) * horizontalGap;
+			const groupStartX = parentCenterX - totalGroupWidth / 2;
 
-		siblingShapes.forEach((sibling, index) => {
-			const newX = groupStartX + index * (selectedWidth + horizontalGap);
-			sibling.shape.setLeft(newX);
-			sibling.shape.setTop(siblingY); // All siblings at same Y level
-		});
+			// Position siblings based on layout direction
+			let siblingY;
+			if (layout === "TD") {
+				// TD: siblings positioned below parent
+				siblingY = parentShape.getTop() + parentShape.getHeight() + verticalGap;
+			} else {
+				// DT: siblings positioned above parent
+				siblingY = parentShape.getTop() - selectedHeight - verticalGap;
+			}
+
+			layoutSiblings.forEach((sibling, index) => {
+				const newX = groupStartX + index * (selectedWidth + horizontalGap);
+				sibling.shape.setLeft(newX);
+				sibling.shape.setTop(siblingY);
+			});
+		}
 	}
 
-	// Update parent to include the new sibling
-	const updatedChildren = [...parentData.childrenIds, newSiblingId];
+	// Update parent to include the new sibling with its layout
+	const newChildWithLayout = { id: newSiblingId, layout: layoutToUse };
+	const updatedChildren = [...parentData.children, newChildWithLayout];
 	const updatedParentId = generateGraphId(
 		parentData.parent,
 		parentData.layout,
@@ -261,30 +278,28 @@ function createSiblingShape(
 	);
 	setShapeGraphId(parentShape, updatedParentId);
 
-	// Connect based on layout: LR/RL uses RIGHT/LEFT, TD/DT uses BOTTOM/TOP
+	// Connect based on the new sibling's specific layout
 	let parentSide, childSide;
-	if (isHorizontalLayout) {
-		if (layoutToUse === "LR") {
-			// LR layout: parent connects from RIGHT, child connects from LEFT
-			parentSide = "RIGHT";
-			childSide = "LEFT";
-		} else {
-			// RL layout
-			// RL layout: parent connects from LEFT, child connects from RIGHT
-			parentSide = "LEFT";
-			childSide = "RIGHT";
-		}
+	if (layoutToUse === "LR") {
+		// LR layout: parent connects from RIGHT, child connects from LEFT
+		parentSide = "RIGHT";
+		childSide = "LEFT";
+	} else if (layoutToUse === "RL") {
+		// RL layout: parent connects from LEFT, child connects from RIGHT
+		parentSide = "LEFT";
+		childSide = "RIGHT";
+	} else if (layoutToUse === "TD") {
+		// TD layout: parent connects from BOTTOM, child connects from TOP
+		parentSide = "BOTTOM";
+		childSide = "TOP";
+	} else if (layoutToUse === "DT") {
+		// DT layout: parent connects from TOP, child connects from BOTTOM
+		parentSide = "TOP";
+		childSide = "BOTTOM";
 	} else {
-		if (layoutToUse === "TD") {
-			// TD layout: parent connects from BOTTOM, child connects from TOP
-			parentSide = "BOTTOM";
-			childSide = "TOP";
-		} else {
-			// DT layout
-			// DT layout: parent connects from TOP, child connects from BOTTOM
-			parentSide = "TOP";
-			childSide = "BOTTOM";
-		}
+		// Default fallback to LR
+		parentSide = "RIGHT";
+		childSide = "LEFT";
 	}
 
 	const parentSite = pickConnectionSite(parentShape, parentSide);

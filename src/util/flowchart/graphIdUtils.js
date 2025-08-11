@@ -137,7 +137,14 @@ function generateGraphId(parent, layout, current, children = []) {
 				.join(",")
 		: "";
 
-	return `graph[${actualParent}](${finalLayout})[${actualCurrent}][${childrenStr}]`;
+	// Handle different graph ID formats based on context
+	// For root shapes (empty parent and empty layout), use legacy format without parentheses
+	if (actualParent === "" && actualLayout === "") {
+		return `graph[][${actualCurrent}][${childrenStr}]`;
+	} else {
+		// Non-root shape or shape with explicit layout: include layout parentheses
+		return `graph[${actualParent}](${actualLayout})[${actualCurrent}][${childrenStr}]`;
+	}
 }
 
 /**

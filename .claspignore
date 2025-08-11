@@ -1,0 +1,220 @@
+# Development and documentation files
+.gitignore
+README.md
+CLAUDE.md
+DOC/
+docs/
+*.md
+
+# Node.js related files (not supported in Google Apps Script)
+package.json
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+node_modules/
+.npm/
+.yarn/
+.pnp.*
+
+# Build and config files (cause runtime errors in Google Apps Script)
+webpack.config.*
+rollup.config.*
+vite.config.*
+babel.config.*
+.babelrc*
+tsconfig.json
+.eslintrc*
+eslint.config.*
+.prettierrc*
+.stylelintrc*
+tailwind.config.*
+postcss.config.*
+next.config.*
+nuxt.config.*
+svelte.config.*
+vue.config.*
+angular.json
+gulpfile.*
+gruntfile.*
+makefile
+Makefile
+
+# TypeScript files (Google Apps Script doesn't support TS directly)
+*.ts
+*.tsx
+*.d.ts
+typings/
+
+# Modern JavaScript features that may cause issues
+*.mjs
+*.es6
+*.es
+*.module.js
+
+# IDE and editor files
+.vscode/
+.idea/
+.sublime-project
+.sublime-workspace
+*.swp
+*.swo
+*.tmp
+*~
+.DS_Store
+Thumbs.db
+.project
+.settings/
+.classpath
+
+# Testing files (not supported in Google Apps Script)
+test/
+tests/
+spec/
+__tests__/
+*.test.js
+*.test.gs
+*.spec.js
+*.spec.gs
+jest.config.*
+karma.conf.*
+cypress.json
+cypress/
+playwright.config.*
+vitest.config.*
+ava.config.*
+mocha.opts
+.mocharc.*
+
+# Development and build scripts
+init.sh
+batch_push_to_cloned_project.sh
+cloned.txt
+*.sh
+*.bat
+*.cmd
+*.ps1
+deploy.*
+build.*
+start.*
+dev.*
+serve.*
+
+# Environment and config files
+.env*
+.dotenv
+config.json
+config.yaml
+config.yml
+secrets.json
+credentials.json
+auth.json
+firebase.json
+.firebaserc
+vercel.json
+netlify.toml
+
+# Log and temporary files
+*.log
+*.tmp
+*.temp
+*.cache
+.cache/
+logs/
+log/
+
+# Version control
+.git/
+.gitattributes
+.gitmodules
+.hg/
+.svn/
+
+# Dependency directories
+bower_components/
+jspm_packages/
+
+# Coverage reports and analysis
+coverage/
+.nyc_output/
+.lcov-info
+*.lcov
+.c8/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Runtime files that could cause conflicts
+*.pid
+*.seed
+*.pid.lock
+
+# Archive files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Files with potentially problematic syntax for Google Apps Script
+*.coffee
+*.ts
+*.jsx
+*.tsx
+*.vue
+*.svelte
+*.scss
+*.sass
+*.less
+*.styl
+
+# Backup files
+*.backup
+*.bak
+*.orig
+*~
+
+# Lock files
+*.lock
+
+# Python files (if mixed project)
+*.py
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+requirements.txt
+Pipfile*
+setup.py
+
+# PHP files (if mixed project)
+*.php
+composer.json
+composer.lock
+
+# Ruby files (if mixed project)
+*.rb
+Gemfile*
+*.gem
+
+# Go files (if mixed project)
+*.go
+go.mod
+go.sum
+
+# Rust files (if mixed project)
+*.rs
+Cargo.toml
+Cargo.lock
+
+# Any file that starts with a dot (hidden files)
+.*
+!.claspignore
