@@ -1,10 +1,24 @@
 /**
  * Graph ID management utilities for hierarchical shape naming
  * Handles parsing, generating, and managing graph IDs for flowchart shapes
- * Format: graph[parent](LR/TD)[current][children]
- * - LR = Left-Right (horizontal layout)
- * - TD = Top-Down (vertical layout)
+ * Format: graph[parent](layout)[current][children]
+ * - Layout types: LR (Left-Right), TD (Top-Down), RL (Right-Left), DT (Down-Top)
+ * - Children can have individual layouts: [B1:RL,B2:TD,B3]
+ * - Child without layout inherits parent's layout
  */
+
+/**
+ * Parses a child ID to extract its ID and optional layout
+ * @param {string} childStr - Child string like "B1" or "B1:RL"
+ * @returns {Object} - Object with {id, layout}
+ */
+function parseChildWithLayout(childStr) {
+	const parts = childStr.trim().split(":");
+	return {
+		id: parts[0],
+		layout: parts[1] || null, // null means inherit from parent
+	};
+}
 
 /**
  * Parses a graph ID to extract its components
@@ -16,18 +30,26 @@ function parseGraphId(graphId) {
 		return null;
 	}
 
-	// New format: graph[parent](LR/TD)[current][children]
+	// New format: graph[parent](layout)[current][children]
 	const newFormatMatches = graphId.match(
 		/graph\[([^\]]*)\]\(([^)]*)\)\[([^\]]*)\]\[([^\]]*)\]/,
 	);
 	if (newFormatMatches) {
+		const childrenStr = newFormatMatches[4] || "";
+		const children = childrenStr
+			? childrenStr
+					.split(",")
+					.filter((c) => c.trim())
+					.map(parseChildWithLayout)
+			: [];
+
 		return {
 			parent: newFormatMatches[1] || "",
 			layout: newFormatMatches[2] || "LR", // Default to LR
 			current: newFormatMatches[3] || "",
-			children: newFormatMatches[4]
-				? newFormatMatches[4].split(",").filter((c) => c.trim())
-				: [],
+			children: children,
+			// Keep backward compatibility with simple array
+			childrenIds: children.map((c) => c.id),
 		};
 	}
 
@@ -36,13 +58,21 @@ function parseGraphId(graphId) {
 		/graph\[([^\]]*)\]\[([^\]]*)\]\[([^\]]*)\]/,
 	);
 	if (legacyMatches) {
+		const childrenStr = legacyMatches[3] || "";
+		const children = childrenStr
+			? childrenStr
+					.split(",")
+					.filter((c) => c.trim())
+					.map((c) => ({ id: c.trim(), layout: null }))
+			: [];
+
 		return {
 			parent: legacyMatches[1] || "",
 			layout: "LR", // Default legacy to LR
 			current: legacyMatches[2] || "",
-			children: legacyMatches[3]
-				? legacyMatches[3].split(",").filter((c) => c.trim())
-				: [],
+			children: children,
+			// Keep backward compatibility with simple array
+			childrenIds: children.map((c) => c.id),
 		};
 	}
 
@@ -50,11 +80,26 @@ function parseGraphId(graphId) {
 }
 
 /**
+ * Formats a child for the graph ID string
+ * @param {string|Object} child - Child ID string or object with {id, layout}
+ * @returns {string} - Formatted child string (e.g., "B1" or "B1:RL")
+ */
+function formatChildForGraphId(child) {
+	if (typeof child === "string") {
+		return child;
+	}
+	if (child && typeof child === "object") {
+		return child.layout ? `${child.id}:${child.layout}` : child.id;
+	}
+	return "";
+}
+
+/**
  * Generates a graph ID from components with layout information
  * @param {string} parent - Parent ID
- * @param {string} layout - Layout type ("LR" or "TD")
+ * @param {string} layout - Layout type ("LR", "TD", "RL", or "DT")
  * @param {string} current - Current ID
- * @param {Array} children - Array of child IDs
+ * @param {Array} children - Array of child IDs (strings or objects with {id, layout})
  * @returns {string} - Generated graph ID
  */
 function generateGraphId(parent, layout, current, children = []) {
@@ -73,7 +118,7 @@ function generateGraphId(parent, layout, current, children = []) {
 	} else if (
 		typeof layout === "string" &&
 		layout !== "" &&
-		!["LR", "TD"].includes(layout)
+		!["LR", "TD", "RL", "DT"].includes(layout)
 	) {
 		// Handle legacy calls: generateGraphId(parent, current, children)
 		actualChildren = current || [];
@@ -83,9 +128,15 @@ function generateGraphId(parent, layout, current, children = []) {
 
 	// Only add layout annotation to children (when parent is not empty)
 	const finalLayout = actualParent ? actualLayout : "";
+
+	// Format children with their layouts
 	const childrenStr = Array.isArray(actualChildren)
-		? actualChildren.join(",")
+		? actualChildren
+				.map(formatChildForGraphId)
+				.filter((c) => c)
+				.join(",")
 		: "";
+
 	return `graph[${actualParent}](${finalLayout})[${actualCurrent}][${childrenStr}]`;
 }
 
@@ -176,7 +227,7 @@ function getShapeGraphId(shape) {
 /**
  * Updates parent shape to include new children in its ID
  * @param {GoogleAppsScript.Slides.Shape} parentShape - Parent shape to update
- * @param {Array} newChildIds - Array of new child IDs to add
+ * @param {Array} newChildIds - Array of new child IDs (strings or objects with {id, layout})
  */
 function updateParentWithChildren(parentShape, newChildIds) {
 	const currentId = getShapeGraphId(parentShape);
@@ -190,8 +241,27 @@ function updateParentWithChildren(parentShape, newChildIds) {
 	const parsed = parseGraphId(currentId);
 	if (!parsed) return;
 
-	// Merge existing children with new ones, avoiding duplicates
-	const allChildren = [...new Set([...parsed.children, ...newChildIds])];
+	// Convert new children to objects if they're strings
+	const newChildren = newChildIds.map((child) =>
+		typeof child === "string" ? { id: child, layout: null } : child,
+	);
+
+	// Create a map of existing children to preserve their layouts
+	const childMap = new Map();
+	parsed.children.forEach((child) => {
+		childMap.set(child.id, child);
+	});
+
+	// Add new children to the map
+	newChildren.forEach((child) => {
+		if (!childMap.has(child.id)) {
+			childMap.set(child.id, child);
+		}
+	});
+
+	// Convert map back to array
+	const allChildren = Array.from(childMap.values());
+
 	const updatedId = generateGraphId(
 		parsed.parent,
 		parsed.layout,
@@ -273,8 +343,8 @@ function updateGraphShapeRelationship(shapeA, shapeB) {
 	const childId = relationship.childId;
 
 	// Update parent to include this child
-	if (!parentId.children.includes(childId.current)) {
-		const updatedChildren = [...parentId.children, childId.current];
+	if (!parentId.childrenIds.includes(childId.current)) {
+		const updatedChildren = [...parentId.childrenIds, childId.current];
 		const newParentId = generateGraphId(
 			parentId.parent,
 			parentId.layout,

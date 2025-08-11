@@ -146,8 +146,8 @@ function connectExistingGraphShapes(
 	}
 
 	// Update parent to include this child
-	if (!parentId.children.includes(childId.current)) {
-		const updatedChildren = [...parentId.children, childId.current];
+	if (!parentId.childrenIds.includes(childId.current)) {
+		const updatedChildren = [...parentId.childrenIds, childId.current];
 		const newParentId = generateGraphId(
 			parentId.parent,
 			parentId.layout,

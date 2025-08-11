@@ -549,7 +549,7 @@ function connectSelectedShapes(
 		const nextLevel = getNextLevel(
 			parentData.current.match(/^([A-Z]+)/)?.[1] || "A",
 		);
-		const existingChildren = parentData.children.filter((id) =>
+		const existingChildren = parentData.childrenIds.filter((id) =>
 			id.startsWith(nextLevel),
 		);
 		const nextNumber = existingChildren.length + 1;
@@ -566,7 +566,7 @@ function connectSelectedShapes(
 		setShapeGraphId(childShape, newChildGraphId);
 
 		// Update parent to include this child
-		const updatedChildren = [...parentData.children, childId];
+		const updatedChildren = [...parentData.childrenIds, childId];
 		const updatedParentId = generateGraphId(
 			parentData.parent,
 			parentData.layout,

@@ -58,9 +58,14 @@ function formatGraphIdInfo(graphId) {
 		details.push(`├─ Parent: ${parsed.parent || "(root)"}`);
 		details.push(`├─ Layout: ${parsed.layout || "(none)"}`);
 		details.push(`├─ Current: ${parsed.current}`);
-		details.push(
-			`└─ Children: ${parsed.children.length > 0 ? parsed.children.join(", ") : "(none)"}`,
-		);
+		// Format children with their layouts if specified
+		const childrenStr =
+			parsed.children.length > 0
+				? parsed.children
+						.map((c) => (c.layout ? `${c.id}:${c.layout}` : c.id))
+						.join(", ")
+				: "(none)";
+		details.push(`└─ Children: ${childrenStr}`);
 		return details.join("\n");
 	}
 	return `📊 Graph ID:\n${graphId}`;
