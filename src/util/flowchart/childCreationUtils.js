@@ -298,35 +298,64 @@ function createChildrenInDirection(
 	const childIds = [];
 
 	if (existingChildShapes.length > 0) {
-		// If there are existing children, position new ones as siblings
-		positions = [];
+		// Check if there are existing children with the same layout
 		const layout = getLayoutFromDirection(direction);
+		const existingChildrenWithSameLayout = existingChildShapes.filter(
+			(child) => {
+				// Check if this child has the same layout as the new children
+				const childLayout =
+					child.data && child.data.layout
+						? child.data.layout
+						: parentData.layout;
+				return childLayout === layout;
+			},
+		);
 
-		// Sort existing children by position to find where to place new ones
-		if (layout === "LR") {
-			// For LR layout, sort by vertical position (top)
-			existingChildShapes.sort((a, b) => a.top - b.top);
-			const lastChild = existingChildShapes[existingChildShapes.length - 1];
+		if (existingChildrenWithSameLayout.length > 0) {
+			// Position new children as siblings to existing ones with same layout
+			positions = [];
 
-			// Place new children below the last existing child
-			for (let i = 0; i < count; i++) {
-				positions.push({
-					left: lastChild.left,
-					top: lastChild.top + (i + 1) * (lastChild.height + gap),
-				});
+			// Sort existing children by position to find where to place new ones
+			if (layout === "LR" || layout === "RL") {
+				// For horizontal layouts, sort by vertical position (top)
+				existingChildrenWithSameLayout.sort((a, b) => a.top - b.top);
+				const lastChild =
+					existingChildrenWithSameLayout[
+						existingChildrenWithSameLayout.length - 1
+					];
+
+				// Place new children below the last existing child
+				for (let i = 0; i < count; i++) {
+					positions.push({
+						left: lastChild.left,
+						top: lastChild.top + (i + 1) * (lastChild.height + gap),
+					});
+				}
+			} else {
+				// TD or DT
+				// For vertical layouts, sort by horizontal position (left)
+				existingChildrenWithSameLayout.sort((a, b) => a.left - b.left);
+				const lastChild =
+					existingChildrenWithSameLayout[
+						existingChildrenWithSameLayout.length - 1
+					];
+
+				// Place new children to the right of the last existing child
+				for (let i = 0; i < count; i++) {
+					positions.push({
+						left: lastChild.left + (i + 1) * (lastChild.width + gap),
+						top: lastChild.top,
+					});
+				}
 			}
 		} else {
-			// For TD layout, sort by horizontal position (left)
-			existingChildShapes.sort((a, b) => a.left - b.left);
-			const lastChild = existingChildShapes[existingChildShapes.length - 1];
-
-			// Place new children to the right of the last existing child
-			for (let i = 0; i < count; i++) {
-				positions.push({
-					left: lastChild.left + (i + 1) * (lastChild.width + gap),
-					top: lastChild.top,
-				});
-			}
+			// No existing children with same layout, use normal positioning
+			positions = calculateChildPositions(
+				parentProperties,
+				direction,
+				gap,
+				count,
+			);
 		}
 	} else {
 		// No existing children, use normal positioning
@@ -453,35 +482,64 @@ function createChildrenInDirectionWithText(
 	let positions;
 
 	if (existingChildShapes.length > 0) {
-		// If there are existing children, position new ones as siblings
-		positions = [];
+		// Check if there are existing children with the same layout
 		const layout = getLayoutFromDirection(direction);
+		const existingChildrenWithSameLayout = existingChildShapes.filter(
+			(child) => {
+				// Check if this child has the same layout as the new children
+				const childLayout =
+					child.data && child.data.layout
+						? child.data.layout
+						: parentData.layout;
+				return childLayout === layout;
+			},
+		);
 
-		// Sort existing children by position to find where to place new ones
-		if (layout === "LR") {
-			// For LR layout, sort by vertical position (top)
-			existingChildShapes.sort((a, b) => a.top - b.top);
-			const lastChild = existingChildShapes[existingChildShapes.length - 1];
+		if (existingChildrenWithSameLayout.length > 0) {
+			// Position new children as siblings to existing ones with same layout
+			positions = [];
 
-			// Place new children below the last existing child
-			for (let i = 0; i < actualCount; i++) {
-				positions.push({
-					left: lastChild.left,
-					top: lastChild.top + (i + 1) * (lastChild.height + gap),
-				});
+			// Sort existing children by position to find where to place new ones
+			if (layout === "LR" || layout === "RL") {
+				// For horizontal layouts, sort by vertical position (top)
+				existingChildrenWithSameLayout.sort((a, b) => a.top - b.top);
+				const lastChild =
+					existingChildrenWithSameLayout[
+						existingChildrenWithSameLayout.length - 1
+					];
+
+				// Place new children below the last existing child
+				for (let i = 0; i < actualCount; i++) {
+					positions.push({
+						left: lastChild.left,
+						top: lastChild.top + (i + 1) * (lastChild.height + gap),
+					});
+				}
+			} else {
+				// TD or DT
+				// For vertical layouts, sort by horizontal position (left)
+				existingChildrenWithSameLayout.sort((a, b) => a.left - b.left);
+				const lastChild =
+					existingChildrenWithSameLayout[
+						existingChildrenWithSameLayout.length - 1
+					];
+
+				// Place new children to the right of the last existing child
+				for (let i = 0; i < actualCount; i++) {
+					positions.push({
+						left: lastChild.left + (i + 1) * (lastChild.width + gap),
+						top: lastChild.top,
+					});
+				}
 			}
 		} else {
-			// For TD layout, sort by horizontal position (left)
-			existingChildShapes.sort((a, b) => a.left - b.left);
-			const lastChild = existingChildShapes[existingChildShapes.length - 1];
-
-			// Place new children to the right of the last existing child
-			for (let i = 0; i < actualCount; i++) {
-				positions.push({
-					left: lastChild.left + (i + 1) * (lastChild.width + gap),
-					top: lastChild.top,
-				});
-			}
+			// No existing children with same layout, use normal positioning
+			positions = calculateChildPositions(
+				parentProperties,
+				direction,
+				gap,
+				actualCount,
+			);
 		}
 	} else {
 		// No existing children, use normal positioning
