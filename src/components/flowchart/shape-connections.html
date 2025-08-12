@@ -1,0 +1,78 @@
+<details>
+  <summary>🔗 Connect Shapes</summary>
+  <div class="details-content">
+    <div class="button-group">
+      <button onclick="connectShapesVertical()">⬆⬇ Connect Top/Down</button>
+      <button onclick="connectShapesHorizontal()">
+        ⬅➡ Connect Left/Right
+      </button>
+    </div>
+
+    <br />
+    <div style="font-size: 12px; color: #666; margin-bottom: 8px">
+      Quadrant-based connections:
+    </div>
+
+    <div style="display: flex; gap: 18px; justify-content: center">
+      <!-- 左側 2x2 表格 -->
+      <div class="quadrant-grid">
+        <button onclick="connectLLQRUQ_TopLeft()" class="quadrant-button">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <path
+              d="M18 27 L18 18 L27 18"
+              stroke="black"
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+        <div class="quadrant-label">B</div>
+        <div class="quadrant-label">A</div>
+        <button onclick="connectLLQRUQ_RightBottom()" class="quadrant-button">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <path
+              d="M9 18 L18 18 L18 9"
+              stroke="black"
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <!-- 右側 2x2 表格 -->
+      <div class="quadrant-grid">
+        <div class="quadrant-label">A</div>
+        <button onclick="connectLUQRLQ_RightTop()" class="quadrant-button">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <path
+              d="M9 18 L18 18 L18 27"
+              stroke="black"
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+        <button onclick="connectLUQRLQ_BottomLeft()" class="quadrant-button">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <path
+              d="M18 9 L18 18 L27 18"
+              stroke="black"
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+        <div class="quadrant-label">B</div>
+      </div>
+    </div>
+  </div>
+</details>

@@ -1,0 +1,893 @@
+<script>
+  function connectShapesVertical() {
+    const lineType = document.getElementById("lineType").value;
+    const startArrow = document.getElementById("startArrow").value;
+    const endArrow = document.getElementById("endArrow").value;
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "⬆⬇ Connect Top/Down";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("Shapes connected vertically!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .connectSelectedShapesVertical(lineType, startArrow, endArrow);
+  }
+
+  function connectShapesHorizontal() {
+    const lineType = document.getElementById("lineType").value;
+    const startArrow = document.getElementById("startArrow").value;
+    const endArrow = document.getElementById("endArrow").value;
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "⬅➡ Connect Left/Right";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("Shapes connected horizontally!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .connectSelectedShapesHorizontal(lineType, startArrow, endArrow);
+  }
+
+  // 四象限連接函數
+  function connectLLQRUQ_TopLeft() {
+    const lineType = document.getElementById("lineType").value;
+    const startArrow = document.getElementById("startArrow").value;
+    const endArrow = document.getElementById("endArrow").value;
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = button.innerHTML; // Preserve SVG content
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("Shapes connected (LLQ→RUQ Top→Left)!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .connectLLQRUQ_TopLeft(lineType, startArrow, endArrow);
+  }
+
+  function connectLLQRUQ_RightBottom() {
+    const lineType = document.getElementById("lineType").value;
+    const startArrow = document.getElementById("startArrow").value;
+    const endArrow = document.getElementById("endArrow").value;
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = button.innerHTML; // Preserve SVG content
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("Shapes connected (LLQ→RUQ Right→Bottom)!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .connectLLQRUQ_RightBottom(lineType, startArrow, endArrow);
+  }
+
+  function connectLUQRLQ_RightTop() {
+    const lineType = document.getElementById("lineType").value;
+    const startArrow = document.getElementById("startArrow").value;
+    const endArrow = document.getElementById("endArrow").value;
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = button.innerHTML; // Preserve SVG content
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("Shapes connected (LUQ→RLQ Right→Top)!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .connectLUQRLQ_RightTop(lineType, startArrow, endArrow);
+  }
+
+  function connectLUQRLQ_BottomLeft() {
+    const lineType = document.getElementById("lineType").value;
+    const startArrow = document.getElementById("startArrow").value;
+    const endArrow = document.getElementById("endArrow").value;
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = button.innerHTML; // Preserve SVG content
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("Shapes connected (LUQ→RLQ Bottom→Left)!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .connectLUQRLQ_BottomLeft(lineType, startArrow, endArrow);
+  }
+
+  function createChildTop() {
+    const verticalGap = parseInt(document.getElementById("verticalGap").value);
+    const childrenCount = getChildCount();
+    const childrenTexts = getChildrenTextArray();
+    const lineType = document.getElementById("lineType").value;
+    const startArrow = document.getElementById("startArrow").value;
+    const endArrow = document.getElementById("endArrow").value;
+
+    if (verticalGap < 0 || isNaN(verticalGap)) {
+      showMessage(
+        "Please enter a valid vertical gap value (0 or greater)",
+        true,
+      );
+      return;
+    }
+
+    if (childrenCount < 1 || childrenCount > 10 || isNaN(childrenCount)) {
+      showMessage("Please enter a valid children count (1-10)", true);
+      return;
+    }
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "⬆ Create Top";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        const msg =
+          childrenCount === 1
+            ? "Child shape created above successfully!"
+            : `${childrenCount} child shapes created above successfully!`;
+        showMessage(msg);
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .createChildTopWithText(
+        verticalGap,
+        lineType,
+        childrenCount,
+        startArrow,
+        endArrow,
+        childrenTexts,
+      );
+  }
+
+  function createChildRight() {
+    const horizontalGap = parseInt(
+      document.getElementById("horizontalGap").value,
+    );
+    const childrenCount = getChildCount();
+    const childrenTexts = getChildrenTextArray();
+    const lineType = document.getElementById("lineType").value;
+    const startArrow = document.getElementById("startArrow").value;
+    const endArrow = document.getElementById("endArrow").value;
+
+    if (horizontalGap < 0 || isNaN(horizontalGap)) {
+      showMessage(
+        "Please enter a valid horizontal gap value (0 or greater)",
+        true,
+      );
+      return;
+    }
+
+    if (childrenCount < 1 || childrenCount > 10 || isNaN(childrenCount)) {
+      showMessage("Please enter a valid children count (1-10)", true);
+      return;
+    }
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "➡ Create Right";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        const msg =
+          childrenCount === 1
+            ? "Child shape created to the right successfully!"
+            : `${childrenCount} child shapes created to the right successfully!`;
+        showMessage(msg);
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .createChildRightWithText(
+        horizontalGap,
+        lineType,
+        childrenCount,
+        startArrow,
+        endArrow,
+        childrenTexts,
+      );
+  }
+
+  function createChildBottom() {
+    const verticalGap = parseInt(document.getElementById("verticalGap").value);
+    const childrenCount = getChildCount();
+    const childrenTexts = getChildrenTextArray();
+    const lineType = document.getElementById("lineType").value;
+    const startArrow = document.getElementById("startArrow").value;
+    const endArrow = document.getElementById("endArrow").value;
+
+    if (verticalGap < 0 || isNaN(verticalGap)) {
+      showMessage(
+        "Please enter a valid vertical gap value (0 or greater)",
+        true,
+      );
+      return;
+    }
+
+    if (childrenCount < 1 || childrenCount > 10 || isNaN(childrenCount)) {
+      showMessage("Please enter a valid children count (1-10)", true);
+      return;
+    }
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "⬇ Create Bottom";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        const msg =
+          childrenCount === 1
+            ? "Child shape created below successfully!"
+            : `${childrenCount} child shapes created below successfully!`;
+        showMessage(msg);
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .createChildBottomWithText(
+        verticalGap,
+        lineType,
+        childrenCount,
+        startArrow,
+        endArrow,
+        childrenTexts,
+      );
+  }
+
+  function createChildLeft() {
+    const horizontalGap = parseInt(
+      document.getElementById("horizontalGap").value,
+    );
+    const childrenCount = getChildCount();
+    const childrenTexts = getChildrenTextArray();
+    const lineType = document.getElementById("lineType").value;
+    const startArrow = document.getElementById("startArrow").value;
+    const endArrow = document.getElementById("endArrow").value;
+
+    if (horizontalGap < 0 || isNaN(horizontalGap)) {
+      showMessage(
+        "Please enter a valid horizontal gap value (0 or greater)",
+        true,
+      );
+      return;
+    }
+
+    if (childrenCount < 1 || childrenCount > 10 || isNaN(childrenCount)) {
+      showMessage("Please enter a valid children count (1-10)", true);
+      return;
+    }
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "⬅ Create Left";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        const msg =
+          childrenCount === 1
+            ? "Child shape created to the left successfully!"
+            : `${childrenCount} child shapes created to the left successfully!`;
+        showMessage(msg);
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .createChildLeftWithText(
+        horizontalGap,
+        lineType,
+        childrenCount,
+        startArrow,
+        endArrow,
+        childrenTexts,
+      );
+  }
+
+  function createSibling() {
+    const horizontalGap = parseInt(
+      document.getElementById("horizontalGap").value,
+    );
+    const verticalGap = parseInt(document.getElementById("verticalGap").value);
+    const lineType = document.getElementById("lineType").value;
+    const startArrow = document.getElementById("startArrow").value;
+    const endArrow = document.getElementById("endArrow").value;
+
+    if (horizontalGap < 0 || isNaN(horizontalGap)) {
+      showMessage(
+        "Please enter a valid horizontal gap value (0 or greater)",
+        true,
+      );
+      return;
+    }
+
+    if (verticalGap < 0 || isNaN(verticalGap)) {
+      showMessage(
+        "Please enter a valid vertical gap value (0 or greater)",
+        true,
+      );
+      return;
+    }
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "👥 Create Sibling";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("Sibling shape created successfully!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .createSiblingShape(
+        horizontalGap,
+        verticalGap,
+        lineType,
+        startArrow,
+        endArrow,
+      );
+  }
+
+  function showGraphId() {
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "👁️ Refresh";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function (result) {
+        endButtonProgress(button, originalText);
+        const display = document.getElementById("graphIdDisplay");
+        if (
+          result.includes("No Graph ID") ||
+          result.includes("Please select")
+        ) {
+          display.className = "graph-id-display empty";
+          display.textContent = result;
+        } else {
+          display.className = "graph-id-display";
+          display.textContent = result;
+        }
+        // Also show a brief success message
+        if (!result.includes("Error") && !result.includes("Please select")) {
+          showMessage("Graph ID refreshed!");
+        }
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        const display = document.getElementById("graphIdDisplay");
+        display.className = "graph-id-display empty";
+        display.textContent = "Error: " + error;
+        showMessage("Error: " + error, true);
+      })
+      .showSelectedShapeGraphId();
+  }
+
+  function clearGraphId() {
+    const clearButton = document.querySelector(
+      'button[onclick="clearGraphId()"]',
+    );
+
+    // Check if button is already in confirmation state
+    if (clearButton.textContent.trim() === "Sure?") {
+      // User clicked "Sure?" - proceed with clearing
+      clearButton.textContent = "🗑️ Clear";
+      clearButton.style.backgroundColor = "#f44336";
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          showMessage(result);
+          // Update the display
+          const display = document.getElementById("graphIdDisplay");
+          display.className = "graph-id-display empty";
+          if (result.includes("successfully")) {
+            display.textContent =
+              "Graph ID cleared. Select another shape and click Refresh.";
+          } else {
+            display.textContent = result;
+          }
+        })
+        .withFailureHandler(function (error) {
+          showMessage("Error: " + error, true);
+        })
+        .clearSelectedShapeGraphId();
+    } else {
+      // First click - show confirmation state
+      clearButton.textContent = "Sure?";
+      clearButton.style.backgroundColor = "#ff9800";
+
+      // Set timeout to revert after 5 seconds
+      setTimeout(function () {
+        if (clearButton.textContent.trim() === "Sure?") {
+          clearButton.textContent = "🗑️ Clear";
+          clearButton.style.backgroundColor = "#f44336";
+        }
+      }, 5000);
+    }
+  }
+
+  // Tab switching functionality
+  function switchTab(tabName) {
+    // Remove active class from all tab buttons
+    document.querySelectorAll(".tab-button").forEach((btn) => {
+      btn.classList.remove("active");
+    });
+
+    // Remove active class from all tab content
+    document.querySelectorAll(".tab-content").forEach((content) => {
+      content.classList.remove("active");
+    });
+
+    // Add active class to clicked tab button
+    event.target.classList.add("active");
+
+    // Show corresponding tab content
+    if (tabName === "count") {
+      document.getElementById("countTab").classList.add("active");
+    } else if (tabName === "text") {
+      document.getElementById("textTab").classList.add("active");
+    }
+  }
+
+  // Update line count for text input
+  function updateLineCount() {
+    const textArea = document.getElementById("childrenText");
+    const lines = textArea.value
+      .split("\n")
+      .filter((line) => line.trim() !== "");
+    const lineCountDisplay = document.getElementById("lineCount");
+    lineCountDisplay.textContent = `${lines.length} lines → ${lines.length} children`;
+  }
+
+  // Get child count based on active tab
+  function getChildCount() {
+    const activeTab = document.querySelector(".tab-content.active");
+    if (activeTab.id === "countTab") {
+      // Count tab - use number input
+      return parseInt(document.getElementById("childrenCount").value);
+    } else {
+      // Text tab - count non-empty lines
+      const textArea = document.getElementById("childrenText");
+      const lines = textArea.value
+        .split("\n")
+        .filter((line) => line.trim() !== "");
+      return lines.length;
+    }
+  }
+
+  // Get children text array
+  function getChildrenTextArray() {
+    const activeTab = document.querySelector(".tab-content.active");
+    if (activeTab.id === "textTab") {
+      const textArea = document.getElementById("childrenText");
+      return textArea.value.split("\n").filter((line) => line.trim() !== "");
+    }
+    return []; // Return empty array for count mode
+  }
+
+  function addBackgroundToSelection() {
+    const padding = parseInt(document.getElementById("bgPadding").value);
+    const bgColor = document.getElementById("bgColor").value;
+    const opacity = parseInt(document.getElementById("bgOpacity").value) / 100;
+
+    if (padding < 0 || isNaN(padding)) {
+      showMessage("Please enter a valid padding value (0 or greater)", true);
+      return;
+    }
+
+    if (opacity < 0 || opacity > 1 || isNaN(opacity)) {
+      showMessage("Please enter a valid opacity value (0-100%)", true);
+      return;
+    }
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "🎨 Add Background Rectangle";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("Background rectangle added successfully!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .addBackgroundToSelectedElements(padding, bgColor, opacity);
+  }
+
+  function updateOpacityDisplay() {
+    const opacitySlider = document.getElementById("bgOpacity");
+    const opacityValue = document.getElementById("opacityValue");
+    opacityValue.textContent = opacitySlider.value + "%";
+  }
+
+  function updateStageOpacityDisplay() {
+    const opacitySlider = document.getElementById("stageOpacity");
+    const opacityValue = document.getElementById("stageOpacityValue");
+    opacityValue.textContent = opacitySlider.value + "%";
+  }
+
+  function addStageBarToSelection() {
+    const baseY = parseInt(document.getElementById("stageY").value);
+    const offsetX = parseInt(document.getElementById("stageOffsetX").value);
+    const extraWidth = parseInt(
+      document.getElementById("stageExtraWidth").value,
+    );
+    const height = parseInt(document.getElementById("stageHeight").value);
+    const fillColor = document.getElementById("stageColor").value;
+    const opacity =
+      parseInt(document.getElementById("stageOpacity").value) / 100;
+    const strokeColor = "#FFFFFF"; // Default white stroke
+    const text = document.getElementById("stageText").value;
+    const fontSize = 10; // Default font size
+
+    if (baseY < 0 || isNaN(baseY)) {
+      showMessage("Please enter a valid Y position (0 or greater)", true);
+      return;
+    }
+
+    if (isNaN(offsetX)) {
+      showMessage("Please enter a valid X offset value", true);
+      return;
+    }
+
+    if (extraWidth < 0 || isNaN(extraWidth)) {
+      showMessage("Please enter a valid extra width (0 or greater)", true);
+      return;
+    }
+
+    if (height < 5 || isNaN(height)) {
+      showMessage("Please enter a valid height (5 or greater)", true);
+      return;
+    }
+
+    if (opacity < 0 || opacity > 1 || isNaN(opacity)) {
+      showMessage("Please enter a valid opacity value (0-100%)", true);
+      return;
+    }
+
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "📊 Add Stage Bar";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("Stage bar added successfully!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .addStageBar(
+        baseY,
+        offsetX,
+        extraWidth,
+        height,
+        fillColor,
+        opacity,
+        strokeColor,
+        text,
+        fontSize,
+      );
+  }
+
+  function showMessage(message, isError = false) {
+    // Create a simple toast message at the bottom of the sidebar
+    const existingToast = document.getElementById("toast-message");
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    const toast = document.createElement("div");
+    toast.id = "toast-message";
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      background: ${isError ? "#f44336" : "#4caf50"};
+      color: white;
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      text-align: center;
+      animation: slideUp 0.3s ease-out;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.style.animation = "slideDown 0.3s ease-out";
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }
+    }, 3000);
+  }
+
+  // Auto-save gap values to localStorage
+  document
+    .getElementById("horizontalGap")
+    .addEventListener("change", function () {
+      localStorage.setItem("flowchart_horizontalGap", this.value);
+    });
+
+  document
+    .getElementById("verticalGap")
+    .addEventListener("change", function () {
+      localStorage.setItem("flowchart_verticalGap", this.value);
+    });
+
+  // Auto-save line type to localStorage
+  document.getElementById("lineType").addEventListener("change", function () {
+    localStorage.setItem("flowchart_lineType", this.value);
+  });
+
+  // Auto-save arrow styles to localStorage
+  document.getElementById("startArrow").addEventListener("change", function () {
+    localStorage.setItem("flowchart_startArrow", this.value);
+  });
+
+  document.getElementById("endArrow").addEventListener("change", function () {
+    localStorage.setItem("flowchart_endArrow", this.value);
+  });
+
+  // Auto-save children text to localStorage
+  document
+    .getElementById("childrenText")
+    .addEventListener("input", function () {
+      localStorage.setItem("flowchart_childrenText", this.value);
+      updateLineCount();
+    });
+
+  // Auto-save background settings to localStorage and update opacity display
+  document.getElementById("bgPadding").addEventListener("change", function () {
+    localStorage.setItem("flowchart_bgPadding", this.value);
+  });
+
+  document.getElementById("bgColor").addEventListener("change", function () {
+    localStorage.setItem("flowchart_bgColor", this.value);
+  });
+
+  document.getElementById("bgOpacity").addEventListener("input", function () {
+    updateOpacityDisplay();
+    localStorage.setItem("flowchart_bgOpacity", this.value);
+  });
+
+  // Auto-save stage bar settings to localStorage
+  document.getElementById("stageY").addEventListener("change", function () {
+    localStorage.setItem("flowchart_stageY", this.value);
+  });
+
+  document
+    .getElementById("stageOffsetX")
+    .addEventListener("change", function () {
+      localStorage.setItem("flowchart_stageOffsetX", this.value);
+    });
+
+  document
+    .getElementById("stageExtraWidth")
+    .addEventListener("change", function () {
+      localStorage.setItem("flowchart_stageExtraWidth", this.value);
+    });
+
+  document
+    .getElementById("stageHeight")
+    .addEventListener("change", function () {
+      localStorage.setItem("flowchart_stageHeight", this.value);
+    });
+
+  document.getElementById("stageColor").addEventListener("change", function () {
+    localStorage.setItem("flowchart_stageColor", this.value);
+  });
+
+  document
+    .getElementById("stageOpacity")
+    .addEventListener("input", function () {
+      updateStageOpacityDisplay();
+      localStorage.setItem("flowchart_stageOpacity", this.value);
+    });
+
+  document.getElementById("stageText").addEventListener("input", function () {
+    localStorage.setItem("flowchart_stageText", this.value);
+  });
+
+  // Button progress animation helpers
+  function startButtonProgress(button, originalText) {
+    button.classList.add("button-progress");
+    // Check if originalText contains HTML (SVG icons)
+    if (originalText.includes("<")) {
+      button.innerHTML = "...";
+    } else {
+      button.textContent = "Creating...";
+    }
+    button.disabled = true;
+  }
+
+  function endButtonProgress(button, originalText) {
+    button.classList.remove("button-progress");
+    // Check if originalText contains HTML (SVG icons)
+    if (originalText.includes("<")) {
+      button.innerHTML = originalText;
+    } else {
+      button.textContent = originalText;
+    }
+    button.disabled = false;
+  }
+
+  // Mutually exclusive accordion behavior
+  function setupMutuallyExclusiveAccordions() {
+    const detailsElements = document.querySelectorAll("details");
+
+    detailsElements.forEach((targetDetail) => {
+      targetDetail.addEventListener("toggle", function () {
+        if (this.open) {
+          // Close all other details when this one opens
+          detailsElements.forEach((otherDetail) => {
+            if (otherDetail !== this && otherDetail.open) {
+              otherDetail.open = false;
+            }
+          });
+        }
+      });
+    });
+  }
+
+  // Load saved values
+  window.addEventListener("load", function () {
+    const savedHorizontalGap = localStorage.getItem("flowchart_horizontalGap");
+    if (savedHorizontalGap) {
+      document.getElementById("horizontalGap").value = savedHorizontalGap;
+    }
+
+    const savedVerticalGap = localStorage.getItem("flowchart_verticalGap");
+    if (savedVerticalGap) {
+      document.getElementById("verticalGap").value = savedVerticalGap;
+    }
+
+    const savedLineType = localStorage.getItem("flowchart_lineType");
+    if (savedLineType) {
+      document.getElementById("lineType").value = savedLineType;
+    }
+
+    const savedStartArrow = localStorage.getItem("flowchart_startArrow");
+    if (savedStartArrow) {
+      document.getElementById("startArrow").value = savedStartArrow;
+    }
+
+    const savedEndArrow = localStorage.getItem("flowchart_endArrow");
+    if (savedEndArrow) {
+      document.getElementById("endArrow").value = savedEndArrow;
+    }
+
+    const savedChildrenText = localStorage.getItem("flowchart_childrenText");
+    if (savedChildrenText) {
+      document.getElementById("childrenText").value = savedChildrenText;
+      updateLineCount();
+    }
+
+    // Load background settings
+    const savedBgPadding = localStorage.getItem("flowchart_bgPadding");
+    if (savedBgPadding) {
+      document.getElementById("bgPadding").value = savedBgPadding;
+    }
+
+    const savedBgColor = localStorage.getItem("flowchart_bgColor");
+    if (savedBgColor) {
+      document.getElementById("bgColor").value = savedBgColor;
+    }
+
+    const savedBgOpacity = localStorage.getItem("flowchart_bgOpacity");
+    if (savedBgOpacity) {
+      document.getElementById("bgOpacity").value = savedBgOpacity;
+      updateOpacityDisplay();
+    } else {
+      updateOpacityDisplay(); // Initialize display even if no saved value
+    }
+
+    // Load stage bar settings
+    const savedStageY = localStorage.getItem("flowchart_stageY");
+    if (savedStageY) {
+      document.getElementById("stageY").value = savedStageY;
+    }
+
+    const savedStageOffsetX = localStorage.getItem("flowchart_stageOffsetX");
+    if (savedStageOffsetX) {
+      document.getElementById("stageOffsetX").value = savedStageOffsetX;
+    }
+
+    const savedStageExtraWidth = localStorage.getItem(
+      "flowchart_stageExtraWidth",
+    );
+    if (savedStageExtraWidth) {
+      document.getElementById("stageExtraWidth").value = savedStageExtraWidth;
+    }
+
+    const savedStageHeight = localStorage.getItem("flowchart_stageHeight");
+    if (savedStageHeight) {
+      document.getElementById("stageHeight").value = savedStageHeight;
+    }
+
+    const savedStageColor = localStorage.getItem("flowchart_stageColor");
+    if (savedStageColor) {
+      document.getElementById("stageColor").value = savedStageColor;
+    }
+
+    const savedStageOpacity = localStorage.getItem("flowchart_stageOpacity");
+    if (savedStageOpacity) {
+      document.getElementById("stageOpacity").value = savedStageOpacity;
+      updateStageOpacityDisplay();
+    } else {
+      updateStageOpacityDisplay(); // Initialize display even if no saved value
+    }
+
+    const savedStageText = localStorage.getItem("flowchart_stageText");
+    if (savedStageText) {
+      document.getElementById("stageText").value = savedStageText;
+    }
+
+    // Setup mutually exclusive accordion behavior
+    setupMutuallyExclusiveAccordions();
+  });
+</script>

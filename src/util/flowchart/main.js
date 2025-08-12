@@ -8,13 +8,9 @@
  */
 function showFlowchartSidebar() {
 	try {
-		const html = HtmlService.createHtmlOutputFromFile(
-			"src/components/flowchartSidebar.html",
-		)
-			.setWidth(300)
-			.setTitle("Flowchart Tools");
-
-		SlidesApp.getUi().showSidebar(html);
+		// Use the modular sidebar approach
+		const sidebar = createFlowchartSidebar();
+		SlidesApp.getUi().showSidebar(sidebar);
 	} catch (e) {
 		console.error(`Error showing flowchart sidebar: ${e.message}`);
 		SlidesApp.getUi().alert(

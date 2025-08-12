@@ -24,12 +24,14 @@ function createModularHtmlTemplate(filename) {
 }
 
 /**
- * Creates and returns the sidebar UI with all components loaded.
+ * Creates and returns the configuration sidebar UI with all components loaded.
  *
- * @return {HtmlOutput} The HTML output for the sidebar
+ * @return {HtmlOutput} The HTML output for the configuration sidebar
  */
-function createModularSidebar() {
-	const template = createModularHtmlTemplate("src/components/sidebar");
+function createConfigSidebar() {
+	const template = createModularHtmlTemplate(
+		"src/components/config-sidebar/index",
+	);
 	return template.evaluate().setTitle("Lizard Slides").setWidth(300);
 }
 
@@ -39,6 +41,18 @@ function createModularSidebar() {
  * @return {HtmlOutput} The HTML output for the markdown sidebar
  */
 function createMarkdownSidebar() {
-	const template = createModularHtmlTemplate("src/components/markdown-sidebar");
+	const template = createModularHtmlTemplate(
+		"src/components/markdown-sidebar/index",
+	);
 	return template.evaluate().setTitle("Markdown to Slides").setWidth(320);
+}
+
+/**
+ * Creates and returns the Flowchart sidebar UI with all components loaded.
+ *
+ * @return {HtmlOutput} The HTML output for the flowchart sidebar
+ */
+function createFlowchartSidebar() {
+	const template = createModularHtmlTemplate("src/components/flowchart/index");
+	return template.evaluate().setTitle("Flowchart Tools").setWidth(300);
 }

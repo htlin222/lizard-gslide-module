@@ -1,0 +1,79 @@
+<details>
+  <summary>➕ Create Child Shapes</summary>
+  <div class="details-content">
+    <div class="tab-container">
+      <button class="tab-button active" onclick="switchTab('count')">
+        📊 By Count
+      </button>
+      <button class="tab-button" onclick="switchTab('text')">📝 By Text</button>
+    </div>
+
+    <!-- Count Tab -->
+    <div id="countTab" class="tab-content active">
+      <div class="form-group">
+        <label for="childrenCount">Children Count:</label>
+        <div class="gap-controls">
+          <input type="number" id="childrenCount" min="1" max="10" value="1" />
+          <span class="input-suffix">shapes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Text Tab -->
+    <div id="textTab" class="tab-content">
+      <div
+        class="form-group"
+        style="flex-direction: column; align-items: stretch"
+      >
+        <label for="childrenText" style="margin-bottom: 6px"
+          >Children Text (one per line):</label
+        >
+        <textarea
+          id="childrenText"
+          class="text-input-area"
+          placeholder="Enter text for each child shape...&#10;Line 1 = Child 1&#10;Line 2 = Child 2&#10;Line 3 = Child 3"
+          oninput="updateLineCount()"
+        ></textarea>
+        <div id="lineCount" class="line-count-info">0 lines → 0 children</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="horizontalGap">Horizontal Gap:</label>
+      <div class="gap-controls">
+        <input type="number" id="horizontalGap" min="0" value="20" />
+        <span class="input-suffix">pt</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="verticalGap">Vertical Gap:</label>
+      <div class="gap-controls">
+        <input type="number" id="verticalGap" min="0" value="20" />
+        <span class="input-suffix">pt</span>
+      </div>
+    </div>
+
+    <br />
+
+    <div class="button-group">
+      <button class="secondary" onclick="createChildTop()">
+        ⬆ Create Top
+      </button>
+      <button class="tertiary" onclick="createChildRight()">
+        ➡ Create Right
+      </button>
+    </div>
+    <div class="button-group" style="margin-top: 8px">
+      <button class="secondary" onclick="createChildBottom()">
+        ⬇ Create Bottom
+      </button>
+      <button class="tertiary" onclick="createChildLeft()">
+        ⬅ Create Left
+      </button>
+    </div>
+
+    <br />
+    <button onclick="createSibling()">👥 Create Sibling</button>
+  </div>
+</details>

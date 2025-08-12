@@ -1,0 +1,89 @@
+<details>
+  <summary>📊 Add Stage Bar</summary>
+  <div class="details-content">
+    <div class="form-group">
+      <label for="stageY">Y Position:</label>
+      <div class="gap-controls">
+        <input type="number" id="stageY" min="0" value="100" />
+        <span class="input-suffix">pt</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="stageOffsetX">X Offset:</label>
+      <div class="gap-controls">
+        <input type="number" id="stageOffsetX" value="-20" />
+        <span class="input-suffix">pt</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="stageExtraWidth">Extra Width:</label>
+      <div class="gap-controls">
+        <input type="number" id="stageExtraWidth" min="0" value="30" />
+        <span class="input-suffix">pt</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="stageHeight">Height:</label>
+      <div class="gap-controls">
+        <input type="number" id="stageHeight" min="5" value="15" />
+        <span class="input-suffix">pt</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="stageColor">Stage Color:</label>
+      <input
+        type="color"
+        id="stageColor"
+        value="#3D6869"
+        style="
+          width: 60px;
+          height: 30px;
+          padding: 0;
+          border: 1px solid #dadce0;
+          border-radius: 4px;
+          cursor: pointer;
+        "
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="stageOpacity">Opacity:</label>
+      <div class="gap-controls">
+        <input
+          type="range"
+          id="stageOpacity"
+          min="0"
+          max="100"
+          value="100"
+          style="width: 100px; margin-right: 8px"
+        />
+        <span id="stageOpacityValue" class="input-suffix">100%</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="stageText">Text (optional):</label>
+      <input
+        type="text"
+        id="stageText"
+        placeholder="Enter text..."
+        style="
+          width: 120px;
+          padding: 6px 8px;
+          border: 1px solid #dadce0;
+          border-radius: 4px;
+          font-size: 14px;
+        "
+      />
+    </div>
+
+    <button onclick="addStageBarToSelection()">📊 Add Stage Bar</button>
+    <div class="help-text">
+      Select shapes, then click to create a HOME_PLATE stage bar above them.
+    </div>
+  </div>
+</details>

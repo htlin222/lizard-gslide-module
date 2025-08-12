@@ -214,7 +214,7 @@ function runToggleWaterMark() {
  */
 function showConfigSidebar() {
 	// Use the modular sidebar approach
-	const sidebar = createModularSidebar();
+	const sidebar = createConfigSidebar();
 	SlidesApp.getUi().showSidebar(sidebar);
 }
 

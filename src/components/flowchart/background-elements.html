@@ -1,0 +1,52 @@
+<details>
+  <summary>🎨 Add BG for selected elements</summary>
+  <div class="details-content">
+    <div class="form-group">
+      <label for="bgPadding">Padding:</label>
+      <div class="gap-controls">
+        <input type="number" id="bgPadding" min="0" value="10" />
+        <span class="input-suffix">pt</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="bgColor">Background Color:</label>
+      <input
+        type="color"
+        id="bgColor"
+        value="#f3f3f3"
+        style="
+          width: 60px;
+          height: 30px;
+          padding: 0;
+          border: 1px solid #dadce0;
+          border-radius: 4px;
+          cursor: pointer;
+        "
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="bgOpacity">Opacity:</label>
+      <div class="gap-controls">
+        <input
+          type="range"
+          id="bgOpacity"
+          min="0"
+          max="100"
+          value="50"
+          style="width: 100px; margin-right: 8px"
+        />
+        <span id="opacityValue" class="input-suffix">50%</span>
+      </div>
+    </div>
+
+    <button onclick="addBackgroundToSelection()">
+      🎨 Add Background Rectangle
+    </button>
+    <div class="help-text">
+      Select multiple shapes, then click to create a background rectangle that
+      encompasses all selected elements with padding.
+    </div>
+  </div>
+</details>
