@@ -2,12 +2,113 @@
  * util_default_style.js
  *
  * Provides utility functions for applying predefined styles to shapes and textboxes
- * in Google Slides presentations.
+ * in Google Slides presentations. Serves as the single source of truth for all style definitions.
  */
 
 /**
+ * Centralized style definitions - single source of truth for all style configurations
+ * Used by both server-side functions and client-side preview updates
+ */
+const STYLE_DEFINITIONS = {
+	1: {
+		// Base color fill, main color border and text
+		name: "Style 1",
+		description: "White fill, main color border and text",
+		borderColor: "main_color",
+		borderWidth: 1,
+		fillColor: "base_color",
+		textColor: "main_color",
+	},
+	2: {
+		// Main color fill, text color border and base color text
+		name: "Style 2",
+		description: "Main color fill, white text",
+		borderColor: "main_color",
+		borderWidth: 1,
+		fillColor: "main_color",
+		textColor: "base_color",
+	},
+	3: {
+		// Sub1 color fill, main color border and main color text
+		name: "Style 3",
+		description: "Sub1 color fill, main color border and text",
+		borderColor: "main_color",
+		borderWidth: 1,
+		fillColor: "sub1_color",
+		textColor: "main_color",
+	},
+	4: {
+		// Base color fill, accent color border and accent color text
+		name: "Style 4",
+		description: "White fill, accent color border and text",
+		borderColor: "accent_color",
+		borderWidth: 1,
+		fillColor: "base_color",
+		textColor: "accent_color",
+	},
+	5: {
+		// Accent color fill, accent color border and base color text
+		name: "Style 5",
+		description: "Accent color fill, white text",
+		borderColor: "accent_color",
+		borderWidth: 1,
+		fillColor: "accent_color",
+		textColor: "base_color",
+	},
+	6: {
+		// Base color fill, base color border and main color text
+		name: "Style 6",
+		description: "White fill, white border, main color text",
+		borderColor: "base_color",
+		borderWidth: 1,
+		fillColor: "base_color",
+		textColor: "main_color",
+	},
+};
+
+/**
+ * Get style definitions for client-side use
+ * Returns style definitions with actual color values resolved
+ */
+function getStyleDefinitions() {
+	const config = getConfigValues();
+	const styles = {};
+
+	for (const [key, style] of Object.entries(STYLE_DEFINITIONS)) {
+		styles[key] = {
+			...style,
+			borderColor: resolveColorVariable(style.borderColor, config),
+			fillColor: resolveColorVariable(style.fillColor, config),
+			textColor: resolveColorVariable(style.textColor, config),
+		};
+	}
+
+	return styles;
+}
+
+/**
+ * Resolve color variable name to actual color value
+ */
+function resolveColorVariable(colorVar, config) {
+	switch (colorVar) {
+		case "main_color":
+			return config.mainColor || main_color;
+		case "base_color":
+			return config.baseColor || base_color;
+		case "sub1_color":
+			return config.sub1Color || sub1_color;
+		case "accent_color":
+			return config.accentColor || accent_color;
+		case "text_color":
+			return config.textColor || text_color;
+		default:
+			return colorVar;
+	}
+}
+
+/**
  * Apply a default style to the selected shape or textbox
- * @param {number} styleNumber - The style number to apply (1, 2, or 3)
+ * @param {number} styleNumber - The style number to apply (1-6)
  */
 function applyDefaultStyle(styleNumber) {
 	const presentation = SlidesApp.getActivePresentation();
@@ -16,51 +117,8 @@ function applyDefaultStyle(styleNumber) {
 		? selection.getPageElementRange().getPageElements()
 		: [];
 
-	// Define the styles
-	const styles = {
-		1: {
-			// Base color fill, main color border and text
-			borderColor: main_color,
-			borderWidth: 1,
-			fillColor: base_color,
-			textColor: main_color,
-		},
-		2: {
-			// Main color fill, text color border and base color text
-			borderColor: main_color,
-			borderWidth: 1,
-			fillColor: main_color,
-			textColor: base_color,
-		},
-		3: {
-			// Sub1 color fill, main color border and base color text
-			borderColor: main_color,
-			borderWidth: 1,
-			fillColor: sub1_color,
-			textColor: main_color,
-		},
-		4: {
-			// Base color fill, accent color border and accent color text
-			borderColor: accent_color,
-			borderWidth: 1,
-			fillColor: base_color,
-			textColor: accent_color,
-		},
-		5: {
-			// Accent color fill, base color border and base color text
-			borderColor: accent_color,
-			borderWidth: 1,
-			fillColor: accent_color,
-			textColor: accent_color,
-		},
-		6: {
-			// Base color fill, base color border and main color text
-			borderColor: base_color,
-			borderWidth: 1,
-			fillColor: base_color,
-			textColor: main_color,
-		},
-	};
+	// Get the resolved styles using centralized definitions
+	const styles = getStyleDefinitions();
 
 	// Get the selected style
 	const style = styles[styleNumber];

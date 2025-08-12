@@ -889,5 +889,60 @@
 
     // Setup mutually exclusive accordion behavior
     setupMutuallyExclusiveAccordions();
+
+    // Initialize style previews on load
+    refreshFlowchartStylePreviews();
   });
+
+  // Style picker functions
+  function applyFlowchartStyle(styleNumber) {
+    // Get the button and start loading animation
+    const button = document.getElementById(
+      `flowchart-style-button-${styleNumber}`,
+    );
+    button.classList.add("style-loading");
+
+    google.script.run
+      .withSuccessHandler(function (result) {
+        // Remove loading animation
+        button.classList.remove("style-loading");
+        showMessage(`Style ${styleNumber} applied to selected shapes!`);
+      })
+      .withFailureHandler(function (error) {
+        // Remove loading animation
+        button.classList.remove("style-loading");
+        showMessage(`Error applying style: ${error}`, true);
+      })
+      .applyDefaultStyle(styleNumber);
+  }
+
+  function refreshFlowchartStylePreviews() {
+    // Call server-side function to get style definitions and config
+    google.script.run
+      .withSuccessHandler(function (styles) {
+        // Apply each style to its corresponding preview element
+        for (let i = 1; i <= 6; i++) {
+          const style = styles[i];
+          if (!style) continue;
+
+          const square = document.getElementById(
+            `flowchart-preview-square-${i}`,
+          );
+          const text = document.getElementById(`flowchart-preview-text-${i}`);
+
+          if (square && text) {
+            square.style.backgroundColor = style.fillColor;
+            square.style.borderColor = style.borderColor;
+            square.style.borderWidth = `${style.borderWidth || 2}px`;
+            square.style.borderStyle = "solid";
+            text.style.color = style.textColor;
+          }
+        }
+      })
+      .withFailureHandler(function (error) {
+        console.error("Error getting style definitions:", error);
+        showMessage("Error loading style previews", true);
+      })
+      .getStyleDefinitions();
+  }
 </script>

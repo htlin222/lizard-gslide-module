@@ -190,49 +190,17 @@
     font-weight: bold;
   }
 
-  /* Set initial colors for style previews */
-  #preview-text-1 {
-    color: var(--main-color, #3d6869); /* Main color for Style 1 */
-  }
-  #preview-text-2 {
-    color: var(--base-color, #ffffff); /* Base color for Style 2 */
-  }
-  #preview-text-3 {
-    color: var(--main-color, #3d6869); /* Main color for Style 1 */
+  /* Style previews - initial styling will be set by JavaScript using centralized definitions */
+  .preview-text {
+    color: var(--main-color, #3d6869); /* Default fallback color */
   }
 
-  #preview-square-1 {
-    background-color: var(--base-color, #ffffff);
-    border: 2px solid var(--main-color, #3d6869);
-  }
-  #preview-square-2 {
-    background-color: var(--main-color, #3d6869);
-    border: 2px solid var(--main-color, #3d6869);
-  }
-  #preview-square-3 {
-    background-color: var(--sub1-color, #e7eae7);
-    border: 2px solid var(--main-color, #3d6869);
-  }
-  #preview-text-4 {
-    color: var(--accent-color, #f29424); /* Accent color for Style 4 */
-  }
-  #preview-text-5 {
-    color: var(--base-color, #ffffff); /* Base color for Style 5 */
-  }
-  #preview-square-4 {
-    background-color: var(--base-color, #ffffff);
-    border: 2px solid var(--accent-color, #f29424);
-  }
-  #preview-square-5 {
-    background-color: var(--accent-color, #f29424);
-    border: 2px solid var(--accent-color, #f29424);
-  }
-  #preview-text-6 {
-    color: var(--main-color, #3d6869); /* Main color for Style 6 */
-  }
-  #preview-square-6 {
-    background-color: var(--base-color, #ffffff);
-    border: 2px solid var(--base-color, #ffffff);
+  .preview-square {
+    background-color: var(
+      --base-color,
+      #ffffff
+    ); /* Default fallback background */
+    border: 2px solid var(--main-color, #3d6869); /* Default fallback border */
   }
   .style-label {
     font-size: 12px;

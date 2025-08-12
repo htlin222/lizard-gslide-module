@@ -93,78 +93,63 @@
     root.style.setProperty("--accent-color", accentColor);
   }
 
-  // Update style preview boxes
+  // Update style preview boxes using centralized style definitions
   function updateStylePreviews(mainColor, config) {
+    // Call server-side function to get style definitions
+    google.script.run
+      .withSuccessHandler(function (styles) {
+        // Apply each style to its corresponding preview element
+        for (let i = 1; i <= 6; i++) {
+          const style = styles[i];
+          if (!style) continue;
+
+          const square = document.getElementById(`preview-square-${i}`);
+          const text = document.getElementById(`preview-text-${i}`);
+
+          if (square && text) {
+            square.style.backgroundColor = style.fillColor;
+            square.style.borderColor = style.borderColor;
+            square.style.borderWidth = `${style.borderWidth || 2}px`;
+            square.style.borderStyle = "solid";
+            text.style.color = style.textColor;
+          }
+        }
+      })
+      .withFailureHandler(function (error) {
+        console.error("Error getting style definitions:", error);
+        // Fallback to basic styling if server call fails
+        updateStylePreviewsFallback(mainColor, config);
+      })
+      .getStyleDefinitions();
+  }
+
+  // Fallback function for style previews if server call fails
+  function updateStylePreviewsFallback(mainColor, config) {
     const baseColor = config?.baseColor || "#FFFFFF";
-    const textColor = config?.textColor || "#333333";
-
-    // Style 1 - Base color fill, main color border and text
-    // Preview background remains light gray
-    const square1 = document.getElementById("preview-square-1");
-    const text1 = document.getElementById("preview-text-1");
-
-    square1.style.backgroundColor = baseColor;
-    square1.style.borderColor = mainColor;
-    square1.style.borderWidth = "2px";
-    square1.style.borderStyle = "solid";
-    text1.style.color = mainColor;
-
-    // Style 2 - Main color fill, text color border and base color text
-    const square2 = document.getElementById("preview-square-2");
-    const text2 = document.getElementById("preview-text-2");
-
-    square2.style.backgroundColor = mainColor;
-    square2.style.borderColor = mainColor;
-    square2.style.borderWidth = "2px";
-    square2.style.borderStyle = "solid";
-    text2.style.color = baseColor;
-
-    // Style 3 - Sub1 color fill, main color border and base color text
     const sub1Color = config?.sub1Color || "#E7EAE7";
-    const square3 = document.getElementById("preview-square-3");
-    const text3 = document.getElementById("preview-text-3");
-
-    square3.style.backgroundColor = sub1Color;
-    square3.style.borderColor = mainColor;
-    square3.style.borderWidth = "2px";
-    square3.style.borderStyle = "solid";
-    text3.style.color = mainColor;
-
-    // Style 4 - Base color fill, accent color border and accent color text
     const accentColor = config?.accentColor || "#f29424";
-    const square4 = document.getElementById("preview-square-4");
-    const text4 = document.getElementById("preview-text-4");
 
-    if (square4 && text4) {
-      square4.style.backgroundColor = baseColor;
-      square4.style.borderColor = accentColor;
-      square4.style.borderWidth = "2px";
-      square4.style.borderStyle = "solid";
-      text4.style.color = accentColor;
-    }
+    const styleConfigs = {
+      1: { fill: baseColor, border: mainColor, text: mainColor },
+      2: { fill: mainColor, border: mainColor, text: baseColor },
+      3: { fill: sub1Color, border: mainColor, text: mainColor },
+      4: { fill: baseColor, border: accentColor, text: accentColor },
+      5: { fill: accentColor, border: accentColor, text: baseColor },
+      6: { fill: baseColor, border: baseColor, text: mainColor },
+    };
 
-    // Style 5 - Accent color fill, base color border and base color text
-    const square5 = document.getElementById("preview-square-5");
-    const text5 = document.getElementById("preview-text-5");
+    for (let i = 1; i <= 6; i++) {
+      const square = document.getElementById(`preview-square-${i}`);
+      const text = document.getElementById(`preview-text-${i}`);
+      const style = styleConfigs[i];
 
-    if (square5 && text5) {
-      square5.style.backgroundColor = accentColor;
-      square5.style.borderColor = accentColor;
-      square5.style.borderWidth = "2px";
-      square5.style.borderStyle = "solid";
-      text5.style.color = baseColor;
-    }
-
-    // Style 6 - Base color fill, base color border and main color text
-    const square6 = document.getElementById("preview-square-6");
-    const text6 = document.getElementById("preview-text-6");
-
-    if (square6 && text6) {
-      square6.style.backgroundColor = baseColor;
-      square6.style.borderColor = baseColor;
-      square6.style.borderWidth = "2px";
-      square6.style.borderStyle = "solid";
-      text6.style.color = mainColor;
+      if (square && text && style) {
+        square.style.backgroundColor = style.fill;
+        square.style.borderColor = style.border;
+        square.style.borderWidth = "2px";
+        square.style.borderStyle = "solid";
+        text.style.color = style.text;
+      }
     }
   }
 
