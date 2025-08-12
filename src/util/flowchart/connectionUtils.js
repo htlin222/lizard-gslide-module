@@ -130,7 +130,7 @@ function findNextAvailableRootId(slide) {
 				// Extract the number from IDs like A1, A2, A3
 				const match = parsed.current.match(/^A(\d+)$/);
 				if (match) {
-					usedRootIds.add(parseInt(match[1]));
+					usedRootIds.add(Number.parseInt(match[1]));
 				}
 			}
 		}
@@ -555,10 +555,21 @@ function connectSelectedShapes(
 		const nextNumber = existingChildren.length + 1;
 		const childId = `${nextLevel}${nextNumber}`;
 
-		// Set child's Graph ID
+		// Set child's Graph ID with full parent hierarchy
 		const layout = orientation === "horizontal" ? "LR" : "TD";
+
+		// Build parent hierarchy chain
+		let parentHierarchy = "";
+		if (parentData.parent) {
+			// Parent already has hierarchy, append current parent
+			parentHierarchy = `${parentData.parent}|${parentData.current}`;
+		} else {
+			// Parent is root, just use its ID
+			parentHierarchy = parentData.current;
+		}
+
 		const newChildGraphId = generateGraphId(
-			parentData.current,
+			parentHierarchy,
 			layout,
 			childId,
 			[],

@@ -61,6 +61,13 @@ function createSiblingShape(
 	let parentShape = null;
 	const siblingShapes = [];
 
+	// Extract the immediate parent from the hierarchy chain
+	// For example: if parent is "A1|B1", the immediate parent is "B1"
+	const parentHierarchy = parsed.parent;
+	const immediateParent = parentHierarchy.includes("|")
+		? parentHierarchy.split("|").pop()
+		: parentHierarchy;
+
 	// Find parent and all existing sibling shapes (including selected shape)
 	for (const shape of allShapes) {
 		const graphId = getShapeGraphId(shape);
@@ -68,11 +75,11 @@ function createSiblingShape(
 			const shapeData = parseGraphId(graphId);
 			if (shapeData) {
 				// Check if this is the parent
-				if (shapeData.current === parsed.parent) {
+				if (shapeData.current === immediateParent) {
 					parentShape = shape;
 				}
-				// Check if this is a sibling (same parent, including the selected shape)
-				if (shapeData.parent === parsed.parent) {
+				// Check if this is a sibling (same parent hierarchy)
+				if (shapeData.parent === parentHierarchy) {
 					siblingShapes.push({
 						shape: shape,
 						data: shapeData,
@@ -210,8 +217,8 @@ function createSiblingShape(
 
 		// Sort siblings by their current IDs for consistent ordering
 		layoutSiblings.sort((a, b) => {
-			const aNum = parseInt(a.data.current.match(/\d+$/)?.[0] || "0");
-			const bNum = parseInt(b.data.current.match(/\d+$/)?.[0] || "0");
+			const aNum = Number.parseInt(a.data.current.match(/\d+$/)?.[0] || "0");
+			const bNum = Number.parseInt(b.data.current.match(/\d+$/)?.[0] || "0");
 			return aNum - bNum;
 		});
 

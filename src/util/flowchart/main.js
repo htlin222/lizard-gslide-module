@@ -157,9 +157,19 @@ function connectExistingGraphShapes(
 		setShapeGraphId(parentShape, newParentId);
 	}
 
-	// Update child to reflect correct parent using parent's layout
+	// Update child to reflect correct parent with full hierarchy
+	// Build parent hierarchy chain
+	let parentHierarchy = "";
+	if (parentId.parent) {
+		// Parent already has hierarchy, append current parent
+		parentHierarchy = `${parentId.parent}|${parentId.current}`;
+	} else {
+		// Parent is root, just use its ID
+		parentHierarchy = parentId.current;
+	}
+
 	const newChildId = generateGraphId(
-		parentId.current,
+		parentHierarchy,
 		parentId.layout,
 		childId.current,
 		childId.children,

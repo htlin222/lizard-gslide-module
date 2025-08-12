@@ -1,10 +1,12 @@
 /**
  * Graph ID management utilities for hierarchical shape naming
  * Handles parsing, generating, and managing graph IDs for flowchart shapes
- * Format: graph[parent](layout)[current][children]
+ * Format: graph[parent1|parent2|...](layout)[current][children]
+ * - Parent field contains full parent hierarchy separated by |
  * - Layout types: LR (Left-Right), TD (Top-Down), RL (Right-Left), DT (Down-Top)
  * - Children can have individual layouts: [B1:RL,B2:TD,B3]
  * - Child without layout inherits parent's layout
+ * Example: graph[A1|B1](LR)[C1][] means C1's parent is B1, and B1's parent is A1
  */
 
 /**
@@ -104,7 +106,7 @@ function formatChildForGraphId(child) {
  */
 function generateGraphId(parent, layout, current, children = []) {
 	// Handle legacy calls with 3 parameters (parent, current, children)
-	let actualParent = parent;
+	let actualParent = parent || "";
 	let actualLayout = layout;
 	let actualCurrent = current;
 	let actualChildren = children;

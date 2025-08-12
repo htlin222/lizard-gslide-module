@@ -21,7 +21,7 @@ function findNextAvailableRootId(slide) {
 				// Extract the number from IDs like A1, A2, A3
 				const match = parsed.current.match(/^A(\d+)$/);
 				if (match) {
-					usedRootIds.add(parseInt(match[1]));
+					usedRootIds.add(Number.parseInt(match[1]));
 				}
 			}
 		}
@@ -306,8 +306,8 @@ function repositionChildrenByLayout(parentShape, slide, gap = 20) {
 
 		// Sort children by their current IDs for consistent ordering
 		layoutChildren.sort((a, b) => {
-			const aNum = parseInt(a.data.current.match(/\d+$/)?.[0] || "0");
-			const bNum = parseInt(b.data.current.match(/\d+$/)?.[0] || "0");
+			const aNum = Number.parseInt(a.data.current.match(/\d+$/)?.[0] || "0");
+			const bNum = Number.parseInt(b.data.current.match(/\d+$/)?.[0] || "0");
 			return aNum - bNum;
 		});
 
@@ -532,12 +532,23 @@ function createChildrenInDirection(
 		// Store child with its layout
 		childIds.push({ id: childId, layout: layout });
 
-		// Set graph ID for child
-		const parentCurrentId = parentGraphId
-			? parseGraphId(parentGraphId)?.current || "A1"
-			: "A1";
+		// Set graph ID for child with full parent hierarchy
+		const parsedParent = parentGraphId ? parseGraphId(parentGraphId) : null;
+		const parentCurrentId = parsedParent?.current || "A1";
 
-		const childGraphId = generateGraphId(parentCurrentId, layout, childId, []);
+		// Build parent hierarchy chain
+		let parentHierarchy = "";
+		if (parsedParent) {
+			if (parsedParent.parent) {
+				// Parent already has hierarchy, append current parent
+				parentHierarchy = `${parsedParent.parent}|${parentCurrentId}`;
+			} else {
+				// Parent is root, just use its ID
+				parentHierarchy = parentCurrentId;
+			}
+		}
+
+		const childGraphId = generateGraphId(parentHierarchy, layout, childId, []);
 		setShapeGraphId(childShape, childGraphId);
 
 		createdShapes.push(childShape);
@@ -818,13 +829,18 @@ function createSingleChildWithText(
 		// Determine layout based on direction
 		const layout = getLayoutFromDirection(direction);
 
-		// Set graph ID for child
-		const childGraphId = generateGraphId(
-			parentData.current,
-			layout,
-			childId,
-			[],
-		);
+		// Set graph ID for child with full parent hierarchy
+		// Build parent hierarchy chain
+		let parentHierarchy = "";
+		if (parentData.parent) {
+			// Parent already has hierarchy, append current parent
+			parentHierarchy = `${parentData.parent}|${parentData.current}`;
+		} else {
+			// Parent is root, just use its ID
+			parentHierarchy = parentData.current;
+		}
+
+		const childGraphId = generateGraphId(parentHierarchy, layout, childId, []);
 		setShapeGraphId(childShape, childGraphId);
 
 		// Update parent to include this child with its layout
