@@ -20,7 +20,7 @@
     border-radius: 4px;
   }
   button {
-    background-color: #4285f4;
+    background-color: var(--main-color, #4285f4);
     color: white;
     border: none;
     padding: 10px 15px;
@@ -31,7 +31,7 @@
     width: 100%;
   }
   button:hover {
-    background-color: #3367d6;
+    background-color: var(--main-color-hover, #3367d6);
   }
   .color-preview {
     width: 30px;
@@ -45,7 +45,7 @@
     font-size: 18px;
     font-weight: bold;
     margin-bottom: 20px;
-    color: #4285f4;
+    color: var(--main-color, #4285f4);
     text-align: center;
   }
   .footer {
@@ -120,7 +120,7 @@
     left: 0;
     height: 2px;
     width: 0%;
-    background: #4285f4;
+    background: var(--main-color, #4285f4);
     animation: loadingProgressBar 3s ease-in-out;
   }
 
@@ -183,31 +183,56 @@
     justify-content: center;
     align-items: center;
     border: 2px solid transparent;
-    border-radius: 2px;
+    border-radius: 4px;
   }
   .preview-text {
-    font-size: 18px;
+    font-size: 24px;
     font-weight: bold;
   }
 
   /* Set initial colors for style previews */
   #preview-text-1 {
-    color: #3d6869; /* Main color for Style 1 */
+    color: var(--main-color, #3d6869); /* Main color for Style 1 */
   }
   #preview-text-2 {
-    color: #ffffff; /* White for Style 2 */
+    color: var(--base-color, #ffffff); /* Base color for Style 2 */
   }
   #preview-text-3 {
-    color: #000000; /* Black for Style 3 */
+    color: var(--main-color, #3d6869); /* Main color for Style 1 */
   }
 
   #preview-square-1 {
-    background-color: #ffffff;
-    border: 2px solid #3d6869;
+    background-color: var(--base-color, #ffffff);
+    border: 2px solid var(--main-color, #3d6869);
   }
   #preview-square-2 {
-    background-color: #3d6869;
-    border: 2px solid #000000;
+    background-color: var(--main-color, #3d6869);
+    border: 2px solid var(--main-color, #3d6869);
+  }
+  #preview-square-3 {
+    background-color: var(--sub1-color, #e7eae7);
+    border: 2px solid var(--main-color, #3d6869);
+  }
+  #preview-text-4 {
+    color: var(--accent-color, #f29424); /* Accent color for Style 4 */
+  }
+  #preview-text-5 {
+    color: var(--base-color, #ffffff); /* Base color for Style 5 */
+  }
+  #preview-square-4 {
+    background-color: var(--base-color, #ffffff);
+    border: 2px solid var(--accent-color, #f29424);
+  }
+  #preview-square-5 {
+    background-color: var(--accent-color, #f29424);
+    border: 2px solid var(--accent-color, #f29424);
+  }
+  #preview-text-6 {
+    color: var(--main-color, #3d6869); /* Main color for Style 6 */
+  }
+  #preview-square-6 {
+    background-color: var(--base-color, #ffffff);
+    border: 2px solid var(--base-color, #ffffff);
   }
   .style-label {
     font-size: 12px;
@@ -219,7 +244,7 @@
     margin: 15px 0;
   }
   .utility-button {
-    background-color: #3d6869;
+    background-color: var(--main-color, #3d6869);
     color: white;
     border: none;
     padding: 10px 15px;
@@ -230,6 +255,6 @@
     margin-bottom: 5px;
   }
   .utility-button:hover {
-    background-color: #2a4b4c;
+    background-color: var(--main-color-hover, #2a4b4c);
   }
 </style>

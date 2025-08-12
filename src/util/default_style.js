@@ -16,32 +16,49 @@ function applyDefaultStyle(styleNumber) {
 		? selection.getPageElementRange().getPageElements()
 		: [];
 
-	// Get the main color from script properties
-	const scriptProperties = PropertiesService.getScriptProperties();
-	const mainColor = scriptProperties.getProperty("mainColor") || "#3D6869";
-
 	// Define the styles
 	const styles = {
 		1: {
-			// White fill, main color border and text
-			borderColor: mainColor,
+			// Base color fill, main color border and text
+			borderColor: main_color,
 			borderWidth: 1,
 			fillColor: base_color,
-			textColor: mainColor,
+			textColor: main_color,
 		},
 		2: {
-			// Main color fill, white text
-			borderColor: mainColor,
+			// Main color fill, text color border and base color text
+			borderColor: main_color,
 			borderWidth: 1,
-			fillColor: mainColor,
+			fillColor: main_color,
 			textColor: base_color,
 		},
 		3: {
-			// Gray fill, main color border and text
-			borderColor: mainColor,
+			// Sub1 color fill, main color border and base color text
+			borderColor: main_color,
 			borderWidth: 1,
-			fillColor: "#EEEEEE",
-			textColor: mainColor,
+			fillColor: sub1_color,
+			textColor: main_color,
+		},
+		4: {
+			// Base color fill, accent color border and accent color text
+			borderColor: accent_color,
+			borderWidth: 1,
+			fillColor: base_color,
+			textColor: accent_color,
+		},
+		5: {
+			// Accent color fill, base color border and base color text
+			borderColor: accent_color,
+			borderWidth: 1,
+			fillColor: accent_color,
+			textColor: accent_color,
+		},
+		6: {
+			// Base color fill, base color border and main color text
+			borderColor: base_color,
+			borderWidth: 1,
+			fillColor: base_color,
+			textColor: main_color,
 		},
 	};
 
@@ -129,10 +146,37 @@ function applyStyle2() {
 }
 
 /**
- * Apply style 3: Gray fill, main color border and text
+ * Apply style 3: Sub1 color fill, main color border and base color text
  * This function is exposed to the sidebar HTML
  */
 function applyStyle3() {
 	applyDefaultStyle(3);
+	return true; // Return a value to confirm execution to the sidebar
+}
+
+/**
+ * Apply style 4: Base color fill, accent color border and accent color text
+ * This function is exposed to the sidebar HTML
+ */
+function applyStyle4() {
+	applyDefaultStyle(4);
+	return true; // Return a value to confirm execution to the sidebar
+}
+
+/**
+ * Apply style 5: Accent color fill, base color border and base color text
+ * This function is exposed to the sidebar HTML
+ */
+function applyStyle5() {
+	applyDefaultStyle(5);
+	return true; // Return a value to confirm execution to the sidebar
+}
+
+/**
+ * Apply style 6: Base color fill, base color border and main color text
+ * This function is exposed to the sidebar HTML
+ */
+function applyStyle6() {
+	applyDefaultStyle(6);
 	return true; // Return a value to confirm execution to the sidebar
 }

@@ -2,7 +2,7 @@
 var main_color = "#3D6869";
 var base_color = "#FFFFFF";
 var text_color = "#333333";
-var accent_color = "#f29424ff";
+var accent_color = "#f29424";
 var sub1_color = "#E7EAE7";
 var sub2_color = "#E7F9F5";
 var main_font_family = "Source Sans Pro";
@@ -243,6 +243,10 @@ function getConfigValues() {
 	// Return current values (from Properties if available, otherwise from variables)
 	return {
 		mainColor: savedMainColor || main_color,
+		baseColor: base_color,
+		textColor: text_color,
+		sub1Color: sub1_color,
+		accentColor: accent_color,
 		fontFamily: savedFontFamily || main_font_family,
 		watermarkText: savedWatermarkText || water_mark_text,
 		fontSize: savedFontSize || label_font_size,
