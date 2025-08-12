@@ -97,22 +97,51 @@
     opacity: 0.6;
     pointer-events: none;
   }
+  .loading::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(0, 0, 0, 0.1),
+      transparent
+    );
+    animation: loadingProgress 3s ease-in-out;
+  }
+
   .loading::after {
     content: "";
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 20px;
-    height: 20px;
-    margin: -10px 0 0 -10px;
-    border: 3px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
-    border-top-color: #4285f4;
-    animation: spin 1s ease-in-out infinite;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background: #4285f4;
+    animation: loadingProgressBar 3s ease-in-out;
   }
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
+
+  @keyframes loadingProgress {
+    0% {
+      left: -100%;
+    }
+    50% {
+      left: 100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
+
+  @keyframes loadingProgressBar {
+    0% {
+      width: 0%;
+    }
+    100% {
+      width: 100%;
     }
   }
 
@@ -160,17 +189,37 @@
     font-size: 18px;
     font-weight: bold;
   }
+
+  /* Set initial colors for style previews */
+  #preview-text-1 {
+    color: #3d6869; /* Main color for Style 1 */
+  }
+  #preview-text-2 {
+    color: #ffffff; /* White for Style 2 */
+  }
+  #preview-text-3 {
+    color: #000000; /* Black for Style 3 */
+  }
+
+  #preview-square-1 {
+    background-color: #ffffff;
+    border: 2px solid #3d6869;
+  }
+  #preview-square-2 {
+    background-color: #3d6869;
+    border: 2px solid #000000;
+  }
   .style-label {
     font-size: 12px;
     margin-top: 5px;
   }
-  
+
   /* Utility buttons styles */
   .utility-buttons {
     margin: 15px 0;
   }
   .utility-button {
-    background-color: #3D6869;
+    background-color: #3d6869;
     color: white;
     border: none;
     padding: 10px 15px;

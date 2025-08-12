@@ -1,5 +1,10 @@
 // Configuration settings for the Google Slides module
 var main_color = "#3D6869";
+var base_color = "#FFFFFF";
+var text_color = "#333333";
+var accent_color = "#f29424ff";
+var sub1_color = "#E7EAE7";
+var sub2_color = "#E7F9F5";
 var main_font_family = "Source Sans Pro";
 var water_mark_text = "ⓒ Hsieh-Ting Lin";
 var label_font_size = 14;

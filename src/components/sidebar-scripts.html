@@ -9,12 +9,15 @@
       .withSuccessHandler(function (config) {
         // Hide loading message
         document.getElementById("status-message").style.display = "none";
-        
+
         // Update form with values
         updateForm(config);
       })
       .withFailureHandler(function (error) {
-        showStatusMessage("Error loading configuration: " + error.message, "error");
+        showStatusMessage(
+          "Error loading configuration: " + error.message,
+          "error",
+        );
       })
       .getConfigValues();
   }
@@ -24,20 +27,25 @@
     // Set main color
     const mainColorInput = document.getElementById("main-color");
     mainColorInput.value = config.mainColor || "#3D6869";
-    
+
     // Update color preview
     updateColorPreview(mainColorInput.value);
-    
+
     // Set up color input event listener
     mainColorInput.addEventListener("input", function () {
       updateColorPreview(this.value);
       updateStylePreviews(this.value);
     });
-    
+
     // Populate font family dropdown
     const fontFamilySelect = document.getElementById("font-family");
-    const fonts = config.availableFonts || ["Arial", "Verdana", "Helvetica", "Times New Roman"];
-    
+    const fonts = config.availableFonts || [
+      "Arial",
+      "Verdana",
+      "Helvetica",
+      "Times New Roman",
+    ];
+
     fonts.forEach(function (font) {
       const option = document.createElement("option");
       option.value = font;
@@ -47,10 +55,11 @@
       }
       fontFamilySelect.appendChild(option);
     });
-    
+
     // Set progress bar height
-    document.getElementById("progress-bar-height").value = config.progressBarHeight || 5;
-    
+    document.getElementById("progress-bar-height").value =
+      config.progressBarHeight || 5;
+
     // Update style previews
     updateStylePreviews(config.mainColor || "#3D6869");
   }
@@ -66,28 +75,28 @@
     // Preview background remains light gray
     const square1 = document.getElementById("preview-square-1");
     const text1 = document.getElementById("preview-text-1");
-    
+
     square1.style.backgroundColor = "#FFFFFF";
     square1.style.borderColor = mainColor;
     square1.style.borderWidth = "2px";
     square1.style.borderStyle = "solid";
     text1.style.color = mainColor;
-    
+
     // Style 2 - Main color fill, dark border and white text
     const square2 = document.getElementById("preview-square-2");
     const text2 = document.getElementById("preview-text-2");
-    
+
     square2.style.backgroundColor = mainColor;
     square2.style.borderColor = "#000000";
     square2.style.borderWidth = "2px";
     square2.style.borderStyle = "solid";
     text2.style.color = "#FFFFFF";
-    
+
     // Style 3 - Lighter version of main color fill, main color border and dark text
     const lighterColor = getLighterColor(mainColor, 0.7);
     const square3 = document.getElementById("preview-square-3");
     const text3 = document.getElementById("preview-text-3");
-    
+
     square3.style.backgroundColor = lighterColor;
     square3.style.borderColor = mainColor;
     square3.style.borderWidth = "2px";
@@ -101,15 +110,16 @@
     const config = {
       mainColor: document.getElementById("main-color").value,
       fontFamily: document.getElementById("font-family").value,
-      progressBarHeight: parseInt(document.getElementById("progress-bar-height").value) || 5
+      progressBarHeight:
+        parseInt(document.getElementById("progress-bar-height").value) || 5,
     };
-    
+
     // Get the save button
     const saveButton = document.getElementById("save-button");
-    
+
     // Add loading animation
     saveButton.classList.add("loading");
-    
+
     // Call server-side function to save configuration
     google.script.run
       .withSuccessHandler(function (result) {
@@ -131,15 +141,16 @@
     const config = {
       mainColor: document.getElementById("main-color").value,
       fontFamily: document.getElementById("font-family").value,
-      progressBarHeight: parseInt(document.getElementById("progress-bar-height").value) || 5
+      progressBarHeight:
+        parseInt(document.getElementById("progress-bar-height").value) || 5,
     };
-    
+
     // Get the apply button
     const applyButton = document.getElementById("apply-button");
-    
+
     // Add loading animation
     applyButton.classList.add("loading");
-    
+
     // Call server-side function to save and apply configuration
     google.script.run
       .withSuccessHandler(function (result) {
@@ -166,17 +177,14 @@
     // Show a status message in the sidebar instead of a dialog
     showStatusMessage(
       "Configuration saved and applied to the presentation!",
-      "success"
+      "success",
     );
   }
 
   // Failure handler
   function onSaveFailure(error) {
     // Show a status message in the sidebar instead of a dialog
-    showStatusMessage(
-      "Error: " + (error.message || "Unknown error"),
-      "error"
-    );
+    showStatusMessage("Error: " + (error.message || "Unknown error"), "error");
   }
 
   // Show a status message in the sidebar
@@ -220,9 +228,7 @@
   // Apply style functions with feedback
   function applyStyle(styleNumber) {
     // Get the button element
-    const styleButton = document.getElementById(
-      "style-button-" + styleNumber
-    );
+    const styleButton = document.getElementById("style-button-" + styleNumber);
 
     // Add loading animation
     styleButton.classList.add("loading");
@@ -237,17 +243,14 @@
         // Show success message
         showStatusMessage(
           "Style " + styleNumber + " applied successfully!",
-          "success"
+          "success",
         );
       })
       .withFailureHandler(function (error) {
         // Remove loading animation
         styleButton.classList.remove("loading");
         // Show error message
-        showStatusMessage(
-          "Error applying style: " + error.message,
-          "error"
-        );
+        showStatusMessage("Error applying style: " + error.message, "error");
       })
       [functionName](); // Call the function dynamically
   }
@@ -258,12 +261,12 @@
     let r = parseInt(hex.substring(1, 3), 16);
     let g = parseInt(hex.substring(3, 5), 16);
     let b = parseInt(hex.substring(5, 7), 16);
-    
+
     // Make it lighter
     r = Math.min(255, Math.round(r + (255 - r) * factor));
     g = Math.min(255, Math.round(g + (255 - g) * factor));
     b = Math.min(255, Math.round(b + (255 - b) * factor));
-    
+
     // Convert back to hex
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
   }
@@ -274,12 +277,12 @@
     let r = parseInt(hex.substring(1, 3), 16);
     let g = parseInt(hex.substring(3, 5), 16);
     let b = parseInt(hex.substring(5, 7), 16);
-    
+
     // Invert the colors
     r = 255 - r;
     g = 255 - g;
     b = 255 - b;
-    
+
     // Convert back to hex
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
   }
@@ -287,38 +290,48 @@
   // Initialize event listeners
   function initializeEventListeners() {
     // Save button
-    document.getElementById("save-button").addEventListener("click", saveConfig);
-    
+    document
+      .getElementById("save-button")
+      .addEventListener("click", saveConfig);
+
     // Apply button
-    document.getElementById("apply-button").addEventListener("click", saveAndApplyConfig);
-    
+    document
+      .getElementById("apply-button")
+      .addEventListener("click", saveAndApplyConfig);
+
     // Style buttons
-    document.getElementById("style-button-1").addEventListener("click", function() {
-      applyStyle(1);
-    });
-    
-    document.getElementById("style-button-2").addEventListener("click", function() {
-      applyStyle(2);
-    });
-    
-    document.getElementById("style-button-3").addEventListener("click", function() {
-      applyStyle(3);
-    });
-    
+    document
+      .getElementById("style-button-1")
+      .addEventListener("click", function () {
+        applyStyle(1);
+      });
+
+    document
+      .getElementById("style-button-2")
+      .addEventListener("click", function () {
+        applyStyle(2);
+      });
+
+    document
+      .getElementById("style-button-3")
+      .addEventListener("click", function () {
+        applyStyle(3);
+      });
+
     // Markdown to Slides button
     const md2slidesButton = document.getElementById("md2slides-button");
     if (md2slidesButton) {
-      md2slidesButton.addEventListener("click", function() {
+      md2slidesButton.addEventListener("click", function () {
         // Show loading state
         this.classList.add("loading");
-        
+
         // Call the server-side function to show the dialog
         google.script.run
-          .withSuccessHandler(function() {
+          .withSuccessHandler(function () {
             // Remove loading state when dialog is shown
             md2slidesButton.classList.remove("loading");
           })
-          .withFailureHandler(function(error) {
+          .withFailureHandler(function (error) {
             // Remove loading state and show error
             md2slidesButton.classList.remove("loading");
             showStatusMessage("Error: " + error.message, "error");
@@ -329,10 +342,10 @@
   }
 
   // Run initialization when the page loads
-  window.onload = function() {
+  window.onload = function () {
     // Initialize the sidebar
     onLoadSidebar();
-    
+
     // Initialize event listeners
     initializeEventListeners();
   };
