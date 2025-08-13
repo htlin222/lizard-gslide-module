@@ -25,6 +25,7 @@
  * ├── stageBarUtils.js       # Stage bar (HOME_PLATE) creation for process flows
  * ├── debugUtils.js          # Debug and inspection utilities
  * ├── lineUpdateUtils.js     # Line update and style management
+ * ├── smartSelectionUtils.js # Smart selection based on graph ID relationships
  * ├── main.js                # Main interface functions and sidebar
  * └── index.js              # This documentation file
  *
@@ -103,6 +104,13 @@
  * - calculateLineOrientation(startShape, endShape)
  * - applyLineStyle(line, lineStyle)
  * - formatUpdateResults(results)
+ *
+ * From smartSelectionUtils.js:
+ * - validateSelectedShape()
+ * - selectAllSiblings()
+ * - selectAllLevel()
+ * - selectAllParents()
+ * - selectFamily()
  *
  * From main.js:
  * - showFlowchartSidebar()

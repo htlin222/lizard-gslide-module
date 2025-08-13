@@ -1092,4 +1092,77 @@
       }
     }
   }
+
+  // Smart Selection functions
+  function selectAllSiblings() {
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "👥 Select All Siblings";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("All siblings selected!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .selectAllSiblings();
+  }
+
+  function selectAllLevel() {
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "🏗️ Select All Level";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("All level shapes selected!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .selectAllLevel();
+  }
+
+  function selectAllParents() {
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "⬆️ Select All Parents";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("All parents selected!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .selectAllParents();
+  }
+
+  function selectFamily() {
+    // Get the button and start progress animation
+    const button = event.target;
+    const originalText = "👨‍👩‍👧‍👦 Select Family";
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("Family members selected!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .selectFamily();
+  }
 </script>

@@ -89,7 +89,7 @@ function createCustomMenu() {
 			.addItem("🏙 覆蓋半透明方塊", "coverImageWithWhite")
 			.addItem("🏞 半透明遮罩", "maskImage")
 			.addItem("🔢 加上數字遞增圓圈", "addNextNumberCircle")
-			.addItem("📄 分割成多欄", "showMultipleColumnsDialog")
+			.addSeparator()
 			.addItem("🍽 快速美化表格", "fastStyleSelectedTable")
 			.addItem("📊 平均間距置中", "runAveragePadding")
 			.addItem("🔍 檢視物件屬性", "showSelectedObjectPropertiesDialog")
@@ -98,8 +98,10 @@ function createCustomMenu() {
 		// Create the graph menu as a top-level menu
 		ui.createMenu("📊 繪圖")
 			.addItem("📐 分割成網格", "showSplitShapeDialog")
+			.addItem("📄 分割成多欄", "showMultipleColumnsDialog")
 			.addItem("🏗 建立子形狀", "showCreateChildShapesDialog")
 			.addItem("🔤 自動語法解析", "autoCreateChildShapesFromLines")
+			.addSeparator()
 			.addItem("📏 調整間距", "showSetGapDialog")
 			.addItem("🧙 智能間距重設", "showSmartGapResetDialog")
 			.addItem("⇣ 兩者間加上垂直線", "insertVerticalDashedLineBetween")
@@ -107,6 +109,7 @@ function createCustomMenu() {
 			.addItem("🎹 轉換成標注框", "convertShapeToCallout")
 			.addItem("**B** 套用粗體樣式", "applyBoldStyleToSelectedShape")
 			.addItem("🔗 流程圖工具", "showFlowchartSidebar")
+			.addSeparator()
 			.addToUi();
 
 		// Create the add new content menu as a top-level menu
