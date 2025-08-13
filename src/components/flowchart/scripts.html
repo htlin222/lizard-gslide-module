@@ -181,6 +181,8 @@
         childrenTexts,
         customDimensions.width,
         customDimensions.height,
+        customDimensions.maxWidth,
+        customDimensions.maxHeight,
       );
   }
 
@@ -235,6 +237,8 @@
         childrenTexts,
         customDimensions.width,
         customDimensions.height,
+        customDimensions.maxWidth,
+        customDimensions.maxHeight,
       );
   }
 
@@ -287,6 +291,8 @@
         childrenTexts,
         customDimensions.width,
         customDimensions.height,
+        customDimensions.maxWidth,
+        customDimensions.maxHeight,
       );
   }
 
@@ -341,6 +347,8 @@
         childrenTexts,
         customDimensions.width,
         customDimensions.height,
+        customDimensions.maxWidth,
+        customDimensions.maxHeight,
       );
   }
 
@@ -962,18 +970,28 @@
   document.addEventListener("DOMContentLoaded", function () {
     const useCustomWidthCheckbox = document.getElementById("useCustomWidth");
     const customWidthInput = document.getElementById("customWidth");
+    const useMaxWidthCheckbox = document.getElementById("useMaxWidth");
     const useCustomHeightCheckbox = document.getElementById("useCustomHeight");
     const customHeightInput = document.getElementById("customHeight");
+    const useMaxHeightCheckbox = document.getElementById("useMaxHeight");
 
-    if (useCustomWidthCheckbox && customWidthInput) {
+    if (useCustomWidthCheckbox && customWidthInput && useMaxWidthCheckbox) {
       useCustomWidthCheckbox.addEventListener("change", function () {
         customWidthInput.disabled = !this.checked;
+        useMaxWidthCheckbox.disabled = !this.checked;
+        if (!this.checked) {
+          useMaxWidthCheckbox.checked = false;
+        }
       });
     }
 
-    if (useCustomHeightCheckbox && customHeightInput) {
+    if (useCustomHeightCheckbox && customHeightInput && useMaxHeightCheckbox) {
       useCustomHeightCheckbox.addEventListener("change", function () {
         customHeightInput.disabled = !this.checked;
+        useMaxHeightCheckbox.disabled = !this.checked;
+        if (!this.checked) {
+          useMaxHeightCheckbox.checked = false;
+        }
       });
     }
   });
@@ -982,8 +1000,10 @@
   function getCustomDimensions() {
     const useCustomWidth = document.getElementById("useCustomWidth");
     const customWidth = document.getElementById("customWidth");
+    const useMaxWidth = document.getElementById("useMaxWidth");
     const useCustomHeight = document.getElementById("useCustomHeight");
     const customHeight = document.getElementById("customHeight");
+    const useMaxHeight = document.getElementById("useMaxHeight");
 
     return {
       width:
@@ -994,6 +1014,8 @@
         useCustomHeight && useCustomHeight.checked
           ? parseInt(customHeight.value)
           : null,
+      maxWidth: useMaxWidth && useMaxWidth.checked,
+      maxHeight: useMaxHeight && useMaxHeight.checked,
     };
   }
 </script>

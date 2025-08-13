@@ -193,6 +193,8 @@ function connectExistingGraphShapes(
  * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
  * @param {number} customWidth - Custom width for children (optional)
  * @param {number} customHeight - Custom height for children (optional)
+ * @param {boolean} maxWidth - Whether to use max width calculation
+ * @param {boolean} maxHeight - Whether to use max height calculation
  */
 function createChildInDirection(
 	direction,
@@ -203,6 +205,8 @@ function createChildInDirection(
 	endArrow = "FILL_ARROW",
 	customWidth = null,
 	customHeight = null,
+	maxWidth = false,
+	maxHeight = false,
 ) {
 	return createChildrenInDirection(
 		direction,
@@ -213,6 +217,8 @@ function createChildInDirection(
 		endArrow,
 		customWidth,
 		customHeight,
+		maxWidth,
+		maxHeight,
 	);
 }
 
@@ -328,6 +334,8 @@ function createChildTopWithText(
 	texts = [],
 	customWidth = null,
 	customHeight = null,
+	maxWidth = false,
+	maxHeight = false,
 ) {
 	return createChildrenInDirectionWithText(
 		"TOP",
@@ -339,6 +347,8 @@ function createChildTopWithText(
 		texts,
 		customWidth,
 		customHeight,
+		maxWidth,
+		maxHeight,
 	);
 }
 
@@ -354,6 +364,8 @@ function createChildRightWithText(
 	texts = [],
 	customWidth = null,
 	customHeight = null,
+	maxWidth = false,
+	maxHeight = false,
 ) {
 	return createChildrenInDirectionWithText(
 		"RIGHT",
@@ -365,6 +377,8 @@ function createChildRightWithText(
 		texts,
 		customWidth,
 		customHeight,
+		maxWidth,
+		maxHeight,
 	);
 }
 
@@ -380,6 +394,8 @@ function createChildBottomWithText(
 	texts = [],
 	customWidth = null,
 	customHeight = null,
+	maxWidth = false,
+	maxHeight = false,
 ) {
 	return createChildrenInDirectionWithText(
 		"BOTTOM",
@@ -391,6 +407,8 @@ function createChildBottomWithText(
 		texts,
 		customWidth,
 		customHeight,
+		maxWidth,
+		maxHeight,
 	);
 }
 
@@ -406,6 +424,8 @@ function createChildLeftWithText(
 	texts = [],
 	customWidth = null,
 	customHeight = null,
+	maxWidth = false,
+	maxHeight = false,
 ) {
 	return createChildrenInDirectionWithText(
 		"LEFT",
@@ -417,6 +437,8 @@ function createChildLeftWithText(
 		texts,
 		customWidth,
 		customHeight,
+		maxWidth,
+		maxHeight,
 	);
 }
 

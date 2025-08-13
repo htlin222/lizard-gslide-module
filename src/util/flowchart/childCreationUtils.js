@@ -391,6 +391,8 @@ function repositionChildrenByLayout(parentShape, slide, gap = 20) {
  * @param {string} endArrow - End arrow style
  * @param {number} customWidth - Custom width for children (optional)
  * @param {number} customHeight - Custom height for children (optional)
+ * @param {boolean} maxWidth - Whether to use max width calculation
+ * @param {boolean} maxHeight - Whether to use max height calculation
  * @returns {Array} - Array of created child shapes
  */
 function createChildrenInDirection(
@@ -402,6 +404,8 @@ function createChildrenInDirection(
 	endArrow = "FILL_ARROW",
 	customWidth = null,
 	customHeight = null,
+	maxWidth = false,
+	maxHeight = false,
 ) {
 	const pres = SlidesApp.getActivePresentation();
 	const selection = pres.getSelection();
@@ -472,6 +476,36 @@ function createChildrenInDirection(
 		setShapeGraphId(parentShape, parentGraphId);
 		parentData = parseGraphId(parentGraphId);
 		nextLevel = "B";
+	}
+
+	// Calculate actual dimensions based on max settings
+	let finalCustomWidth = customWidth;
+	let finalCustomHeight = customHeight;
+
+	if (maxWidth && customWidth && count > 0) {
+		// For LR/RL layouts, width is distributed among children
+		const layout = getLayoutFromDirection(direction);
+		if (layout === "LR" || layout === "RL") {
+			// Width doesn't need division for LR/RL (children are stacked vertically)
+			finalCustomWidth = customWidth;
+		} else {
+			// TD/DT: divide width among children
+			finalCustomWidth = Math.floor((customWidth - (count - 1) * gap) / count);
+		}
+	}
+
+	if (maxHeight && customHeight && count > 0) {
+		// For TD/DT layouts, height is distributed among children
+		const layout = getLayoutFromDirection(direction);
+		if (layout === "TD" || layout === "DT") {
+			// Height doesn't need division for TD/DT (children are stacked horizontally)
+			finalCustomHeight = customHeight;
+		} else {
+			// LR/RL: divide height among children
+			finalCustomHeight = Math.floor(
+				(customHeight - (count - 1) * gap) / count,
+			);
+		}
 	}
 
 	// Determine starting child number based on existing children
@@ -549,8 +583,8 @@ function createChildrenInDirection(
 			lineType,
 			startArrow,
 			endArrow,
-			customWidth,
-			customHeight,
+			finalCustomWidth,
+			finalCustomHeight,
 		);
 
 		// Generate unique child ID
@@ -600,6 +634,8 @@ function createChildrenInDirection(
  * @param {Array} texts - Array of text strings for each child shape
  * @param {number} customWidth - Custom width for children (optional)
  * @param {number} customHeight - Custom height for children (optional)
+ * @param {boolean} maxWidth - Whether to use max width calculation
+ * @param {boolean} maxHeight - Whether to use max height calculation
  * @returns {Array} - Array of created child shapes
  */
 function createChildrenInDirectionWithText(
@@ -612,6 +648,8 @@ function createChildrenInDirectionWithText(
 	texts = [],
 	customWidth = null,
 	customHeight = null,
+	maxWidth = false,
+	maxHeight = false,
 ) {
 	const pres = SlidesApp.getActivePresentation();
 	const selection = pres.getSelection();
@@ -637,6 +675,38 @@ function createChildrenInDirectionWithText(
 
 	// Use text count if texts are provided, otherwise use count parameter
 	const actualCount = texts.length > 0 ? texts.length : count;
+
+	// Calculate actual dimensions based on max settings
+	let finalCustomWidth = customWidth;
+	let finalCustomHeight = customHeight;
+
+	if (maxWidth && customWidth && actualCount > 0) {
+		// For LR/RL layouts, width is distributed among children
+		const layout = getLayoutFromDirection(direction);
+		if (layout === "LR" || layout === "RL") {
+			// Width doesn't need division for LR/RL (children are stacked vertically)
+			finalCustomWidth = customWidth;
+		} else {
+			// TD/DT: divide width among children
+			finalCustomWidth = Math.floor(
+				(customWidth - (actualCount - 1) * gap) / actualCount,
+			);
+		}
+	}
+
+	if (maxHeight && customHeight && actualCount > 0) {
+		// For TD/DT layouts, height is distributed among children
+		const layout = getLayoutFromDirection(direction);
+		if (layout === "TD" || layout === "DT") {
+			// Height doesn't need division for TD/DT (children are stacked horizontally)
+			finalCustomHeight = customHeight;
+		} else {
+			// LR/RL: divide height among children
+			finalCustomHeight = Math.floor(
+				(customHeight - (actualCount - 1) * gap) / actualCount,
+			);
+		}
+	}
 
 	// Check for existing children just like in createChildrenInDirection
 	const parentGraphId = getShapeGraphId(parentShape);
@@ -751,8 +821,8 @@ function createChildrenInDirectionWithText(
 				direction,
 				gap,
 				actualCount,
-				customWidth,
-				customHeight,
+				finalCustomWidth,
+				finalCustomHeight,
 			);
 		}
 	} else {
@@ -762,8 +832,8 @@ function createChildrenInDirectionWithText(
 			direction,
 			gap,
 			actualCount,
-			customWidth,
-			customHeight,
+			finalCustomWidth,
+			finalCustomHeight,
 		);
 	}
 
@@ -783,8 +853,8 @@ function createChildrenInDirectionWithText(
 			startArrow,
 			endArrow,
 			childText,
-			customWidth,
-			customHeight,
+			finalCustomWidth,
+			finalCustomHeight,
 		);
 
 		if (childShape) {
