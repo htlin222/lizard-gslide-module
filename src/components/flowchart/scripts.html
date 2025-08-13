@@ -140,6 +140,7 @@
     const startArrow = document.getElementById("startArrow").value;
     const endArrow = document.getElementById("endArrow").value;
     const customDimensions = getCustomDimensions();
+    const defaultStyle = getDefaultStyle(); // Get the default style
 
     if (verticalGap < 0 || isNaN(verticalGap)) {
       showMessage(
@@ -183,6 +184,7 @@
         customDimensions.height,
         customDimensions.maxWidth,
         customDimensions.maxHeight,
+        defaultStyle, // Pass the default style
       );
   }
 
@@ -196,6 +198,7 @@
     const startArrow = document.getElementById("startArrow").value;
     const endArrow = document.getElementById("endArrow").value;
     const customDimensions = getCustomDimensions();
+    const defaultStyle = getDefaultStyle(); // Get the default style
 
     if (horizontalGap < 0 || isNaN(horizontalGap)) {
       showMessage(
@@ -239,6 +242,7 @@
         customDimensions.height,
         customDimensions.maxWidth,
         customDimensions.maxHeight,
+        defaultStyle, // Pass the default style
       );
   }
 
@@ -250,6 +254,7 @@
     const startArrow = document.getElementById("startArrow").value;
     const endArrow = document.getElementById("endArrow").value;
     const customDimensions = getCustomDimensions();
+    const defaultStyle = getDefaultStyle(); // Get the default style
 
     if (verticalGap < 0 || isNaN(verticalGap)) {
       showMessage(
@@ -293,6 +298,7 @@
         customDimensions.height,
         customDimensions.maxWidth,
         customDimensions.maxHeight,
+        defaultStyle, // Pass the default style
       );
   }
 
@@ -306,6 +312,7 @@
     const startArrow = document.getElementById("startArrow").value;
     const endArrow = document.getElementById("endArrow").value;
     const customDimensions = getCustomDimensions();
+    const defaultStyle = getDefaultStyle(); // Get the default style
 
     if (horizontalGap < 0 || isNaN(horizontalGap)) {
       showMessage(
@@ -349,6 +356,7 @@
         customDimensions.height,
         customDimensions.maxWidth,
         customDimensions.maxHeight,
+        defaultStyle, // Pass the default style
       );
   }
 
@@ -360,6 +368,7 @@
     const lineType = document.getElementById("lineType").value;
     const startArrow = document.getElementById("startArrow").value;
     const endArrow = document.getElementById("endArrow").value;
+    const defaultStyle = getDefaultStyle(); // Get the default style
 
     if (horizontalGap < 0 || isNaN(horizontalGap)) {
       showMessage(
@@ -397,6 +406,7 @@
         lineType,
         startArrow,
         endArrow,
+        defaultStyle, // Pass the default style
       );
   }
 
@@ -912,6 +922,9 @@
 
     // Initialize style previews on load
     refreshFlowchartStylePreviews();
+
+    // Initialize default style toggles
+    initializeDefaultStyleToggles();
   });
 
   // Style picker functions
@@ -1017,5 +1030,66 @@
       maxWidth: useMaxWidth && useMaxWidth.checked,
       maxHeight: useMaxHeight && useMaxHeight.checked,
     };
+  }
+
+  // Default style toggle functionality
+  function toggleDefaultStyle(styleNumber, event) {
+    // Prevent event from bubbling up to the style button
+    if (event) {
+      event.stopPropagation();
+    }
+
+    // Get the toggle button for this style
+    const toggleButton = document.getElementById(
+      `flowchart-default-toggle-${styleNumber}`,
+    );
+
+    // Check if this style is currently active
+    const isCurrentlyActive = toggleButton.classList.contains("active");
+
+    // If it's currently active, deactivate it
+    if (isCurrentlyActive) {
+      toggleButton.classList.remove("active");
+      localStorage.removeItem("flowchart_defaultStyle");
+      showMessage(`Style ${styleNumber} removed as default`);
+      return;
+    }
+
+    // Remove active class from all toggle buttons
+    for (let i = 1; i <= 6; i++) {
+      const otherToggle = document.getElementById(
+        `flowchart-default-toggle-${i}`,
+      );
+      if (otherToggle) {
+        otherToggle.classList.remove("active");
+      }
+    }
+
+    // Activate the clicked toggle
+    toggleButton.classList.add("active");
+
+    // Save the default style to localStorage
+    localStorage.setItem("flowchart_defaultStyle", styleNumber);
+
+    showMessage(`Style ${styleNumber} set as default for new shapes`);
+  }
+
+  // Get the default style number (returns null if none set)
+  function getDefaultStyle() {
+    const savedDefault = localStorage.getItem("flowchart_defaultStyle");
+    return savedDefault ? parseInt(savedDefault) : null;
+  }
+
+  // Initialize default style toggle states on load
+  function initializeDefaultStyleToggles() {
+    const defaultStyle = getDefaultStyle();
+    if (defaultStyle) {
+      const toggleButton = document.getElementById(
+        `flowchart-default-toggle-${defaultStyle}`,
+      );
+      if (toggleButton) {
+        toggleButton.classList.add("active");
+      }
+    }
   }
 </script>

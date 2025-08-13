@@ -650,6 +650,7 @@ function createChildrenInDirectionWithText(
 	customHeight = null,
 	maxWidth = false,
 	maxHeight = false,
+	defaultStyle = null,
 ) {
 	const pres = SlidesApp.getActivePresentation();
 	const selection = pres.getSelection();
@@ -855,6 +856,7 @@ function createChildrenInDirectionWithText(
 			childText,
 			finalCustomWidth,
 			finalCustomHeight,
+			defaultStyle,
 		);
 
 		if (childShape) {
@@ -893,6 +895,7 @@ function createSingleChildWithText(
 	text,
 	customWidth,
 	customHeight,
+	defaultStyle,
 ) {
 	// Use custom dimensions if provided, otherwise use parent dimensions
 	const width = customWidth || parentShape.getWidth();
@@ -919,6 +922,15 @@ function createSingleChildWithText(
 
 	// Copy styling from parent AFTER setting text (to preserve text styling)
 	copyShapeStyle(parentShape, childShape);
+
+	// Apply default style if specified (overrides inherited styling)
+	if (defaultStyle) {
+		try {
+			applyStyleToShape(childShape, defaultStyle);
+		} catch (e) {
+			console.log(`Warning: Could not apply default style: ${e.message}`);
+		}
+	}
 
 	// Set up graph ID for flowchart hierarchy
 	let parentGraphId = getShapeGraphId(parentShape);

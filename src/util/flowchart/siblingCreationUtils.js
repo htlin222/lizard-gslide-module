@@ -18,6 +18,7 @@ function createSiblingShape(
 	lineType = "STRAIGHT",
 	startArrow = "NONE",
 	endArrow = "FILL_ARROW",
+	defaultStyle = null,
 ) {
 	const pres = SlidesApp.getActivePresentation();
 	const selection = pres.getSelection();
@@ -183,6 +184,15 @@ function createSiblingShape(
 
 	// Copy styling from selected shape
 	copyShapeStyle(selectedShape, newShape);
+
+	// Apply default style if specified (overrides inherited styling)
+	if (defaultStyle) {
+		try {
+			applyStyleToShape(newShape, defaultStyle);
+		} catch (e) {
+			console.log(`Warning: Could not apply default style: ${e.message}`);
+		}
+	}
 
 	// Set the hierarchical graph ID using the determined layout
 	const newGraphId = generateGraphId(

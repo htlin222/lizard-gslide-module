@@ -389,6 +389,12 @@
     margin-bottom: 12px;
   }
 
+  .style-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
   .style-button {
     cursor: pointer;
     text-align: center;
@@ -506,5 +512,36 @@
     100% {
       width: 100%;
     }
+  }
+
+  /* Default toggle button styles */
+  .default-toggle {
+    width: 100%;
+    padding: 4px 8px;
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid #d1d9e0;
+    border-radius: 4px;
+    background-color: white;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .default-toggle:hover {
+    background-color: #f6f8fa;
+    border-color: #8c959f;
+  }
+
+  .default-toggle.active {
+    background-color: #1a73e8;
+    border-color: #1a73e8;
+    color: white;
+  }
+
+  .default-toggle.active:hover {
+    background-color: #1557b7;
+    border-color: #1557b7;
   }
 </style>

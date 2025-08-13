@@ -238,3 +238,44 @@ function applyStyle6() {
 	applyDefaultStyle(6);
 	return true; // Return a value to confirm execution to the sidebar
 }
+
+/**
+ * Apply a default style to a specific shape object
+ * @param {Shape} shape - The shape object to apply style to
+ * @param {number} styleNumber - The style number to apply (1-6)
+ */
+function applyStyleToShape(shape, styleNumber) {
+	if (!shape || !styleNumber) {
+		return;
+	}
+
+	// Get the resolved styles using centralized definitions
+	const styles = getStyleDefinitions();
+
+	// Get the selected style
+	const style = styles[styleNumber];
+	if (!style) {
+		Logger.log("Invalid style number: " + styleNumber);
+		return;
+	}
+
+	try {
+		// First, ensure the shape has text to avoid 'has no text' error
+		// This must be done before any text styling operations
+		if (!shape.getText().asString()) {
+			shape.getText().setText("TEXT_HERE");
+		}
+
+		// Apply border
+		shape.getBorder().setWeight(style.borderWidth);
+		shape.getBorder().getLineFill().setSolidFill(style.borderColor);
+
+		// Apply fill
+		shape.getFill().setSolidFill(style.fillColor);
+
+		// Apply text color
+		shape.getText().getTextStyle().setForegroundColor(style.textColor);
+	} catch (e) {
+		Logger.log("Error applying style to shape: " + e.toString());
+	}
+}

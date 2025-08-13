@@ -336,6 +336,7 @@ function createChildTopWithText(
 	customHeight = null,
 	maxWidth = false,
 	maxHeight = false,
+	defaultStyle = null,
 ) {
 	return createChildrenInDirectionWithText(
 		"TOP",
@@ -349,6 +350,7 @@ function createChildTopWithText(
 		customHeight,
 		maxWidth,
 		maxHeight,
+		defaultStyle,
 	);
 }
 
@@ -366,6 +368,7 @@ function createChildRightWithText(
 	customHeight = null,
 	maxWidth = false,
 	maxHeight = false,
+	defaultStyle = null,
 ) {
 	return createChildrenInDirectionWithText(
 		"RIGHT",
@@ -379,6 +382,7 @@ function createChildRightWithText(
 		customHeight,
 		maxWidth,
 		maxHeight,
+		defaultStyle,
 	);
 }
 
@@ -396,6 +400,7 @@ function createChildBottomWithText(
 	customHeight = null,
 	maxWidth = false,
 	maxHeight = false,
+	defaultStyle = null,
 ) {
 	return createChildrenInDirectionWithText(
 		"BOTTOM",
@@ -409,6 +414,7 @@ function createChildBottomWithText(
 		customHeight,
 		maxWidth,
 		maxHeight,
+		defaultStyle,
 	);
 }
 
@@ -426,6 +432,7 @@ function createChildLeftWithText(
 	customHeight = null,
 	maxWidth = false,
 	maxHeight = false,
+	defaultStyle = null,
 ) {
 	return createChildrenInDirectionWithText(
 		"LEFT",
@@ -439,6 +446,7 @@ function createChildLeftWithText(
 		customHeight,
 		maxWidth,
 		maxHeight,
+		defaultStyle,
 	);
 }
 
