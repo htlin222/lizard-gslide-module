@@ -185,6 +185,13 @@ function createSiblingShape(
 	// Copy styling from selected shape
 	copyShapeStyle(selectedShape, newShape);
 
+	// Add placeholder text for styling purposes
+	try {
+		newShape.getText().setText("_");
+	} catch (e) {
+		console.log(`Warning: Could not set sibling shape text: ${e.message}`);
+	}
+
 	// Apply default style if specified (overrides inherited styling)
 	if (defaultStyle) {
 		try {

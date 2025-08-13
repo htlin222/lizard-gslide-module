@@ -207,6 +207,7 @@ function createChildInDirection(
 	customHeight = null,
 	maxWidth = false,
 	maxHeight = false,
+	defaultStyle = null,
 ) {
 	return createChildrenInDirection(
 		direction,
@@ -219,6 +220,7 @@ function createChildInDirection(
 		customHeight,
 		maxWidth,
 		maxHeight,
+		defaultStyle,
 	);
 }
 

@@ -212,6 +212,7 @@ function createSingleChild(
 	endArrow,
 	customWidth,
 	customHeight,
+	defaultStyle,
 ) {
 	const slide = parentShape.getParentPage();
 
@@ -230,6 +231,22 @@ function createSingleChild(
 
 	// Copy styling from parent
 	copyShapeStyle(parentShape, childShape);
+
+	// Add placeholder text for styling purposes
+	try {
+		childShape.getText().setText("_");
+	} catch (e) {
+		console.log(`Warning: Could not set child shape text: ${e.message}`);
+	}
+
+	// Apply default style if specified (overrides inherited styling)
+	if (defaultStyle) {
+		try {
+			applyStyleToShape(childShape, defaultStyle);
+		} catch (e) {
+			console.log(`Warning: Could not apply default style: ${e.message}`);
+		}
+	}
 
 	// Create connection
 	const sides = getConnectionSides(direction);
@@ -406,6 +423,7 @@ function createChildrenInDirection(
 	customHeight = null,
 	maxWidth = false,
 	maxHeight = false,
+	defaultStyle = null,
 ) {
 	const pres = SlidesApp.getActivePresentation();
 	const selection = pres.getSelection();
@@ -585,6 +603,7 @@ function createChildrenInDirection(
 			endArrow,
 			finalCustomWidth,
 			finalCustomHeight,
+			defaultStyle,
 		);
 
 		// Generate unique child ID
@@ -914,8 +933,10 @@ function createSingleChildWithText(
 	try {
 		if (text && text.trim() !== "") {
 			childShape.getText().setText(text);
+		} else {
+			// If no text provided, add placeholder for styling
+			childShape.getText().setText("_");
 		}
-		// If no text provided, leave the shape empty (don't set any text)
 	} catch (e) {
 		console.log(`Warning: Could not set child shape text: ${e.message}`);
 	}
