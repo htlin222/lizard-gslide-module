@@ -101,21 +101,33 @@ function validateParentElement(range) {
  * @param {string} direction - Direction to create children (TOP, RIGHT, BOTTOM, LEFT)
  * @param {number} gap - Gap between shapes
  * @param {number} count - Number of children
+ * @param {number} customWidth - Custom width for children (optional)
+ * @param {number} customHeight - Custom height for children (optional)
  * @returns {Array} - Array of position objects {left, top}
  */
-function calculateChildPositions(parent, direction, gap, count) {
+function calculateChildPositions(
+	parent,
+	direction,
+	gap,
+	count,
+	customWidth,
+	customHeight,
+) {
+	// Use custom dimensions if provided, otherwise use parent dimensions
+	const childWidth = customWidth || parent.width;
+	const childHeight = customHeight || parent.height;
 	const positions = [];
 
-	// Calculate sibling spacing offset
+	// Calculate sibling spacing offset using child dimensions
 	let siblingOffset = 0;
 	if (count > 1) {
 		if (direction === "LEFT" || direction === "RIGHT") {
 			// For horizontal directions, space siblings vertically
-			const totalHeight = count * parent.height + (count - 1) * gap;
+			const totalHeight = count * childHeight + (count - 1) * gap;
 			siblingOffset = -(totalHeight - parent.height) / 2;
 		} else {
 			// For vertical directions, space siblings horizontally
-			const totalWidth = count * parent.width + (count - 1) * gap;
+			const totalWidth = count * childWidth + (count - 1) * gap;
 			siblingOffset = -(totalWidth - parent.width) / 2;
 		}
 	}
@@ -126,20 +138,20 @@ function calculateChildPositions(parent, direction, gap, count) {
 
 		switch (direction) {
 			case "TOP":
-				childTop = parent.top - parent.height - gap;
-				childLeft = parent.left + siblingOffset + i * (parent.width + gap);
+				childTop = parent.top - childHeight - gap;
+				childLeft = parent.left + siblingOffset + i * (childWidth + gap);
 				break;
 			case "RIGHT":
 				childLeft = parent.left + parent.width + gap;
-				childTop = parent.top + siblingOffset + i * (parent.height + gap);
+				childTop = parent.top + siblingOffset + i * (childHeight + gap);
 				break;
 			case "BOTTOM":
 				childTop = parent.top + parent.height + gap;
-				childLeft = parent.left + siblingOffset + i * (parent.width + gap);
+				childLeft = parent.left + siblingOffset + i * (childWidth + gap);
 				break;
 			case "LEFT":
-				childLeft = parent.left - parent.width - gap;
-				childTop = parent.top + siblingOffset + i * (parent.height + gap);
+				childLeft = parent.left - childWidth - gap;
+				childTop = parent.top + siblingOffset + i * (childHeight + gap);
 				break;
 		}
 
@@ -187,6 +199,8 @@ function getConnectionSides(direction) {
  * @param {string} lineType - Line type for connection
  * @param {string} startArrow - Start arrow style
  * @param {string} endArrow - End arrow style
+ * @param {number} customWidth - Custom width for child shape (optional)
+ * @param {number} customHeight - Custom height for child shape (optional)
  * @returns {GoogleAppsScript.Slides.Shape} - Created child shape
  */
 function createSingleChild(
@@ -196,16 +210,22 @@ function createSingleChild(
 	lineType,
 	startArrow,
 	endArrow,
+	customWidth,
+	customHeight,
 ) {
 	const slide = parentShape.getParentPage();
+
+	// Use custom dimensions if provided, otherwise use parent dimensions
+	const width = customWidth || parentShape.getWidth();
+	const height = customHeight || parentShape.getHeight();
 
 	// Create new shape
 	const childShape = slide.insertShape(
 		parentShape.getShapeType(),
 		position.left,
 		position.top,
-		parentShape.getWidth(),
-		parentShape.getHeight(),
+		width,
+		height,
 	);
 
 	// Copy styling from parent
@@ -369,6 +389,8 @@ function repositionChildrenByLayout(parentShape, slide, gap = 20) {
  * @param {number} count - Number of children to create
  * @param {string} startArrow - Start arrow style
  * @param {string} endArrow - End arrow style
+ * @param {number} customWidth - Custom width for children (optional)
+ * @param {number} customHeight - Custom height for children (optional)
  * @returns {Array} - Array of created child shapes
  */
 function createChildrenInDirection(
@@ -378,6 +400,8 @@ function createChildrenInDirection(
 	count = 1,
 	startArrow = "NONE",
 	endArrow = "FILL_ARROW",
+	customWidth = null,
+	customHeight = null,
 ) {
 	const pres = SlidesApp.getActivePresentation();
 	const selection = pres.getSelection();
@@ -525,6 +549,8 @@ function createChildrenInDirection(
 			lineType,
 			startArrow,
 			endArrow,
+			customWidth,
+			customHeight,
 		);
 
 		// Generate unique child ID
@@ -572,6 +598,8 @@ function createChildrenInDirection(
  * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
  * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
  * @param {Array} texts - Array of text strings for each child shape
+ * @param {number} customWidth - Custom width for children (optional)
+ * @param {number} customHeight - Custom height for children (optional)
  * @returns {Array} - Array of created child shapes
  */
 function createChildrenInDirectionWithText(
@@ -582,6 +610,8 @@ function createChildrenInDirectionWithText(
 	startArrow = "NONE",
 	endArrow = "FILL_ARROW",
 	texts = [],
+	customWidth = null,
+	customHeight = null,
 ) {
 	const pres = SlidesApp.getActivePresentation();
 	const selection = pres.getSelection();
@@ -721,6 +751,8 @@ function createChildrenInDirectionWithText(
 				direction,
 				gap,
 				actualCount,
+				customWidth,
+				customHeight,
 			);
 		}
 	} else {
@@ -730,6 +762,8 @@ function createChildrenInDirectionWithText(
 			direction,
 			gap,
 			actualCount,
+			customWidth,
+			customHeight,
 		);
 	}
 
@@ -749,6 +783,8 @@ function createChildrenInDirectionWithText(
 			startArrow,
 			endArrow,
 			childText,
+			customWidth,
+			customHeight,
 		);
 
 		if (childShape) {
@@ -772,6 +808,8 @@ function createChildrenInDirectionWithText(
  * @param {string} startArrow - Start arrow style
  * @param {string} endArrow - End arrow style
  * @param {string} text - Text to set in the child shape
+ * @param {number} customWidth - Custom width for child shape (optional)
+ * @param {number} customHeight - Custom height for child shape (optional)
  * @returns {GoogleAppsScript.Slides.Shape} - Created child shape
  */
 function createSingleChildWithText(
@@ -783,14 +821,20 @@ function createSingleChildWithText(
 	startArrow,
 	endArrow,
 	text,
+	customWidth,
+	customHeight,
 ) {
+	// Use custom dimensions if provided, otherwise use parent dimensions
+	const width = customWidth || parentShape.getWidth();
+	const height = customHeight || parentShape.getHeight();
+
 	// Create new shape at calculated position
 	const childShape = slide.insertShape(
 		parentShape.getShapeType(),
 		position.left,
 		position.top,
-		parentShape.getWidth(),
-		parentShape.getHeight(),
+		width,
+		height,
 	);
 
 	// Copy styling from parent (except graph ID)

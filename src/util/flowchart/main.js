@@ -191,6 +191,8 @@ function connectExistingGraphShapes(
  * @param {number} count - Number of children to create (default 1)
  * @param {string} startArrow - Start arrow style (NONE, FILL_ARROW, etc.)
  * @param {string} endArrow - End arrow style (NONE, FILL_ARROW, etc.)
+ * @param {number} customWidth - Custom width for children (optional)
+ * @param {number} customHeight - Custom height for children (optional)
  */
 function createChildInDirection(
 	direction,
@@ -199,6 +201,8 @@ function createChildInDirection(
 	count = 1,
 	startArrow = "NONE",
 	endArrow = "FILL_ARROW",
+	customWidth = null,
+	customHeight = null,
 ) {
 	return createChildrenInDirection(
 		direction,
@@ -207,6 +211,8 @@ function createChildInDirection(
 		count,
 		startArrow,
 		endArrow,
+		customWidth,
+		customHeight,
 	);
 }
 
@@ -219,6 +225,8 @@ function createChildTop(
 	count = 1,
 	startArrow = "NONE",
 	endArrow = "FILL_ARROW",
+	customWidth = null,
+	customHeight = null,
 ) {
 	return createChildInDirection(
 		"TOP",
@@ -227,6 +235,8 @@ function createChildTop(
 		count,
 		startArrow,
 		endArrow,
+		customWidth,
+		customHeight,
 	);
 }
 
@@ -239,6 +249,8 @@ function createChildRight(
 	count = 1,
 	startArrow = "NONE",
 	endArrow = "FILL_ARROW",
+	customWidth = null,
+	customHeight = null,
 ) {
 	return createChildInDirection(
 		"RIGHT",
@@ -247,6 +259,8 @@ function createChildRight(
 		count,
 		startArrow,
 		endArrow,
+		customWidth,
+		customHeight,
 	);
 }
 
@@ -259,6 +273,8 @@ function createChildBottom(
 	count = 1,
 	startArrow = "NONE",
 	endArrow = "FILL_ARROW",
+	customWidth = null,
+	customHeight = null,
 ) {
 	return createChildInDirection(
 		"BOTTOM",
@@ -267,6 +283,8 @@ function createChildBottom(
 		count,
 		startArrow,
 		endArrow,
+		customWidth,
+		customHeight,
 	);
 }
 
@@ -279,6 +297,8 @@ function createChildLeft(
 	count = 1,
 	startArrow = "NONE",
 	endArrow = "FILL_ARROW",
+	customWidth = null,
+	customHeight = null,
 ) {
 	return createChildInDirection(
 		"LEFT",
@@ -287,6 +307,8 @@ function createChildLeft(
 		count,
 		startArrow,
 		endArrow,
+		customWidth,
+		customHeight,
 	);
 }
 
@@ -304,6 +326,8 @@ function createChildTopWithText(
 	startArrow = "NONE",
 	endArrow = "FILL_ARROW",
 	texts = [],
+	customWidth = null,
+	customHeight = null,
 ) {
 	return createChildrenInDirectionWithText(
 		"TOP",
@@ -313,6 +337,8 @@ function createChildTopWithText(
 		startArrow,
 		endArrow,
 		texts,
+		customWidth,
+		customHeight,
 	);
 }
 
@@ -326,6 +352,8 @@ function createChildRightWithText(
 	startArrow = "NONE",
 	endArrow = "FILL_ARROW",
 	texts = [],
+	customWidth = null,
+	customHeight = null,
 ) {
 	return createChildrenInDirectionWithText(
 		"RIGHT",
@@ -335,6 +363,8 @@ function createChildRightWithText(
 		startArrow,
 		endArrow,
 		texts,
+		customWidth,
+		customHeight,
 	);
 }
 
@@ -348,6 +378,8 @@ function createChildBottomWithText(
 	startArrow = "NONE",
 	endArrow = "FILL_ARROW",
 	texts = [],
+	customWidth = null,
+	customHeight = null,
 ) {
 	return createChildrenInDirectionWithText(
 		"BOTTOM",
@@ -357,6 +389,8 @@ function createChildBottomWithText(
 		startArrow,
 		endArrow,
 		texts,
+		customWidth,
+		customHeight,
 	);
 }
 
@@ -370,6 +404,8 @@ function createChildLeftWithText(
 	startArrow = "NONE",
 	endArrow = "FILL_ARROW",
 	texts = [],
+	customWidth = null,
+	customHeight = null,
 ) {
 	return createChildrenInDirectionWithText(
 		"LEFT",
@@ -379,6 +415,8 @@ function createChildLeftWithText(
 		startArrow,
 		endArrow,
 		texts,
+		customWidth,
+		customHeight,
 	);
 }
 

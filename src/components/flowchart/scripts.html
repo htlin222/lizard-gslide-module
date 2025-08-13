@@ -139,6 +139,7 @@
     const lineType = document.getElementById("lineType").value;
     const startArrow = document.getElementById("startArrow").value;
     const endArrow = document.getElementById("endArrow").value;
+    const customDimensions = getCustomDimensions();
 
     if (verticalGap < 0 || isNaN(verticalGap)) {
       showMessage(
@@ -178,6 +179,8 @@
         startArrow,
         endArrow,
         childrenTexts,
+        customDimensions.width,
+        customDimensions.height,
       );
   }
 
@@ -190,6 +193,7 @@
     const lineType = document.getElementById("lineType").value;
     const startArrow = document.getElementById("startArrow").value;
     const endArrow = document.getElementById("endArrow").value;
+    const customDimensions = getCustomDimensions();
 
     if (horizontalGap < 0 || isNaN(horizontalGap)) {
       showMessage(
@@ -229,6 +233,8 @@
         startArrow,
         endArrow,
         childrenTexts,
+        customDimensions.width,
+        customDimensions.height,
       );
   }
 
@@ -239,6 +245,7 @@
     const lineType = document.getElementById("lineType").value;
     const startArrow = document.getElementById("startArrow").value;
     const endArrow = document.getElementById("endArrow").value;
+    const customDimensions = getCustomDimensions();
 
     if (verticalGap < 0 || isNaN(verticalGap)) {
       showMessage(
@@ -278,6 +285,8 @@
         startArrow,
         endArrow,
         childrenTexts,
+        customDimensions.width,
+        customDimensions.height,
       );
   }
 
@@ -290,6 +299,7 @@
     const lineType = document.getElementById("lineType").value;
     const startArrow = document.getElementById("startArrow").value;
     const endArrow = document.getElementById("endArrow").value;
+    const customDimensions = getCustomDimensions();
 
     if (horizontalGap < 0 || isNaN(horizontalGap)) {
       showMessage(
@@ -329,6 +339,8 @@
         startArrow,
         endArrow,
         childrenTexts,
+        customDimensions.width,
+        customDimensions.height,
       );
   }
 
@@ -944,5 +956,44 @@
         showMessage("Error loading style previews", true);
       })
       .getStyleDefinitions();
+  }
+
+  // Setup checkbox handlers for custom width/height
+  document.addEventListener("DOMContentLoaded", function () {
+    const useCustomWidthCheckbox = document.getElementById("useCustomWidth");
+    const customWidthInput = document.getElementById("customWidth");
+    const useCustomHeightCheckbox = document.getElementById("useCustomHeight");
+    const customHeightInput = document.getElementById("customHeight");
+
+    if (useCustomWidthCheckbox && customWidthInput) {
+      useCustomWidthCheckbox.addEventListener("change", function () {
+        customWidthInput.disabled = !this.checked;
+      });
+    }
+
+    if (useCustomHeightCheckbox && customHeightInput) {
+      useCustomHeightCheckbox.addEventListener("change", function () {
+        customHeightInput.disabled = !this.checked;
+      });
+    }
+  });
+
+  // Get custom dimensions if enabled
+  function getCustomDimensions() {
+    const useCustomWidth = document.getElementById("useCustomWidth");
+    const customWidth = document.getElementById("customWidth");
+    const useCustomHeight = document.getElementById("useCustomHeight");
+    const customHeight = document.getElementById("customHeight");
+
+    return {
+      width:
+        useCustomWidth && useCustomWidth.checked
+          ? parseInt(customWidth.value)
+          : null,
+      height:
+        useCustomHeight && useCustomHeight.checked
+          ? parseInt(customHeight.value)
+          : null,
+    };
   }
 </script>
