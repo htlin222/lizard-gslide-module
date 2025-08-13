@@ -32,7 +32,7 @@
         <textarea
           id="markdownText"
           class="text-input-area"
-          style="padding: 6px 8px"
+          style="padding: 6px 2px"
           placeholder="# Main Topic&#10;## Subtopic 1&#10;### Detail 1.1&#10;### Detail 1.2&#10;## Subtopic 2&#10;### Detail 2.1"
           oninput="updateMarkdownPreview()"
         ></textarea>
@@ -71,24 +71,26 @@
       style="flex-direction: column; align-items: stretch"
     >
       <label style="margin-bottom: 8px">Layout:</label>
-      <div class="button-group" style="display: flex; width: 100%">
+      <div class="button-group" style="display: flex; gap: 8px; width: 100%">
         <button
           type="button"
-          class="layout-button secondary active"
+          class="layout-toggle active"
+          id="layout-toggle-lr"
           data-layout="LR"
           onclick="selectLayout('LR')"
           style="flex: 1"
         >
-          ⬅️➡️ Left-Right
+          Left-Right
         </button>
         <button
           type="button"
-          class="layout-button tertiary"
+          class="layout-toggle"
+          id="layout-toggle-td"
           data-layout="TD"
           onclick="selectLayout('TD')"
           style="flex: 1"
         >
-          ⬆️⬇️ Top-Down
+          Top-Down
         </button>
       </div>
     </div>

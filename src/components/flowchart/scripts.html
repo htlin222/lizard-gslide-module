@@ -1244,23 +1244,19 @@
   }
 
   function selectLayout(layout) {
-    // Remove active from all layout buttons and reset classes
-    const layoutButtons = document.querySelectorAll(".layout-button");
+    // Remove active from all layout toggle buttons
+    const layoutButtons = document.querySelectorAll(".layout-toggle");
     layoutButtons.forEach((btn) => {
       btn.classList.remove("active");
-      btn.classList.remove("secondary", "tertiary");
     });
 
-    // Add active to clicked button and set appropriate classes
-    const clickedButton = event.target;
-    clickedButton.classList.add("active", "secondary");
-
-    // Set inactive button to tertiary
-    layoutButtons.forEach((btn) => {
-      if (btn !== clickedButton) {
-        btn.classList.add("tertiary");
-      }
-    });
+    // Add active to the correct button based on layout value
+    const targetButton = document.getElementById(
+      `layout-toggle-${layout.toLowerCase()}`,
+    );
+    if (targetButton) {
+      targetButton.classList.add("active");
+    }
 
     // Store selected layout for server-side access
     window.selectedLayout = layout;
@@ -1268,5 +1264,21 @@
 
   function getSelectedLayout() {
     return window.selectedLayout || "LR"; // Default to LR
+  }
+
+  // Initialize layout selection on load
+  function initializeLayoutToggle() {
+    window.selectedLayout = "LR"; // Set default to LR
+    const lrButton = document.getElementById("layout-toggle-lr");
+    if (lrButton && !lrButton.classList.contains("active")) {
+      lrButton.classList.add("active");
+    }
+  }
+
+  // Call initialization when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeLayoutToggle);
+  } else {
+    initializeLayoutToggle();
   }
 </script>

@@ -176,10 +176,10 @@
   }
 
   .text-input-area {
-    width: calc(100% - 52px);
-    min-height: 80px;
+    width: calc(100% - 32px);
+    min-height: 120px;
     max-height: 120px;
-    padding: 8px;
+    padding: 2px;
     border: 1px solid #dadce0;
     border-radius: 4px;
     font-size: 12px;
@@ -541,6 +541,35 @@
   }
 
   .default-toggle.active:hover {
+    background-color: #1557b7;
+    border-color: #1557b7;
+  }
+
+  /* Layout toggle button styles (similar to default-toggle) */
+  .layout-toggle {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background-color: white;
+    border: 1px solid #d0d7de;
+    border-radius: 4px;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .layout-toggle:hover {
+    background-color: #f6f8fa;
+    border-color: #8c959f;
+  }
+
+  .layout-toggle.active {
+    background-color: #1a73e8;
+    border-color: #1a73e8;
+    color: white;
+  }
+
+  .layout-toggle.active:hover {
     background-color: #1557b7;
     border-color: #1557b7;
   }
