@@ -907,10 +907,7 @@ function createSingleChildWithText(
 		height,
 	);
 
-	// Copy styling from parent (except graph ID)
-	copyShapeStyle(parentShape, childShape);
-
-	// Set the custom text for this child shape (only if text is provided)
+	// Set the custom text for this child shape first (if text is provided)
 	try {
 		if (text && text.trim() !== "") {
 			childShape.getText().setText(text);
@@ -919,6 +916,9 @@ function createSingleChildWithText(
 	} catch (e) {
 		console.log(`Warning: Could not set child shape text: ${e.message}`);
 	}
+
+	// Copy styling from parent AFTER setting text (to preserve text styling)
+	copyShapeStyle(parentShape, childShape);
 
 	// Set up graph ID for flowchart hierarchy
 	let parentGraphId = getShapeGraphId(parentShape);

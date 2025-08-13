@@ -73,57 +73,209 @@ function pickConnectionSite(shape, side) {
  * Copies style properties from source shape to target shape
  * @param {GoogleAppsScript.Slides.Shape} sourceShape - Shape to copy style from
  * @param {GoogleAppsScript.Slides.Shape} targetShape - Shape to apply style to
+ * @param {boolean} copyTextContent - Whether to copy text content (default: false)
  */
-function copyShapeStyle(sourceShape, targetShape) {
+function copyShapeStyle(sourceShape, targetShape, copyTextContent = false) {
 	try {
-		// Copy fill
-		const sourceFill = sourceShape.getFill();
-		if (sourceFill?.getSolidFill()) {
-			targetShape.getFill().setSolidFill(sourceFill.getSolidFill().getColor());
-		}
-
-		// Copy border
-		const sourceBorder = sourceShape.getBorder();
-		if (sourceBorder) {
-			const targetBorder = targetShape.getBorder();
-			if (sourceBorder.getLineFill()?.getSolidFill()) {
-				targetBorder
-					.getLineFill()
-					.setSolidFill(sourceBorder.getLineFill().getSolidFill().getColor());
+		// Copy fill with alpha support
+		try {
+			const sourceFill = sourceShape.getFill();
+			if (sourceFill && sourceFill.getType() === SlidesApp.FillType.SOLID) {
+				const sourceSolidFill = sourceFill.getSolidFill();
+				if (sourceSolidFill) {
+					// Get the color and alpha separately and apply them
+					const color = sourceSolidFill.getColor();
+					const alpha = sourceSolidFill.getAlpha();
+					targetShape.getFill().setSolidFill(color, alpha);
+				}
 			}
-			targetBorder.setWeight(sourceBorder.getWeight());
-			targetBorder.setDashStyle(sourceBorder.getDashStyle());
+		} catch (e) {
+			console.log("Warning: Could not copy fill: " + e.message);
 		}
 
-		// Copy text style if there's text
+		// Copy border with complete styling - following the exact pattern from documentation
+		try {
+			const sourceBorder = sourceShape.getBorder();
+			const targetBorder = targetShape.getBorder();
+
+			if (sourceBorder && targetBorder) {
+				// First set the border weight (must be done separately)
+				try {
+					const borderWeight = sourceBorder.getWeight();
+					if (borderWeight) {
+						targetBorder.setWeight(borderWeight);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy border weight: " + e.message);
+				}
+
+				// Then set the border color using getLineFill() - separate statement as per docs
+				try {
+					const sourceLineFill = sourceBorder.getLineFill();
+					if (
+						sourceLineFill &&
+						sourceLineFill.getType() === SlidesApp.FillType.SOLID
+					) {
+						const sourceSolidFill = sourceLineFill.getSolidFill();
+						if (sourceSolidFill) {
+							const borderColor = sourceSolidFill.getColor();
+							targetBorder.getLineFill().setSolidFill(borderColor);
+						}
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy border color: " + e.message);
+				}
+
+				// Finally set dash style
+				try {
+					const dashStyle = sourceBorder.getDashStyle();
+					if (dashStyle) {
+						targetBorder.setDashStyle(dashStyle);
+					}
+				} catch (e) {
+					console.log(
+						"Warning: Could not copy border dash style: " + e.message,
+					);
+				}
+			}
+		} catch (e) {
+			console.log("Warning: Could not copy border styling: " + e.message);
+		}
+
+		// Copy text style (but not content unless specified)
 		const sourceText = sourceShape.getText();
 		const targetText = targetShape.getText();
 		if (sourceText && targetText) {
-			// Copy text content
-			targetText.setText(sourceText.asString());
+			// Only copy text content if explicitly requested
+			if (copyTextContent) {
+				targetText.setText(sourceText.asString());
+			}
 
-			// Copy text style
-			const sourceStyle = sourceText.getTextStyle();
-			const targetStyle = targetText.getTextStyle();
+			// Always copy text styling
+			try {
+				const sourceStyle = sourceText.getTextStyle();
+				const targetStyle = targetText.getTextStyle();
 
-			if (sourceStyle.getFontFamily()) {
-				targetStyle.setFontFamily(sourceStyle.getFontFamily());
-			}
-			if (sourceStyle.getFontSize()) {
-				targetStyle.setFontSize(sourceStyle.getFontSize());
-			}
-			if (sourceStyle.getForegroundColor()) {
-				targetStyle.setForegroundColor(sourceStyle.getForegroundColor());
-			}
-			if (sourceStyle.isBold()) {
-				targetStyle.setBold(sourceStyle.isBold());
-			}
-			if (sourceStyle.isItalic()) {
-				targetStyle.setItalic(sourceStyle.isItalic());
+				// Copy font family
+				try {
+					const fontFamily = sourceStyle.getFontFamily();
+					if (fontFamily) {
+						targetStyle.setFontFamily(fontFamily);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy font family: " + e.message);
+				}
+
+				// Copy font size
+				try {
+					const fontSize = sourceStyle.getFontSize();
+					if (fontSize) {
+						targetStyle.setFontSize(fontSize);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy font size: " + e.message);
+				}
+
+				// Copy font color (foreground color)
+				try {
+					const foregroundColor = sourceStyle.getForegroundColor();
+					if (foregroundColor) {
+						targetStyle.setForegroundColor(foregroundColor);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy font color: " + e.message);
+				}
+
+				// Copy bold styling - using safer boolean check
+				try {
+					const isBold = sourceStyle.isBold();
+					if (typeof isBold === "boolean") {
+						targetStyle.setBold(isBold);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy bold style: " + e.message);
+				}
+
+				// Copy italic styling - using safer boolean check
+				try {
+					const isItalic = sourceStyle.isItalic();
+					if (typeof isItalic === "boolean") {
+						targetStyle.setItalic(isItalic);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy italic style: " + e.message);
+				}
+
+				// Copy underline styling - using safer boolean check
+				try {
+					const isUnderline = sourceStyle.isUnderline();
+					if (typeof isUnderline === "boolean") {
+						targetStyle.setUnderline(isUnderline);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy underline style: " + e.message);
+				}
+
+				// Copy strikethrough styling if available
+				try {
+					if (typeof sourceStyle.isStrikethrough === "function") {
+						const isStrikethrough = sourceStyle.isStrikethrough();
+						if (typeof isStrikethrough === "boolean") {
+							targetStyle.setStrikethrough(isStrikethrough);
+						}
+					}
+				} catch (e) {
+					console.log(
+						"Warning: Could not copy strikethrough style: " + e.message,
+					);
+				}
+			} catch (e) {
+				console.log("Warning: Could not copy text style: " + e.message);
 			}
 		}
 	} catch (e) {
-		console.log("Warning: Could not copy all style properties: " + e.message);
+		console.log("Warning: Could not copy shape style: " + e.message);
+	}
+}
+
+/**
+ * Debug function to test style copying on selected shapes
+ * Select two shapes and run this to copy style from first to second
+ */
+function debugStyleCopy() {
+	try {
+		const pres = SlidesApp.getActivePresentation();
+		const selection = pres.getSelection();
+		const range = selection.getPageElementRange();
+
+		if (!range) {
+			SlidesApp.getUi().alert("Please select TWO shapes");
+			return;
+		}
+
+		const elements = range.getPageElements();
+		if (elements.length !== 2) {
+			SlidesApp.getUi().alert("Please select exactly TWO shapes");
+			return;
+		}
+
+		const sourceShape = elements[0].asShape();
+		const targetShape = elements[1].asShape();
+
+		console.log("=== DEBUG: Style Copy Test ===");
+		console.log("Source shape ID: " + sourceShape.getObjectId());
+		console.log("Target shape ID: " + targetShape.getObjectId());
+
+		// Test the style copying
+		copyShapeStyle(sourceShape, targetShape);
+
+		console.log("Style copying completed - check console for any warnings");
+		SlidesApp.getUi().alert(
+			"Style copying test completed. Check console logs for details.",
+		);
+	} catch (e) {
+		console.error("Debug style copy error: " + e.message);
+		SlidesApp.getUi().alert("Error: " + e.message);
 	}
 }
 

@@ -155,53 +155,122 @@ function splitSelectedShape(rows, columns, gap) {
 function copyShapeStyle(sourceShape, targetShape) {
 	try {
 		// Copy fill
-		const sourceFill = sourceShape.getFill();
-		const targetFill = targetShape.getFill();
-
-		if (sourceFill.getType() === SlidesApp.FillType.SOLID) {
-			targetFill.setSolidFill(
-				sourceFill.getSolidFill().getColor(),
-				sourceFill.getSolidFill().getAlpha(),
-			);
+		try {
+			const sourceFill = sourceShape.getFill();
+			if (sourceFill && sourceFill.getType() === SlidesApp.FillType.SOLID) {
+				const sourceSolidFill = sourceFill.getSolidFill();
+				if (sourceSolidFill) {
+					const color = sourceSolidFill.getColor();
+					const alpha = sourceSolidFill.getAlpha();
+					targetShape.getFill().setSolidFill(color, alpha);
+				}
+			}
+		} catch (e) {
+			console.log("Warning: Could not copy fill: " + e.message);
 		}
 
 		// Copy border - using proper border handling for Google Slides
 		const sourceBorder = sourceShape.getBorder();
 		const targetBorder = targetShape.getBorder();
 
-		// Set border weight and dash style
-		targetBorder.setWeight(sourceBorder.getWeight());
-		targetBorder.setDashStyle(sourceBorder.getDashStyle());
+		if (sourceBorder && targetBorder) {
+			// Set border weight and dash style
+			try {
+				targetBorder.setWeight(sourceBorder.getWeight());
+			} catch (e) {
+				console.log("Warning: Could not copy border weight: " + e.message);
+			}
 
-		// Set border color if it's a solid fill
-		const borderFill = sourceBorder.getFill();
-		if (borderFill.getType() === SlidesApp.FillType.SOLID) {
-			targetBorder.setSolidFill(
-				borderFill.getSolidFill().getColor(),
-				borderFill.getSolidFill().getAlpha(),
-			);
+			try {
+				targetBorder.setDashStyle(sourceBorder.getDashStyle());
+			} catch (e) {
+				console.log("Warning: Could not copy border dash style: " + e.message);
+			}
+
+			// Set border color if it's a solid fill
+			const borderLineFill = sourceBorder.getLineFill();
+			if (
+				borderLineFill &&
+				borderLineFill.getType() === SlidesApp.FillType.SOLID
+			) {
+				const sourceSolidFill = borderLineFill.getSolidFill();
+				if (sourceSolidFill) {
+					targetBorder
+						.getLineFill()
+						.setSolidFill(
+							sourceSolidFill.getColor(),
+							sourceSolidFill.getAlpha(),
+						);
+				}
+			}
 		}
 
 		// Copy text style if applicable
 		if (sourceShape.getText() && targetShape.getText()) {
-			const sourceTextStyle = sourceShape.getText().getTextStyle();
-			const targetTextStyle = targetShape.getText().getTextStyle();
+			try {
+				const sourceTextStyle = sourceShape.getText().getTextStyle();
+				const targetTextStyle = targetShape.getText().getTextStyle();
 
-			// Copy basic text properties
-			if (sourceTextStyle.getFontFamily()) {
-				targetTextStyle.setFontFamily(sourceTextStyle.getFontFamily());
-			}
-			if (sourceTextStyle.getFontSize()) {
-				targetTextStyle.setFontSize(sourceTextStyle.getFontSize());
-			}
-			targetTextStyle.setBold(sourceTextStyle.isBold());
-			targetTextStyle.setItalic(sourceTextStyle.isItalic());
-			targetTextStyle.setUnderline(sourceTextStyle.isUnderline());
+				// Copy basic text properties
+				try {
+					const fontFamily = sourceTextStyle.getFontFamily();
+					if (fontFamily) {
+						targetTextStyle.setFontFamily(fontFamily);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy font family: " + e.message);
+				}
 
-			// Copy text color if available
-			const fontColor = sourceTextStyle.getForegroundColor();
-			if (fontColor) {
-				targetTextStyle.setForegroundColor(fontColor);
+				try {
+					const fontSize = sourceTextStyle.getFontSize();
+					if (fontSize) {
+						targetTextStyle.setFontSize(fontSize);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy font size: " + e.message);
+				}
+
+				// Copy bold styling - using safer boolean check
+				try {
+					const isBold = sourceTextStyle.isBold();
+					if (typeof isBold === "boolean") {
+						targetTextStyle.setBold(isBold);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy bold style: " + e.message);
+				}
+
+				// Copy italic styling - using safer boolean check
+				try {
+					const isItalic = sourceTextStyle.isItalic();
+					if (typeof isItalic === "boolean") {
+						targetTextStyle.setItalic(isItalic);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy italic style: " + e.message);
+				}
+
+				// Copy underline styling - using safer boolean check
+				try {
+					const isUnderline = sourceTextStyle.isUnderline();
+					if (typeof isUnderline === "boolean") {
+						targetTextStyle.setUnderline(isUnderline);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy underline style: " + e.message);
+				}
+
+				// Copy text color if available
+				try {
+					const fontColor = sourceTextStyle.getForegroundColor();
+					if (fontColor) {
+						targetTextStyle.setForegroundColor(fontColor);
+					}
+				} catch (e) {
+					console.log("Warning: Could not copy font color: " + e.message);
+				}
+			} catch (e) {
+				console.log("Warning: Could not copy text style: " + e.message);
 			}
 		}
 	} catch (error) {
