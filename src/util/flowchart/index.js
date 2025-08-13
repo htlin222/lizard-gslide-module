@@ -26,6 +26,7 @@
  * ├── debugUtils.js          # Debug and inspection utilities
  * ├── lineUpdateUtils.js     # Line update and style management
  * ├── smartSelectionUtils.js # Smart selection based on graph ID relationships
+ * ├── markdownUtils.js      # Markdown hierarchy to flowchart conversion
  * ├── main.js                # Main interface functions and sidebar
  * └── index.js              # This documentation file
  *
@@ -111,6 +112,15 @@
  * - selectAllLevel()
  * - selectAllParents()
  * - selectFamily()
+ *
+ * From markdownUtils.js:
+ * - parseMarkdownHierarchy(markdownText)
+ * - generateMarkdownPreview(items)
+ * - createFromMarkdown()
+ * - calculateMarkdownPositions(items, layout)
+ * - updateParentChildrenInGraphIds(createdShapes, items)
+ * - getDefaultStyle()
+ * - applyStyleToShape(shape, style)
  *
  * From main.js:
  * - showFlowchartSidebar()

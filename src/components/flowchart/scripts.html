@@ -1165,4 +1165,108 @@
       })
       .selectFamily();
   }
+
+  // Markdown functions
+  function switchMarkdownTab(tabName) {
+    // Hide all tab contents
+    document.getElementById("hierarchyTab").classList.remove("active");
+    document.getElementById("previewTab").classList.remove("active");
+
+    // Remove active from all tab buttons
+    const tabButtons = document.querySelectorAll(".tab-button");
+    tabButtons.forEach((btn) => btn.classList.remove("active"));
+
+    // Show selected tab content
+    document.getElementById(tabName + "Tab").classList.add("active");
+
+    // Set active tab button
+    event.target.classList.add("active");
+  }
+
+  function updateMarkdownPreview() {
+    const markdownText = document.getElementById("markdownText").value;
+
+    if (!markdownText || !markdownText.trim()) {
+      document.getElementById("markdownPreview").textContent =
+        "0 levels → 0 shapes";
+      document.getElementById("markdownStructure").textContent =
+        "No markdown to preview";
+      return;
+    }
+
+    // Parse markdown on client side for preview
+    const lines = markdownText.split("\n");
+    let shapeCount = 0;
+    let maxLevel = 0;
+    let preview = "";
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (trimmedLine && trimmedLine.startsWith("#")) {
+        const levelMatch = trimmedLine.match(/^(#+)\s+(.+)$/);
+        if (levelMatch) {
+          const level = levelMatch[1].length;
+          const text = levelMatch[2].trim();
+          maxLevel = Math.max(maxLevel, level);
+          shapeCount++;
+
+          const indent = "  ".repeat(level - 1);
+          const alphabetLevel = String.fromCharCode(64 + level); // A, B, C, etc.
+          preview += `${indent}${alphabetLevel}: ${text}\n`;
+        }
+      }
+    }
+
+    document.getElementById("markdownPreview").textContent =
+      `${maxLevel} levels → ${shapeCount} shapes`;
+    document.getElementById("markdownStructure").textContent =
+      preview || "No valid markdown headers";
+  }
+
+  function createFromMarkdown() {
+    const button = event.target;
+    const originalText = "🌳 Create Flowchart";
+    const markdownText = document.getElementById("markdownText").value;
+    const layout = getSelectedLayout();
+
+    startButtonProgress(button, originalText);
+
+    google.script.run
+      .withSuccessHandler(function () {
+        endButtonProgress(button, originalText);
+        showMessage("Flowchart created from markdown!");
+      })
+      .withFailureHandler(function (error) {
+        endButtonProgress(button, originalText);
+        showMessage("Error: " + error, true);
+      })
+      .createFromMarkdown(markdownText, layout);
+  }
+
+  function selectLayout(layout) {
+    // Remove active from all layout buttons and reset classes
+    const layoutButtons = document.querySelectorAll(".layout-button");
+    layoutButtons.forEach((btn) => {
+      btn.classList.remove("active");
+      btn.classList.remove("secondary", "tertiary");
+    });
+
+    // Add active to clicked button and set appropriate classes
+    const clickedButton = event.target;
+    clickedButton.classList.add("active", "secondary");
+
+    // Set inactive button to tertiary
+    layoutButtons.forEach((btn) => {
+      if (btn !== clickedButton) {
+        btn.classList.add("tertiary");
+      }
+    });
+
+    // Store selected layout for server-side access
+    window.selectedLayout = layout;
+  }
+
+  function getSelectedLayout() {
+    return window.selectedLayout || "LR"; // Default to LR
+  }
 </script>
