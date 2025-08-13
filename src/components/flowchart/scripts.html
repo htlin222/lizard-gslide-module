@@ -1228,6 +1228,15 @@
     const originalText = "🌳 Create Flowchart";
     const markdownText = document.getElementById("markdownText").value;
     const layout = getSelectedLayout();
+    const horizontalGap =
+      parseInt(document.getElementById("horizontalGap").value) || 20;
+    const verticalGap =
+      parseInt(document.getElementById("verticalGap").value) || 20;
+
+    // Get line settings from the line-settings component
+    const lineType = document.getElementById("lineType").value;
+    const startArrow = document.getElementById("startArrow").value;
+    const endArrow = document.getElementById("endArrow").value;
 
     startButtonProgress(button, originalText);
 
@@ -1240,7 +1249,15 @@
         endButtonProgress(button, originalText);
         showMessage("Error: " + error, true);
       })
-      .createFromMarkdown(markdownText, layout);
+      .createFromMarkdown(
+        markdownText,
+        layout,
+        horizontalGap,
+        verticalGap,
+        lineType,
+        startArrow,
+        endArrow,
+      );
   }
 
   function selectLayout(layout) {

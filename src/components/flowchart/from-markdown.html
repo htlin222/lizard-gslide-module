@@ -22,6 +22,12 @@
 
     <!-- Hierarchy Tab -->
     <div id="hierarchyTab" class="tab-content active">
+      <div class="form-group">
+        <p class="info-text" style="margin-bottom: 8px">
+          📐 First select a shape as canvas to define the area
+        </p>
+      </div>
+
       <div
         class="form-group"
         style="flex-direction: column; align-items: stretch"
@@ -92,6 +98,23 @@
         >
           Top-Down
         </button>
+      </div>
+    </div>
+
+    <!-- Gap Settings -->
+    <div class="form-group">
+      <label for="horizontalGap">Horizontal Gap:</label>
+      <div class="gap-controls">
+        <input type="number" id="horizontalGap" min="0" value="20" />
+        <span class="input-suffix">pt</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="verticalGap">Vertical Gap:</label>
+      <div class="gap-controls">
+        <input type="number" id="verticalGap" min="0" value="20" />
+        <span class="input-suffix">pt</span>
       </div>
     </div>
 

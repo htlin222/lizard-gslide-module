@@ -4,7 +4,7 @@
  */
 
 /**
- * Parses markdown text into hierarchical structure
+ * Parses markdown text into hierarchical structure following markmap-style hierarchy
  * @param {string} markdownText - The markdown text to parse
  * @returns {Array} Array of parsed markdown items with level, text, and hierarchy info
  */
@@ -15,7 +15,7 @@ function parseMarkdownHierarchy(markdownText) {
 
 	const lines = markdownText.split("\n");
 	const items = [];
-	const levelStack = []; // Track parent hierarchy
+	const levelStack = []; // Track parent IDs at each level
 
 	for (const line of lines) {
 		const trimmedLine = line.trim();
@@ -35,31 +35,23 @@ function parseMarkdownHierarchy(markdownText) {
 		// Convert level to alphabet (1=A, 2=B, etc.)
 		const alphabetLevel = String.fromCharCode(64 + level); // 65 is 'A'
 
-		// Adjust level stack to current level
+		// Adjust level stack to current level depth
+		// Keep only parent levels (remove deeper levels)
 		while (levelStack.length >= level) {
 			levelStack.pop();
 		}
 
-		// Generate current ID
-		let currentId;
-		if (levelStack.length === 0) {
-			// Root level - just use alphabet + number
-			const rootCount = items.filter((item) => item.level === 1).length + 1;
-			currentId = alphabetLevel + rootCount;
-		} else {
-			// Child level - append to parent
-			const parentId = levelStack[levelStack.length - 1];
-			const siblingCount =
-				items.filter(
-					(item) =>
-						item.level === level &&
-						item.parentHierarchy.length > 0 &&
-						item.parentHierarchy[item.parentHierarchy.length - 1] === parentId,
-				).length + 1;
-			currentId = alphabetLevel + siblingCount;
-		}
+		// Count siblings at this level under the same parent
+		const parentId =
+			levelStack.length > 0 ? levelStack[levelStack.length - 1] : null;
+		const siblingCount =
+			items.filter((item) => item.level === level && item.parentId === parentId)
+				.length + 1;
 
-		// Build parent hierarchy
+		// Generate current ID
+		const currentId = alphabetLevel + siblingCount;
+
+		// Build complete parent hierarchy path
 		const parentHierarchy = [...levelStack];
 
 		const item = {
@@ -68,14 +60,11 @@ function parseMarkdownHierarchy(markdownText) {
 			alphabetLevel: alphabetLevel,
 			currentId: currentId,
 			parentHierarchy: parentHierarchy,
-			parentId:
-				parentHierarchy.length > 0
-					? parentHierarchy[parentHierarchy.length - 1]
-					: null,
+			parentId: parentId,
 		};
 
 		items.push(item);
-		levelStack.push(currentId);
+		levelStack.push(currentId); // Add current ID to stack for potential children
 	}
 
 	return items;
@@ -104,19 +93,51 @@ function generateMarkdownPreview(items) {
 }
 
 /**
- * Creates flowchart from markdown hierarchy using existing child creation functions
+ * Creates flowchart from markdown hierarchy using canvas-based intelligent sizing
  * @param {string} markdownText - The markdown text
  * @param {string} layout - Layout type ('TD' or 'LR')
+ * @param {number} horizontalGap - Horizontal gap between shapes
+ * @param {number} verticalGap - Vertical gap between shapes
+ * @param {string} lineType - Line type for connections ('STRAIGHT', 'BENT', 'CURVED')
+ * @param {string} startArrow - Start arrow style
+ * @param {string} endArrow - End arrow style
  */
-function createFromMarkdown(markdownText, layout) {
+function createFromMarkdown(
+	markdownText,
+	layout,
+	horizontalGap,
+	verticalGap,
+	lineType,
+	startArrow,
+	endArrow,
+) {
 	try {
 		markdownText = markdownText || "";
 		layout = layout || "LR";
+		horizontalGap = horizontalGap || 20;
+		verticalGap = verticalGap || 20;
+		lineType = lineType || "BENT";
+		startArrow = startArrow || "NONE";
+		endArrow = endArrow || "FILL_ARROW";
 
 		if (!markdownText || !markdownText.trim()) {
 			console.error("No markdown text provided");
 			return;
 		}
+
+		// First, validate and get the canvas shape
+		const pres = SlidesApp.getActivePresentation();
+		const selection = pres.getSelection();
+		const range = selection.getPageElementRange();
+
+		const validation = validateParentElement(range);
+		if (validation.error) {
+			console.error(validation.error);
+			return;
+		}
+
+		const canvasShape = validation.shape;
+		const slide = canvasShape.getParentPage();
 
 		// Parse markdown hierarchy
 		const items = parseMarkdownHierarchy(markdownText);
@@ -125,17 +146,38 @@ function createFromMarkdown(markdownText, layout) {
 			return;
 		}
 
-		// Get current slide and create root shape first
-		const pres = SlidesApp.getActivePresentation();
-		const slide = pres.getSelection().getCurrentPage();
+		// Calculate intelligent dimensions based on canvas and markdown structure
+		const canvasProps = {
+			left: canvasShape.getLeft(),
+			top: canvasShape.getTop(),
+			width: canvasShape.getWidth(),
+			height: canvasShape.getHeight(),
+		};
 
-		if (!slide) {
-			console.error("No slide selected");
-			return;
-		}
+		const dimensions = calculateIntelligentDimensions(
+			items,
+			layout,
+			canvasProps,
+			horizontalGap,
+			verticalGap,
+		);
 
-		// Create the flowchart using existing child creation functions
-		createMarkdownFlowchart(items, slide, layout);
+		// Remove the canvas shape since we're replacing it
+		canvasShape.remove();
+
+		// Create the flowchart using intelligent positioning
+		createMarkdownFlowchartIntelligent(
+			items,
+			slide,
+			layout,
+			canvasProps,
+			dimensions,
+			horizontalGap,
+			verticalGap,
+			lineType,
+			startArrow,
+			endArrow,
+		);
 
 		console.log(`Created flowchart with ${items.length} shapes from markdown`);
 	} catch (e) {
@@ -144,107 +186,190 @@ function createFromMarkdown(markdownText, layout) {
 }
 
 /**
- * Creates markdown flowchart using existing child creation functions
+ * Calculates intelligent dimensions based on canvas size and markdown structure
  * @param {Array} items - Parsed markdown items
- * @param {GoogleAppsScript.Slides.Slide} slide - The slide to create shapes on
  * @param {string} layout - Layout type ('TD' or 'LR')
+ * @param {Object} canvasProps - Canvas properties {left, top, width, height}
+ * @param {number} horizontalGap - Horizontal gap between shapes
+ * @param {number} verticalGap - Vertical gap between shapes
+ * @returns {Object} Dimensions object with shapeWidth, shapeHeight, and positioning info
  */
-function createMarkdownFlowchart(items, slide, layout) {
-	// Group items by level
+function calculateIntelligentDimensions(
+	items,
+	layout,
+	canvasProps,
+	horizontalGap,
+	verticalGap,
+) {
+	// Analyze the markdown structure
+	const maxLevel = Math.max(...items.map((item) => item.level));
 	const itemsByLevel = new Map();
+	let maxShapesInLevel = 0;
+
 	for (const item of items) {
 		if (!itemsByLevel.has(item.level)) {
 			itemsByLevel.set(item.level, []);
 		}
 		itemsByLevel.get(item.level).push(item);
+		maxShapesInLevel = Math.max(
+			maxShapesInLevel,
+			itemsByLevel.get(item.level).length,
+		);
 	}
 
-	// Create root shapes (level 1) first
-	const rootItems = itemsByLevel.get(1) || [];
-	const createdShapes = new Map(); // currentId -> shape
-	const shapeWidth = 60;
-	const shapeHeight = 20;
+	let shapeWidth, shapeHeight;
 
-	// Create all root shapes first
-	for (let i = 0; i < rootItems.length; i++) {
-		const item = rootItems[i];
-		const x = 50 + i * (shapeWidth + 40);
-		const y = 50;
-
-		const rootShape = slide.insertShape(
-			SlidesApp.ShapeType.RECTANGLE,
-			x,
-			y,
-			shapeWidth,
-			shapeHeight,
+	if (layout === "LR") {
+		// LR: levels spread horizontally, max shapes in a level spread vertically
+		// Width: canvas width divided by number of levels (minus gaps)
+		shapeWidth = Math.floor(
+			(canvasProps.width - (maxLevel - 1) * horizontalGap) / maxLevel,
 		);
 
-		// Set text and style
-		rootShape.getText().setText(item.text);
+		// Height: canvas height divided by max shapes in a level (minus gaps)
+		shapeHeight = Math.floor(
+			(canvasProps.height - (maxShapesInLevel - 1) * verticalGap) /
+				maxShapesInLevel,
+		);
+	} else {
+		// TD: levels spread vertically, max shapes in a level spread horizontally
+		// Width: canvas width divided by max shapes in a level (minus gaps)
+		shapeWidth = Math.floor(
+			(canvasProps.width - (maxShapesInLevel - 1) * horizontalGap) /
+				maxShapesInLevel,
+		);
 
-		// Apply default style if available
-		const defaultStyle = getDefaultStyle();
-		if (defaultStyle) {
-			applyStyleToShape(rootShape, defaultStyle);
-		}
-
-		// Initialize as root shape with graph ID
-		initializeAsRootGraphShape(rootShape);
-		createdShapes.set(item.currentId, rootShape);
+		// Height: canvas height divided by number of levels (minus gaps)
+		shapeHeight = Math.floor(
+			(canvasProps.height - (maxLevel - 1) * verticalGap) / maxLevel,
+		);
 	}
 
-	// Create children level by level using existing functions
-	for (
-		let level = 2;
-		level <= Math.max(...items.map((item) => item.level));
-		level++
-	) {
-		const levelItems = itemsByLevel.get(level) || [];
+	// Ensure minimum dimensions
+	shapeWidth = Math.max(shapeWidth, 40);
+	shapeHeight = Math.max(shapeHeight, 20);
 
-		for (const item of levelItems) {
-			const parentShape = createdShapes.get(item.parentId);
-			if (!parentShape) continue;
-
-			// Select the parent shape temporarily
-			parentShape.select();
-
-			// Determine direction based on layout
-			const direction = layout === "LR" ? "RIGHT" : "BOTTOM";
-
-			// Create child using existing function with text
-			const childShapes = createChildrenInDirectionWithText(
-				direction,
-				20, // gap
-				"STRAIGHT", // lineType
-				1, // count
-				"NONE", // startArrow
-				"FILL_ARROW", // endArrow
-				[item.text], // texts array
-				shapeWidth, // customWidth
-				shapeHeight, // customHeight
-				false, // maxWidth
-				false, // maxHeight
-				getDefaultStyle(), // defaultStyle
-			);
-
-			if (childShapes && childShapes.length > 0) {
-				createdShapes.set(item.currentId, childShapes[0]);
-			}
-		}
-	}
-
-	// Clear selection at the end
-	const selection = SlidesApp.getActivePresentation().getSelection();
-	selection.unselectAll();
+	return {
+		shapeWidth,
+		shapeHeight,
+		maxLevel,
+		maxShapesInLevel,
+		itemsByLevel,
+	};
 }
 
 /**
- * Updates parent shapes' graph IDs with their children
+ * Creates markdown flowchart with intelligent positioning within canvas bounds
+ * @param {Array} items - Parsed markdown items
+ * @param {GoogleAppsScript.Slides.Slide} slide - The slide to create shapes on
+ * @param {string} layout - Layout type ('TD' or 'LR')
+ * @param {Object} canvasProps - Canvas properties {left, top, width, height}
+ * @param {Object} dimensions - Calculated dimensions
+ * @param {number} horizontalGap - Horizontal gap between shapes
+ * @param {number} verticalGap - Vertical gap between shapes
+ * @param {string} lineType - Line type for connections ('STRAIGHT', 'BENT', 'CURVED')
+ * @param {string} startArrow - Start arrow style
+ * @param {string} endArrow - End arrow style
+ */
+function createMarkdownFlowchartIntelligent(
+	items,
+	slide,
+	layout,
+	canvasProps,
+	dimensions,
+	horizontalGap,
+	verticalGap,
+	lineType,
+	startArrow,
+	endArrow,
+) {
+	const { shapeWidth, shapeHeight, itemsByLevel } = dimensions;
+	const createdShapes = new Map(); // currentId -> shape
+	const defaultStyle = getDefaultStyle();
+
+	// Create all shapes with calculated positions
+	for (const [level, levelItems] of itemsByLevel.entries()) {
+		for (let i = 0; i < levelItems.length; i++) {
+			const item = levelItems[i];
+
+			// Calculate position based on layout
+			let x, y;
+			if (layout === "LR") {
+				// LR: level determines X, index in level determines Y
+				x = canvasProps.left + (level - 1) * (shapeWidth + horizontalGap);
+
+				// Center the level vertically within canvas
+				const levelHeight =
+					levelItems.length * shapeHeight +
+					(levelItems.length - 1) * verticalGap;
+				const levelStartY =
+					canvasProps.top + (canvasProps.height - levelHeight) / 2;
+				y = levelStartY + i * (shapeHeight + verticalGap);
+			} else {
+				// TD: level determines Y, index in level determines X
+				y = canvasProps.top + (level - 1) * (shapeHeight + verticalGap);
+
+				// Center the level horizontally within canvas
+				const levelWidth =
+					levelItems.length * shapeWidth +
+					(levelItems.length - 1) * horizontalGap;
+				const levelStartX =
+					canvasProps.left + (canvasProps.width - levelWidth) / 2;
+				x = levelStartX + i * (shapeWidth + horizontalGap);
+			}
+
+			// Create shape with intelligent dimensions
+			const shape = slide.insertShape(
+				SlidesApp.ShapeType.RECTANGLE,
+				x,
+				y,
+				shapeWidth,
+				shapeHeight,
+			);
+
+			// Set text and style
+			shape.getText().setText(item.text);
+
+			if (defaultStyle) {
+				applyStyleToShape(shape, defaultStyle);
+			}
+
+			// Set graph ID with proper parent hierarchy
+			const parentHierarchyString =
+				item.parentHierarchy.length > 0 ? item.parentHierarchy.join("|") : "";
+			const graphId = generateGraphId(
+				parentHierarchyString,
+				layout,
+				item.currentId,
+				"", // Children will be added later in updateParentChildrenInGraphIds
+			);
+			setShapeGraphId(shape, graphId);
+
+			createdShapes.set(item.currentId, shape);
+		}
+	}
+
+	// Create connections between parent and child shapes
+	createMarkdownConnections(
+		items,
+		createdShapes,
+		layout,
+		lineType,
+		startArrow,
+		endArrow,
+	);
+
+	// Update parent graph IDs with children
+	updateParentChildrenInGraphIds(createdShapes, items);
+}
+
+/**
+ * Updates parent shapes' graph IDs with their children information
  * @param {Map} createdShapes - Map of currentId -> shape
  * @param {Array} items - Parsed markdown items
  */
 function updateParentChildrenInGraphIds(createdShapes, items) {
-	// Build parent-children mapping
+	// Build parent-children mapping with layout information
 	const parentChildren = new Map();
 
 	for (const item of items) {
@@ -252,23 +377,33 @@ function updateParentChildrenInGraphIds(createdShapes, items) {
 			if (!parentChildren.has(item.parentId)) {
 				parentChildren.set(item.parentId, []);
 			}
-			parentChildren.get(item.parentId).push(item.currentId);
+			// Store child with layout info (all children in markdown have same layout)
+			parentChildren.get(item.parentId).push({
+				id: item.currentId,
+				layout: "LR", // Default layout, will be updated based on actual layout parameter
+			});
 		}
 	}
 
-	// Update parent graph IDs
-	for (const [parentId, childIds] of parentChildren.entries()) {
+	// Update parent graph IDs with children information
+	for (const [parentId, children] of parentChildren.entries()) {
 		const parentShape = createdShapes.get(parentId);
 		if (parentShape) {
 			const currentGraphId = getShapeGraphId(parentShape);
 			if (currentGraphId) {
 				const parsed = parseGraphId(currentGraphId);
 				if (parsed) {
+					// Update children with the correct layout from the parent's graph ID
+					const childrenWithLayout = children.map((child) => ({
+						id: child.id,
+						layout: parsed.layout || "LR",
+					}));
+
 					const updatedGraphId = generateGraphId(
 						parsed.parent,
 						parsed.layout,
 						parsed.current,
-						childIds.join(","),
+						childrenWithLayout,
 					);
 					setShapeGraphId(parentShape, updatedGraphId);
 				}
@@ -291,6 +426,70 @@ function getDefaultStyle() {
 		console.warn("Failed to parse default style from localStorage:", e);
 	}
 	return null;
+}
+
+/**
+ * Creates connections between parent and child shapes based on markdown hierarchy
+ * @param {Array} items - Parsed markdown items with hierarchy information
+ * @param {Map} createdShapes - Map of currentId -> shape
+ * @param {string} layout - Layout type ('TD' or 'LR')
+ * @param {string} lineType - Line type for connections ('STRAIGHT', 'BENT', 'CURVED')
+ * @param {string} startArrow - Start arrow style
+ * @param {string} endArrow - End arrow style
+ */
+function createMarkdownConnections(
+	items,
+	createdShapes,
+	layout,
+	lineType,
+	startArrow,
+	endArrow,
+) {
+	for (const item of items) {
+		if (item.parentId && createdShapes.has(item.parentId)) {
+			const parentShape = createdShapes.get(item.parentId);
+			const childShape = createdShapes.get(item.currentId);
+
+			if (parentShape && childShape) {
+				// Determine connection sides based on layout
+				let parentSide, childSide;
+				if (layout === "LR") {
+					parentSide = "RIGHT";
+					childSide = "LEFT";
+				} else {
+					parentSide = "BOTTOM";
+					childSide = "TOP";
+				}
+
+				// Create connection using existing utilities
+				const parentSite = pickConnectionSite(parentShape, parentSide);
+				const childSite = pickConnectionSite(childShape, childSide);
+
+				if (parentSite && childSite) {
+					const slide = parentShape.getParentPage();
+					const lineCategory =
+						SlidesApp.LineCategory[lineType] || SlidesApp.LineCategory.BENT;
+					const line = slide.insertLine(lineCategory, parentSite, childSite);
+
+					// Apply arrow styles from line settings
+					if (
+						startArrow &&
+						startArrow !== "NONE" &&
+						SlidesApp.ArrowStyle[startArrow]
+					) {
+						line.setStartArrow(SlidesApp.ArrowStyle[startArrow]);
+					}
+					if (
+						endArrow &&
+						endArrow !== "NONE" &&
+						SlidesApp.ArrowStyle[endArrow]
+					) {
+						line.setEndArrow(SlidesApp.ArrowStyle[endArrow]);
+					}
+				}
+			}
+		}
+	}
 }
 
 /**

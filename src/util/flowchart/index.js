@@ -116,8 +116,10 @@
  * From markdownUtils.js:
  * - parseMarkdownHierarchy(markdownText)
  * - generateMarkdownPreview(items)
- * - createFromMarkdown()
- * - calculateMarkdownPositions(items, layout)
+ * - createFromMarkdown(markdownText, layout, horizontalGap, verticalGap)
+ * - calculateIntelligentDimensions(items, layout, canvasProps, horizontalGap, verticalGap)
+ * - createMarkdownFlowchartIntelligent(items, slide, layout, canvasProps, dimensions, horizontalGap, verticalGap)
+ * - createMarkdownConnections(items, createdShapes, layout)
  * - updateParentChildrenInGraphIds(createdShapes, items)
  * - getDefaultStyle()
  * - applyStyleToShape(shape, style)
