@@ -71,7 +71,7 @@ function selectAllSiblings() {
 		const currentGraphId = getShapeGraphId(currentShape);
 		if (currentGraphId) {
 			const currentParsed = parseGraphId(currentGraphId);
-			if (currentParsed && currentParsed.parent === parsed.parent) {
+			if (currentParsed?.parent === parsed.parent) {
 				siblingShapes.push(currentShape);
 			}
 		}
@@ -130,7 +130,7 @@ function selectAllLevel() {
 		const currentGraphId = getShapeGraphId(currentShape);
 		if (currentGraphId) {
 			const currentParsed = parseGraphId(currentGraphId);
-			if (currentParsed && currentParsed.current) {
+			if (currentParsed?.current) {
 				const currentLevelMatch = currentParsed.current.match(/^([A-Z]+)/);
 				if (currentLevelMatch && currentLevelMatch[1] === level) {
 					levelShapes.push(currentShape);
@@ -253,7 +253,7 @@ function selectFamily() {
 			const currentGraphId = getShapeGraphId(currentShape);
 			if (currentGraphId) {
 				const currentParsed = parseGraphId(currentGraphId);
-				if (currentParsed && currentParsed.parent) {
+				if (currentParsed?.parent) {
 					// Check if this shape is a direct child of parentId
 					const parentHierarchy = currentParsed.parent.split("|");
 					if (parentHierarchy[parentHierarchy.length - 1] === parentId) {
@@ -289,5 +289,212 @@ function selectFamily() {
 		}
 	} catch (e) {
 		console.error(`Error selecting family shapes: ${e.message}`);
+	}
+}
+
+/**
+ * Wrapper function to receive gap value from HTML
+ * @param {number} gap - Gap between shapes in pixels
+ */
+function alignChildrenWithGap(gap = 20) {
+	alignChildren(gap);
+}
+
+/**
+ * Aligns all direct children of the selected shape
+ * @param {number} gap - Gap between shapes in pixels (default 20)
+ */
+function alignChildren(gap = 20) {
+	const validation = validateSelectedShape();
+	if (validation.error) {
+		return;
+	}
+
+	const { shape, slide, graphId } = validation;
+	const parsed = parseGraphId(graphId);
+
+	if (!parsed || !parsed.current) {
+		return;
+	}
+
+	const allShapes = slide.getShapes();
+	const childShapes = [];
+
+	// Find all direct children (same pattern as selectFamily)
+	for (const currentShape of allShapes) {
+		const currentGraphId = getShapeGraphId(currentShape);
+		if (currentGraphId) {
+			const currentParsed = parseGraphId(currentGraphId);
+			if (currentParsed?.parent) {
+				// Check if this shape is a direct child
+				const parentHierarchy = currentParsed.parent.split("|");
+				if (parentHierarchy[parentHierarchy.length - 1] === parsed.current) {
+					childShapes.push(currentShape);
+				}
+			}
+		}
+	}
+
+	if (childShapes.length === 0) {
+		return;
+	}
+
+	try {
+		// Get parent position and dimensions
+		const parentLeft = shape.getLeft();
+		const parentTop = shape.getTop();
+		const parentWidth = shape.getWidth();
+		const parentHeight = shape.getHeight();
+		const parentCenterX = parentLeft + parentWidth / 2;
+		const parentCenterY = parentTop + parentHeight / 2;
+
+		// Get child dimensions
+		const childData = childShapes.map((child) => ({
+			shape: child,
+			width: child.getWidth(),
+			height: child.getHeight(),
+		}));
+
+		if (parsed.layout === "TD" || parsed.layout === "DT") {
+			// Top-Down layout: align children horizontally below parent
+			const startY = parentTop + parentHeight + gap;
+			const totalWidth =
+				childData.reduce((sum, child) => sum + child.width, 0) +
+				gap * (childData.length - 1);
+			let currentX = parentCenterX - totalWidth / 2;
+
+			childData.forEach((child) => {
+				child.shape.setLeft(currentX);
+				child.shape.setTop(startY);
+				currentX += child.width + gap;
+			});
+		} else {
+			// Left-Right layout: align children vertically to the right of parent
+			const startX = parentLeft + parentWidth + gap;
+			const totalHeight =
+				childData.reduce((sum, child) => sum + child.height, 0) +
+				gap * (childData.length - 1);
+			let currentY = parentCenterY - totalHeight / 2;
+
+			childData.forEach((child) => {
+				child.shape.setLeft(startX);
+				child.shape.setTop(currentY);
+				currentY += child.height + gap;
+			});
+		}
+
+		// Re-select the original shape
+		shape.select();
+	} catch (e) {
+		console.error(`Error aligning children: ${e.message}`);
+	}
+}
+
+/**
+ * Aligns the parent shape based on the center of its children
+ */
+function alignWithParent() {
+	const validation = validateSelectedShape();
+	if (validation.error) {
+		return;
+	}
+
+	const { shape, slide, graphId } = validation;
+	const parsed = parseGraphId(graphId);
+
+	if (!parsed || !parsed.parent) {
+		return;
+	}
+
+	// Get the immediate parent ID
+	const parentHierarchy = parsed.parent.split("|");
+	const immediateParentId = parentHierarchy[parentHierarchy.length - 1];
+
+	const allShapes = slide.getShapes();
+	let parentShape = null;
+	let parentLayout = null;
+
+	// Find the parent shape
+	for (const currentShape of allShapes) {
+		const currentGraphId = getShapeGraphId(currentShape);
+		if (currentGraphId) {
+			const currentParsed = parseGraphId(currentGraphId);
+			if (currentParsed && currentParsed.current === immediateParentId) {
+				parentShape = currentShape;
+				parentLayout = currentParsed.layout;
+				break;
+			}
+		}
+	}
+
+	if (!parentShape) {
+		return;
+	}
+
+	// Find all siblings (including selected shape)
+	const siblingShapes = [shape];
+	for (const currentShape of allShapes) {
+		if (currentShape === shape) continue;
+
+		const currentGraphId = getShapeGraphId(currentShape);
+		if (currentGraphId) {
+			const currentParsed = parseGraphId(currentGraphId);
+			if (currentParsed?.parent) {
+				const currentParentHierarchy = currentParsed.parent.split("|");
+				if (
+					currentParentHierarchy[currentParentHierarchy.length - 1] ===
+					immediateParentId
+				) {
+					siblingShapes.push(currentShape);
+				}
+			}
+		}
+	}
+
+	if (siblingShapes.length === 0) {
+		return;
+	}
+
+	try {
+		// Calculate bounding box of all siblings
+		let minX = Number.POSITIVE_INFINITY;
+		let maxX = Number.NEGATIVE_INFINITY;
+		let minY = Number.POSITIVE_INFINITY;
+		let maxY = Number.NEGATIVE_INFINITY;
+
+		for (const sibling of siblingShapes) {
+			const left = sibling.getLeft();
+			const top = sibling.getTop();
+			const right = left + sibling.getWidth();
+			const bottom = top + sibling.getHeight();
+
+			minX = Math.min(minX, left);
+			maxX = Math.max(maxX, right);
+			minY = Math.min(minY, top);
+			maxY = Math.max(maxY, bottom);
+		}
+
+		// Calculate center of siblings
+		const siblingsCenterX = (minX + maxX) / 2;
+		const siblingsCenterY = (minY + maxY) / 2;
+
+		// Move parent to align with siblings center
+		const parentWidth = parentShape.getWidth();
+		const parentHeight = parentShape.getHeight();
+
+		if (parentLayout === "TD" || parentLayout === "DT") {
+			// Top-Down: align parent horizontally with siblings center
+			const newParentLeft = siblingsCenterX - parentWidth / 2;
+			parentShape.setLeft(newParentLeft);
+		} else {
+			// Left-Right: align parent vertically with siblings center
+			const newParentTop = siblingsCenterY - parentHeight / 2;
+			parentShape.setTop(newParentTop);
+		}
+
+		// Re-select the original shape
+		shape.select();
+	} catch (e) {
+		console.error(`Error aligning parent: ${e.message}`);
 	}
 }

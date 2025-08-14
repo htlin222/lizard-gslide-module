@@ -19,5 +19,38 @@
       <button class="secondary" onclick="selectAllParents()">⬆️ Parents</button>
       <button class="tertiary" onclick="selectFamily()">🐣 Descendants</button>
     </div>
+
+    <div class="form-group" style="margin-top: 12px">
+      <p class="info-text">
+        Align shapes based on their hierarchical relationships.
+      </p>
+    </div>
+
+    <div class="form-group">
+      <label for="alignmentGap">Gap between shapes (px):</label>
+      <input
+        type="number"
+        id="alignmentGap"
+        value="20"
+        min="0"
+        style="width: 80px"
+      />
+    </div>
+
+    <div class="button-group">
+      <button class="secondary" onclick="alignChildrenWithGap()">
+        🎯 Align Children
+      </button>
+      <button class="tertiary" onclick="alignWithParent()">
+        🎯 Align the Parent
+      </button>
+    </div>
+
+    <script>
+      function alignChildrenWithGap() {
+        const gap = document.getElementById("alignmentGap").value || 20;
+        google.script.run.alignChildrenWithGap(parseInt(gap));
+      }
+    </script>
   </div>
 </details>
