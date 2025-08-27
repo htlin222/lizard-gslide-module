@@ -428,8 +428,7 @@ function showMarkdownSidebar() {
 	} catch (e) {
 		console.error("Error showing Markdown sidebar: " + e.message);
 		SlidesApp.getUi().alert(
-			"Error",
-			"Could not open the Markdown sidebar: " + e.message,
+			"Error: Could not open the Markdown sidebar: " + e.message,
 		);
 	}
 }
