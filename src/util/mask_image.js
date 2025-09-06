@@ -132,29 +132,38 @@ function createGridBasedMask(currentSlide, imageElement, shapeElements) {
 	const imageRight = imageLeft + imageWidth;
 	const imageBottom = imageTop + imageHeight;
 
-	// Collect all unique X and Y coordinates to create a grid
-	const xCoordinates = [imageLeft, imageRight];
-	const yCoordinates = [imageTop, imageBottom];
+	// Collect all unique X and Y coordinates to create a grid (force to integers)
+	const xCoordinates = [Math.round(imageLeft), Math.round(imageRight)];
+	const yCoordinates = [Math.round(imageTop), Math.round(imageBottom)];
 
 	for (const shape of shapeElements) {
-		const shapeLeft = shape.getLeft();
-		const shapeTop = shape.getTop();
-		const shapeRight = shapeLeft + shape.getWidth();
-		const shapeBottom = shapeTop + shape.getHeight();
+		const shapeLeft = Math.round(shape.getLeft());
+		const shapeTop = Math.round(shape.getTop());
+		const shapeRight = Math.round(shapeLeft + shape.getWidth());
+		const shapeBottom = Math.round(shapeTop + shape.getHeight());
 
 		// Add X coordinates within image bounds
-		if (shapeLeft > imageLeft && shapeLeft < imageRight) {
+		if (
+			shapeLeft > Math.round(imageLeft) &&
+			shapeLeft < Math.round(imageRight)
+		) {
 			xCoordinates.push(shapeLeft);
 		}
-		if (shapeRight > imageLeft && shapeRight < imageRight) {
+		if (
+			shapeRight > Math.round(imageLeft) &&
+			shapeRight < Math.round(imageRight)
+		) {
 			xCoordinates.push(shapeRight);
 		}
 
 		// Add Y coordinates within image bounds
-		if (shapeTop > imageTop && shapeTop < imageBottom) {
+		if (shapeTop > Math.round(imageTop) && shapeTop < Math.round(imageBottom)) {
 			yCoordinates.push(shapeTop);
 		}
-		if (shapeBottom > imageTop && shapeBottom < imageBottom) {
+		if (
+			shapeBottom > Math.round(imageTop) &&
+			shapeBottom < Math.round(imageBottom)
+		) {
 			yCoordinates.push(shapeBottom);
 		}
 	}
@@ -177,10 +186,10 @@ function createGridBasedMask(currentSlide, imageElement, shapeElements) {
 			let cellCoveredByShape = false;
 
 			for (const shape of shapeElements) {
-				const shapeLeft = shape.getLeft();
-				const shapeTop = shape.getTop();
-				const shapeRight = shapeLeft + shape.getWidth();
-				const shapeBottom = shapeTop + shape.getHeight();
+				const shapeLeft = Math.round(shape.getLeft());
+				const shapeTop = Math.round(shape.getTop());
+				const shapeRight = Math.round(shapeLeft + shape.getWidth());
+				const shapeBottom = Math.round(shapeTop + shape.getHeight());
 
 				// Check if shape completely covers this cell
 				if (
@@ -198,10 +207,10 @@ function createGridBasedMask(currentSlide, imageElement, shapeElements) {
 			if (!cellCoveredByShape) {
 				const overlay = currentSlide.insertShape(
 					SlidesApp.ShapeType.RECTANGLE,
-					cellLeft,
-					cellTop,
-					cellWidth,
-					cellHeight,
+					Math.round(cellLeft),
+					Math.round(cellTop),
+					Math.round(cellWidth),
+					Math.round(cellHeight),
 				);
 				overlay.getFill().setSolidFill("#FFFFFF", OVERLAY_ALPHA);
 				overlay.getBorder().setWeight(0.1);
