@@ -2,9 +2,9 @@
 const OVERLAY_ALPHA = 0.8;
 
 /**
- * Masks an image by highlighting a specific area defined by a shape.
- * Creates four semi-transparent white rectangles that cover everything except the shape area.
- * Requires selecting both a shape and an image.
+ * Masks an image by highlighting specific areas defined by multiple shapes.
+ * Creates semi-transparent white rectangles using a grid-based approach to prevent overlaps.
+ * Requires selecting multiple shapes and one image.
  * @return {boolean} True if successful, false otherwise
  */
 function maskImage() {
@@ -18,129 +18,80 @@ function maskImage() {
 
 		if (!pageElementRange) {
 			SlidesApp.getUi().alert(
-				"No selection found. Please select a shape and an image.",
+				"No selection found. Please select shapes and an image.",
 			);
 			return false;
 		}
 
 		const selectedElements = pageElementRange.getPageElements();
 
-		if (!selectedElements || selectedElements.length !== 2) {
+		if (!selectedElements || selectedElements.length < 2) {
 			SlidesApp.getUi().alert(
-				"Please select exactly two elements: one shape and one image.",
+				"Please select at least one shape and one image.",
 			);
 			return false;
 		}
 
-		// Find which element is the shape and which is the image
-		let shapeElement = null;
+		// Find which elements are shapes and which is the image
+		const shapeElements = [];
 		let imageElement = null;
 
 		for (const element of selectedElements) {
 			if (element.getPageElementType() === SlidesApp.PageElementType.SHAPE) {
-				shapeElement = element.asShape();
+				shapeElements.push(element.asShape());
 			} else if (
 				element.getPageElementType() === SlidesApp.PageElementType.IMAGE
 			) {
+				if (imageElement !== null) {
+					SlidesApp.getUi().alert("Please select only one image.");
+					return false;
+				}
 				imageElement = element.asImage();
 			}
 		}
 
-		if (!shapeElement || !imageElement) {
-			SlidesApp.getUi().alert("Please select exactly one shape and one image.");
+		if (shapeElements.length === 0 || !imageElement) {
+			SlidesApp.getUi().alert(
+				"Please select at least one shape and exactly one image.",
+			);
 			return false;
 		}
 
-		// Get shape and image dimensions and positions
-		const shapeLeft = shapeElement.getLeft();
-		const shapeTop = shapeElement.getTop();
-		const shapeWidth = shapeElement.getWidth();
-		const shapeHeight = shapeElement.getHeight();
-
+		// Get image dimensions and position
 		const imageLeft = imageElement.getLeft();
 		const imageTop = imageElement.getTop();
 		const imageWidth = imageElement.getWidth();
 		const imageHeight = imageElement.getHeight();
 
-		// Check if the shape is at least partially within the image bounds
-		if (
-			shapeLeft > imageLeft + imageWidth ||
-			shapeLeft + shapeWidth < imageLeft ||
-			shapeTop > imageTop + imageHeight ||
-			shapeTop + shapeHeight < imageTop
-		) {
-			SlidesApp.getUi().alert(
-				"The shape and image don't overlap. Please adjust their positions.",
-			);
-			return false;
+		// Validate all shapes are at least partially within the image bounds
+		for (let i = 0; i < shapeElements.length; i++) {
+			const shape = shapeElements[i];
+			const shapeLeft = shape.getLeft();
+			const shapeTop = shape.getTop();
+			const shapeWidth = shape.getWidth();
+			const shapeHeight = shape.getHeight();
+
+			if (
+				shapeLeft > imageLeft + imageWidth ||
+				shapeLeft + shapeWidth < imageLeft ||
+				shapeTop > imageTop + imageHeight ||
+				shapeTop + shapeHeight < imageTop
+			) {
+				SlidesApp.getUi().alert(
+					`Shape ${i + 1} and the image don't overlap. Please adjust their positions.`,
+				);
+				return false;
+			}
 		}
 
-		// Create four rectangles to cover the areas outside the shape
-		const overlays = [];
+		// Use grid-based masking approach to prevent overlaps
+		const overlays = createGridBasedMask(
+			currentSlide,
+			imageElement,
+			shapeElements,
+		);
 
-		// 1. Top rectangle (covers area above the shape)
-		if (shapeTop > imageTop) {
-			const topOverlay = currentSlide.insertShape(
-				SlidesApp.ShapeType.RECTANGLE,
-				imageLeft,
-				imageTop,
-				imageWidth,
-				shapeTop - imageTop,
-			);
-			topOverlay.getFill().setSolidFill("#FFFFFF", OVERLAY_ALPHA);
-			topOverlay.getBorder().setWeight(0.1); // Minimum valid weight
-			topOverlay.getBorder().getLineFill().setSolidFill("#FFFFFF", 0); // Transparent border
-			overlays.push(topOverlay);
-		}
-
-		// 2. Bottom rectangle (covers area below the shape)
-		if (shapeTop + shapeHeight < imageTop + imageHeight) {
-			const bottomOverlay = currentSlide.insertShape(
-				SlidesApp.ShapeType.RECTANGLE,
-				imageLeft,
-				shapeTop + shapeHeight,
-				imageWidth,
-				imageTop + imageHeight - (shapeTop + shapeHeight),
-			);
-			bottomOverlay.getFill().setSolidFill("#FFFFFF", OVERLAY_ALPHA);
-			bottomOverlay.getBorder().setWeight(0.1); // Minimum valid weight
-			bottomOverlay.getBorder().getLineFill().setSolidFill("#FFFFFF", 0); // Transparent border
-			overlays.push(bottomOverlay);
-		}
-
-		// 3. Left rectangle (covers area to the left of the shape)
-		if (shapeLeft > imageLeft) {
-			const leftOverlay = currentSlide.insertShape(
-				SlidesApp.ShapeType.RECTANGLE,
-				imageLeft,
-				Math.max(imageTop, shapeTop),
-				shapeLeft - imageLeft,
-				Math.min(imageTop + imageHeight, shapeTop + shapeHeight) -
-					Math.max(imageTop, shapeTop),
-			);
-			leftOverlay.getFill().setSolidFill("#FFFFFF", OVERLAY_ALPHA);
-			leftOverlay.getBorder().setWeight(0.1); // Minimum valid weight
-			leftOverlay.getBorder().getLineFill().setSolidFill("#FFFFFF", 0); // Transparent border
-			overlays.push(leftOverlay);
-		}
-
-		// 4. Right rectangle (covers area to the right of the shape)
-		if (shapeLeft + shapeWidth < imageLeft + imageWidth) {
-			const rightOverlay = currentSlide.insertShape(
-				SlidesApp.ShapeType.RECTANGLE,
-				shapeLeft + shapeWidth,
-				Math.max(imageTop, shapeTop),
-				imageLeft + imageWidth - (shapeLeft + shapeWidth),
-				Math.min(imageTop + imageHeight, shapeTop + shapeHeight) -
-					Math.max(imageTop, shapeTop),
-			);
-			rightOverlay.getFill().setSolidFill("#FFFFFF", OVERLAY_ALPHA);
-			rightOverlay.getBorder().setWeight(0.1); // Minimum valid weight
-			rightOverlay.getBorder().getLineFill().setSolidFill("#FFFFFF", 0); // Transparent border
-			overlays.push(rightOverlay);
-		}
-
-		// Create an array of all elements to group (overlays and original image, but not the shape)
+		// Create an array of all elements to group (overlays and original image, but not the shapes)
 		const pageElements = [imageElement, ...overlays].filter(Boolean);
 
 		// Group all elements together
@@ -148,8 +99,10 @@ function maskImage() {
 			currentSlide.group(pageElements);
 		}
 
-		// Delete the shape as it's no longer needed
-		shapeElement.remove();
+		// Delete all shapes as they're no longer needed
+		for (const shape of shapeElements) {
+			shape.remove();
+		}
 
 		return true;
 	} catch (error) {
@@ -158,4 +111,105 @@ function maskImage() {
 		console.log(error.stack);
 		return false;
 	}
+}
+
+/**
+ * Creates non-overlapping mask overlays for multiple shapes on an image.
+ * Uses a grid-based approach to prevent duplicate overlapping masks.
+ * @param {Object} currentSlide - The current slide
+ * @param {Object} imageElement - The image element to mask
+ * @param {Array} shapeElements - Array of shape elements to use as masks
+ * @return {Array} Array of overlay shapes created
+ */
+function createGridBasedMask(currentSlide, imageElement, shapeElements) {
+	const overlays = [];
+
+	// Get image boundaries
+	const imageLeft = imageElement.getLeft();
+	const imageTop = imageElement.getTop();
+	const imageWidth = imageElement.getWidth();
+	const imageHeight = imageElement.getHeight();
+	const imageRight = imageLeft + imageWidth;
+	const imageBottom = imageTop + imageHeight;
+
+	// Collect all unique X and Y coordinates to create a grid
+	const xCoordinates = [imageLeft, imageRight];
+	const yCoordinates = [imageTop, imageBottom];
+
+	for (const shape of shapeElements) {
+		const shapeLeft = shape.getLeft();
+		const shapeTop = shape.getTop();
+		const shapeRight = shapeLeft + shape.getWidth();
+		const shapeBottom = shapeTop + shape.getHeight();
+
+		// Add X coordinates within image bounds
+		if (shapeLeft > imageLeft && shapeLeft < imageRight) {
+			xCoordinates.push(shapeLeft);
+		}
+		if (shapeRight > imageLeft && shapeRight < imageRight) {
+			xCoordinates.push(shapeRight);
+		}
+
+		// Add Y coordinates within image bounds
+		if (shapeTop > imageTop && shapeTop < imageBottom) {
+			yCoordinates.push(shapeTop);
+		}
+		if (shapeBottom > imageTop && shapeBottom < imageBottom) {
+			yCoordinates.push(shapeBottom);
+		}
+	}
+
+	// Sort and remove duplicates
+	const sortedXCoords = [...new Set(xCoordinates)].sort((a, b) => a - b);
+	const sortedYCoords = [...new Set(yCoordinates)].sort((a, b) => a - b);
+
+	// Process each grid cell
+	for (let i = 0; i < sortedXCoords.length - 1; i++) {
+		for (let j = 0; j < sortedYCoords.length - 1; j++) {
+			const cellLeft = sortedXCoords[i];
+			const cellRight = sortedXCoords[i + 1];
+			const cellTop = sortedYCoords[j];
+			const cellBottom = sortedYCoords[j + 1];
+			const cellWidth = cellRight - cellLeft;
+			const cellHeight = cellBottom - cellTop;
+
+			// Check if any shape covers this cell
+			let cellCoveredByShape = false;
+
+			for (const shape of shapeElements) {
+				const shapeLeft = shape.getLeft();
+				const shapeTop = shape.getTop();
+				const shapeRight = shapeLeft + shape.getWidth();
+				const shapeBottom = shapeTop + shape.getHeight();
+
+				// Check if shape completely covers this cell
+				if (
+					shapeLeft <= cellLeft &&
+					shapeRight >= cellRight &&
+					shapeTop <= cellTop &&
+					shapeBottom >= cellBottom
+				) {
+					cellCoveredByShape = true;
+					break;
+				}
+			}
+
+			// If cell is not covered by any shape, create a mask
+			if (!cellCoveredByShape) {
+				const overlay = currentSlide.insertShape(
+					SlidesApp.ShapeType.RECTANGLE,
+					cellLeft,
+					cellTop,
+					cellWidth,
+					cellHeight,
+				);
+				overlay.getFill().setSolidFill("#FFFFFF", OVERLAY_ALPHA);
+				overlay.getBorder().setWeight(0.1);
+				overlay.getBorder().getLineFill().setSolidFill("#FFFFFF", 0);
+				overlays.push(overlay);
+			}
+		}
+	}
+
+	return overlays;
 }
