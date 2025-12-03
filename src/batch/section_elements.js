@@ -15,7 +15,7 @@ function addSectionElementsUltra(slides, sectionsCache, requests, cache) {
 	const BOX_CONFIG = {
 		x: (720 - 600) / 2,
 		yBefore: 30,
-		yAfter: 230,
+		yAfter: 220,
 		width: 600,
 		boxHeight: 150,
 		fontSize: 20,
