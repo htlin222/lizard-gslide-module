@@ -311,9 +311,9 @@ function addCodeBlocksToSlide(slide, codeBlocks) {
 		for (let i = 0; i < codeBlocks.length; i++) {
 			const codeBlock = codeBlocks[i];
 
-			// Create a text box for the code block
+			// Create a rectangle shape for the code block (better visibility than TEXT_BOX)
 			const codeShape = slide.insertShape(
-				SlidesApp.ShapeType.TEXT_BOX,
+				SlidesApp.ShapeType.RECTANGLE,
 				slideWidth * 0.1, // Left position (10% from left)
 				startY + i * (codeBlockHeight + padding), // Top position
 				slideWidth * 0.8, // Width (80% of slide width)
@@ -328,34 +328,47 @@ function addCodeBlocksToSlide(slide, codeBlocks) {
 			const textStyle = textRange.getTextStyle();
 			textStyle.setFontSize(12); // Fixed font size of 12 as requested
 			textStyle.setFontFamily("Courier New"); // Monospace font for code
+			textStyle.setForegroundColor("#000000"); // Black text for readability
 
 			// Add background color to distinguish code blocks
 			codeShape.getFill().setSolidFill("#f5f5f5"); // Light gray background
 
-			// Add border to make it look like a code block
-			const border = codeShape.getBorder();
-			border.setWeight(1);
-			border.getLineFill().setSolidFill("#cccccc"); // Light gray border
+			// Add border to make it look like a code block (following API guide pattern)
+			codeShape.getBorder().setWeight(1);
+			codeShape.getBorder().getLineFill().setSolidFill("#cccccc"); // Light gray border
 
-			// If language is specified, add it as a label at the top
-			if (codeBlock.language) {
-				const languageLabel = slide.insertShape(
-					SlidesApp.ShapeType.TEXT_BOX,
-					slideWidth * 0.1, // Same left position as code block
-					startY + i * (codeBlockHeight + padding) - 15, // Just above the code block
-					100, // Small width for label
-					15, // Small height for label
-				);
+			// Set text alignment
+			textRange
+				.getParagraphStyle()
+				.setParagraphAlignment(SlidesApp.ParagraphAlignment.START);
 
-				const labelText = languageLabel.getText();
-				labelText.setText(codeBlock.language);
-				labelText.getTextStyle().setFontSize(10);
-				labelText.getTextStyle().setForegroundColor("#666666");
-				labelText.getTextStyle().setItalic(true);
+			// Set content alignment to top-left
+			codeShape.setContentAlignment(SlidesApp.ContentAlignment.TOP);
 
-				// Remove border and background from label
-				languageLabel.getBorder().setTransparent();
-				languageLabel.getFill().setSolidFill("#ffffff");
+			// If language is specified, add it as a small label at the top
+			if (codeBlock.language && codeBlock.language.trim() !== "") {
+				const labelY = startY + i * (codeBlockHeight + padding) - 20;
+
+				// Only add label if there's space above the code block
+				if (labelY >= 0) {
+					const languageLabel = slide.insertShape(
+						SlidesApp.ShapeType.TEXT_BOX,
+						slideWidth * 0.1, // Same left position as code block
+						labelY, // Just above the code block
+						100, // Small width for label
+						18, // Small height for label
+					);
+
+					const labelText = languageLabel.getText();
+					labelText.setText(codeBlock.language);
+					labelText.getTextStyle().setFontSize(10);
+					labelText.getTextStyle().setForegroundColor("#666666");
+					labelText.getTextStyle().setItalic(true);
+
+					// Make label transparent
+					languageLabel.getFill().setTransparent();
+					languageLabel.getBorder().setTransparent();
+				}
 			}
 		}
 
