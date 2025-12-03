@@ -1,6 +1,8 @@
 // Page number module for Google Slides
 /**
  * 批次建立頁碼文字
+ * Note: This function is deprecated. Use addPageNumberUltra() from element_generators.js instead.
+ * Fixed: Changed newGuid() to getNextGuid() to prevent undefined function errors.
  */
 function appendPageNumberToSlide({
 	slideId,
@@ -9,7 +11,7 @@ function appendPageNumberToSlide({
 	totalPages,
 	config,
 }) {
-	const pageNumId = `page_num_${slideId}_${newGuid()}`;
+	const pageNumId = `page_num_${slideId}_${getNextGuid()}`;
 	requests.push(
 		// 建立分頁文字框
 		{
