@@ -6,27 +6,8 @@
  * Test H3 header parsing and parent title functionality
  */
 function testH3HeaderParsing() {
-	const testMarkdown = `# Section Title
-
-## Main Topic
-- First point
-- Second point
-
-### Subtopic A
-- Detailed point 1
-- Detailed point 2
-
-### Subtopic B
-- Another detailed point
-- One more point
-
-## Another Topic
-- Different content
-
-### Subtopic C
-- Under different topic
-- More content
-`;
+	const testMarkdown =
+		"# Section Title\n\n## Main Topic\n- First point\n- Second point\n\n### Subtopic A\n- Detailed point 1\n- Detailed point 2\n\n### Subtopic B\n- Another detailed point\n- One more point\n\n## Another Topic\n- Different content\n\n### Subtopic C\n- Under different topic\n- More content";
 
 	console.log("Testing H3 header parsing...");
 
@@ -119,5 +100,39 @@ function testParentTitleStyling() {
 		}
 	} catch (error) {
 		console.error("Error in parent title styling test:", error);
+	}
+}
+
+/**
+ * Test H1 title font size (should be 36pt)
+ */
+function testH1FontSize() {
+	const testMarkdown =
+		"# Large Section Title\n\n## Regular Subtitle\n\n- Content point";
+
+	console.log("Testing H1 font size (should be 36pt)...");
+
+	try {
+		// Parse the markdown
+		const structure = parseMarkdownToStructure(testMarkdown);
+		console.log("Structure:", structure);
+
+		// Check that first slide is SECTION_HEADER
+		if (structure.length > 0 && structure[0].layout === "SECTION_HEADER") {
+			console.log("✅ First slide correctly identified as SECTION_HEADER");
+		} else {
+			console.log("❌ First slide layout issue");
+		}
+
+		// Create slides and test font sizing
+		const createdSlides = createSlidesFromStructure(structure);
+		const success = addContentToSlides(createdSlides);
+
+		if (success) {
+			console.log("✅ Content added successfully");
+			console.log("Check the first slide - H1 title should be 36pt font");
+		}
+	} catch (error) {
+		console.error("Error in H1 font size test:", error);
 	}
 }

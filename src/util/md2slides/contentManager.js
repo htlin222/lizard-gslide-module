@@ -17,7 +17,7 @@ function addContentToSlides(createdSlides) {
 			const info = slideObj.info;
 
 			// Add title to all slides
-			addTitleToSlide(slide, info.title);
+			addTitleToSlide(slide, info.title, info.layout);
 
 			// Add parent title (H2) if this is an H3 slide
 			if (info.parentTitle && info.parentTitle.length > 0) {
@@ -54,9 +54,10 @@ function addContentToSlides(createdSlides) {
  * Adds title to a slide using multiple fallback approaches with font sizing
  * @param {Slide} slide - The slide to add title to
  * @param {string} title - The title text
+ * @param {string} layout - The slide layout (SECTION_HEADER or TITLE_AND_BODY)
  * @return {boolean} Success status
  */
-function addTitleToSlide(slide, title) {
+function addTitleToSlide(slide, title, layout) {
 	const shapes = slide.getShapes();
 	let titleAdded = false;
 	let titleTextRange = null;
@@ -110,7 +111,9 @@ function addTitleToSlide(slide, title) {
 	// Apply title font sizing if title was added successfully
 	if (titleAdded && titleTextRange) {
 		try {
-			const fontSize = getTitleFontSize(title);
+			// Use 36pt for H1 (SECTION_HEADER), calculated size for H2/H3
+			const fontSize =
+				layout === "SECTION_HEADER" ? 36 : getTitleFontSize(title);
 			titleTextRange.getTextStyle().setFontSize(fontSize);
 		} catch (e) {
 			Logger.log(`Error applying title font size: ${e.message}`);
