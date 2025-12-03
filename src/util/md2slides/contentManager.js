@@ -336,32 +336,34 @@ function addCodeBlocksToSlide(slide, codeBlocks) {
 			textRange.setText(codeBlock.content);
 			console.log("Text content set");
 
-			// Apply basic formatting
+			// Apply basic formatting - 14號字，預設字體
 			const textStyle = textRange.getTextStyle();
-			textStyle.setFontSize(12);
+			textStyle.setFontSize(14); // 改為14號字
 			textStyle.setForegroundColor("#000000");
-			console.log("Text style applied");
+			console.log("Text style applied - 14pt font");
 
-			// Try to set font family (might fail in some cases)
+			// 設定文字靠左對齊
 			try {
-				textStyle.setFontFamily("Courier New");
-				console.log("Font family set to Courier New");
-			} catch (fontError) {
-				console.log(`Font family error: ${fontError.message}, using default`);
+				textRange
+					.getParagraphStyle()
+					.setParagraphAlignment(SlidesApp.ParagraphAlignment.START);
+				console.log("Text alignment set to left");
+			} catch (alignError) {
+				console.log(`Text alignment error: ${alignError.message}`);
 			}
 
-			// Add background color and border
+			// 設定淺灰背景和白色邊框
 			try {
-				codeShape.getFill().setSolidFill("#f5f5f5");
-				console.log("Background color applied");
+				codeShape.getFill().setSolidFill("#f5f5f5"); // 淺灰色背景
+				console.log("Light gray background applied");
 			} catch (fillError) {
 				console.log(`Fill error: ${fillError.message}`);
 			}
 
 			try {
-				codeShape.getBorder().setWeight(2); // Thicker border for visibility
-				codeShape.getBorder().getLineFill().setSolidFill("#000000"); // Black border for visibility
-				console.log("Border applied");
+				codeShape.getBorder().setWeight(1); // 細邊框
+				codeShape.getBorder().getLineFill().setSolidFill("#FFFFFF"); // 白色邊框
+				console.log("Gray background with white border applied");
 			} catch (borderError) {
 				console.log(`Border error: ${borderError.message}`);
 			}
