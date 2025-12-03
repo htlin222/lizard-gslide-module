@@ -17,6 +17,7 @@ function parseMarkdownToStructure(markdownText) {
 		let inCodeBlock = false;
 		let codeBlockContent = [];
 		let codeBlockLanguage = "";
+		let currentH2Title = ""; // Track the current H2 title for H3 slides
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
@@ -101,6 +102,9 @@ function parseMarkdownToStructure(markdownText) {
 				// Remove patterns like "Page 1:" or "Page 10:" from the title
 				title = title.replace(/^Page\s+\d+:\s*/i, "");
 
+				// Track this H2 title for future H3 slides
+				currentH2Title = title;
+
 				// Create a new TITLE_AND_BODY slide
 				currentSlide = {
 					layout: "TITLE_AND_BODY",
@@ -109,6 +113,25 @@ function parseMarkdownToStructure(markdownText) {
 					speakerNotes: [],
 					listType: "bullet", // Default to bullet list
 					codeBlocks: [],
+				};
+				slideStructure.push(currentSlide);
+			}
+			// Check for H3 heading (### Heading)
+			else if (trimmedLine.startsWith("### ")) {
+				// Extract title and remove page numbering pattern if present
+				let title = trimmedLine.substring(4).trim();
+				// Remove patterns like "Page 1:" or "Page 10:" from the title
+				title = title.replace(/^Page\s+\d+:\s*/i, "");
+
+				// Create a new TITLE_AND_BODY slide with parent H2 title
+				currentSlide = {
+					layout: "TITLE_AND_BODY",
+					title: title,
+					bodyItems: [],
+					speakerNotes: [],
+					listType: "bullet", // Default to bullet list
+					codeBlocks: [],
+					parentTitle: currentH2Title, // Store the parent H2 title
 				};
 				slideStructure.push(currentSlide);
 			}

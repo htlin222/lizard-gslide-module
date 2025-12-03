@@ -19,6 +19,11 @@ function addContentToSlides(createdSlides) {
 			// Add title to all slides
 			addTitleToSlide(slide, info.title);
 
+			// Add parent title (H2) if this is an H3 slide
+			if (info.parentTitle && info.parentTitle.length > 0) {
+				addParentTitleToSlide(slide, info.parentTitle);
+			}
+
 			// Add body content if it exists for TITLE_AND_BODY slides
 			if (
 				info.layout === "TITLE_AND_BODY" &&
@@ -402,6 +407,43 @@ function addCodeBlocksToSlide(slide, codeBlocks) {
 		console.error(`Error adding code blocks to slide: ${e.message}`);
 		console.error(`Error stack: ${e.stack}`);
 		Logger.log(`Error adding code blocks to slide: ${e.message}`);
+		return false;
+	}
+}
+
+/**
+ * Adds parent title (H2) to H3 slides in the style of insertStyledTitleBox
+ * @param {Slide} slide - The slide to add parent title to
+ * @param {string} parentTitle - The parent H2 title text
+ * @return {boolean} Success status
+ */
+function addParentTitleToSlide(slide, parentTitle) {
+	try {
+		// Remove existing parent title if it exists
+		const shapes = slide.getShapes();
+		for (const shape of shapes) {
+			if (
+				shape.getShapeType() === SlidesApp.ShapeType.TEXT_BOX &&
+				shape.getTitle() === "PREVIOUS_TITLE"
+			) {
+				shape.remove();
+			}
+		}
+
+		// Insert styled text box at fixed position and size (same as insertStyledTitleBox)
+		const parentTitleShape = slide.insertTextBox(parentTitle, 24, 18, 200, 25);
+		parentTitleShape.setTitle("PREVIOUS_TITLE");
+
+		// Apply font styling (same as insertStyledTitleBox)
+		const textRange = parentTitleShape.getText();
+		textRange.getTextStyle().setFontSize(12);
+		textRange.getTextStyle().setForegroundColor("#888888");
+
+		console.log(`Added parent title "${parentTitle}" to slide`);
+		return true;
+	} catch (e) {
+		Logger.log(`Error adding parent title to slide: ${e.message}`);
+		console.error(`Error adding parent title: ${e.message}`);
 		return false;
 	}
 }
