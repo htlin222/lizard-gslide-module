@@ -304,20 +304,37 @@ function addCodeBlocksToSlide(slide, codeBlocks) {
 			`addCodeBlocksToSlide called with ${codeBlocks.length} code blocks`,
 		);
 
+		// 計算佈局參數
+		const maxWidth = 620; // 最大總寬度
+		const gap = 10; // code blocks 之間的間距
+		const numBlocks = codeBlocks.length;
+		const totalGaps = (numBlocks - 1) * gap; // 總間距
+		const blockWidth = (maxWidth - totalGaps) / numBlocks; // 每個 block 的寬度
+
+		console.log(
+			`Layout: ${numBlocks} blocks, total width: ${maxWidth}, gap: ${gap}, block width: ${blockWidth}`,
+		);
+
 		for (let i = 0; i < codeBlocks.length; i++) {
 			const codeBlock = codeBlocks[i];
 			console.log(
 				`Processing code block ${i}: language=${codeBlock.language}, content="${codeBlock.content}"`,
 			);
 
-			// 簡化位置計算，使用固定位置
-			const x = 50; // Fixed left position
-			const y = 250 + i * 120; // Fixed top position with spacing
-			const width = 400; // Fixed width
-			const height = 100; // Fixed height
+			// 計算行數和高度
+			const lines = codeBlock.content.split("\n");
+			const lineCount = lines.length;
+			let height = 100; // 基礎高度（5行）
+			if (lineCount > 5) {
+				height += (lineCount - 5) * 30; // 每多一行加30
+			}
+
+			// 水平排列位置計算
+			const x = 50 + i * (blockWidth + gap); // X位置：起始位置 + 索引 * (寬度 + 間距)
+			const y = 250; // 所有 blocks 使用相同的 Y 位置（同一行）
 
 			console.log(
-				`Creating shape at position: x=${x}, y=${y}, width=${width}, height=${height}`,
+				`Creating shape ${i}: x=${x}, y=${y}, width=${blockWidth}, height=${height}, lines=${lineCount}`,
 			);
 
 			// Create a rectangle shape for the code block
@@ -325,7 +342,7 @@ function addCodeBlocksToSlide(slide, codeBlocks) {
 				SlidesApp.ShapeType.RECTANGLE,
 				x,
 				y,
-				width,
+				blockWidth,
 				height,
 			);
 
