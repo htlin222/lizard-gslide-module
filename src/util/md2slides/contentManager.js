@@ -300,80 +300,88 @@ function getTitleFromSlide(slide) {
  */
 function addCodeBlocksToSlide(slide, codeBlocks) {
 	try {
-		const slideWidth = slide.getPageWidth();
-		const slideHeight = slide.getPageHeight();
-
-		// Position code blocks at the bottom of the slide or after body content
-		const startY = slideHeight * 0.6; // Start at 60% of slide height
-		const codeBlockHeight = slideHeight * 0.25; // Each code block takes 25% of height
-		const padding = 20; // Padding between code blocks
+		console.log(
+			`addCodeBlocksToSlide called with ${codeBlocks.length} code blocks`,
+		);
 
 		for (let i = 0; i < codeBlocks.length; i++) {
 			const codeBlock = codeBlocks[i];
-
-			// Create a rectangle shape for the code block (better visibility than TEXT_BOX)
-			const codeShape = slide.insertShape(
-				SlidesApp.ShapeType.RECTANGLE,
-				slideWidth * 0.1, // Left position (10% from left)
-				startY + i * (codeBlockHeight + padding), // Top position
-				slideWidth * 0.8, // Width (80% of slide width)
-				codeBlockHeight, // Height
+			console.log(
+				`Processing code block ${i}: language=${codeBlock.language}, content="${codeBlock.content}"`,
 			);
 
-			// Set the code content
+			// 簡化位置計算，使用固定位置
+			const x = 50; // Fixed left position
+			const y = 250 + i * 120; // Fixed top position with spacing
+			const width = 400; // Fixed width
+			const height = 100; // Fixed height
+
+			console.log(
+				`Creating shape at position: x=${x}, y=${y}, width=${width}, height=${height}`,
+			);
+
+			// Create a rectangle shape for the code block
+			const codeShape = slide.insertShape(
+				SlidesApp.ShapeType.RECTANGLE,
+				x,
+				y,
+				width,
+				height,
+			);
+
+			console.log("Shape created successfully");
+
+			// Set the code content first
 			const textRange = codeShape.getText();
 			textRange.setText(codeBlock.content);
+			console.log("Text content set");
 
-			// Apply code formatting
+			// Apply basic formatting
 			const textStyle = textRange.getTextStyle();
-			textStyle.setFontSize(12); // Fixed font size of 12 as requested
-			textStyle.setFontFamily("Courier New"); // Monospace font for code
-			textStyle.setForegroundColor("#000000"); // Black text for readability
+			textStyle.setFontSize(12);
+			textStyle.setForegroundColor("#000000");
+			console.log("Text style applied");
 
-			// Add background color to distinguish code blocks
-			codeShape.getFill().setSolidFill("#f5f5f5"); // Light gray background
-
-			// Add border to make it look like a code block (following API guide pattern)
-			codeShape.getBorder().setWeight(1);
-			codeShape.getBorder().getLineFill().setSolidFill("#cccccc"); // Light gray border
-
-			// Set text alignment
-			textRange
-				.getParagraphStyle()
-				.setParagraphAlignment(SlidesApp.ParagraphAlignment.START);
-
-			// Set content alignment to top-left
-			codeShape.setContentAlignment(SlidesApp.ContentAlignment.TOP);
-
-			// If language is specified, add it as a small label at the top
-			if (codeBlock.language && codeBlock.language.trim() !== "") {
-				const labelY = startY + i * (codeBlockHeight + padding) - 20;
-
-				// Only add label if there's space above the code block
-				if (labelY >= 0) {
-					const languageLabel = slide.insertShape(
-						SlidesApp.ShapeType.TEXT_BOX,
-						slideWidth * 0.1, // Same left position as code block
-						labelY, // Just above the code block
-						100, // Small width for label
-						18, // Small height for label
-					);
-
-					const labelText = languageLabel.getText();
-					labelText.setText(codeBlock.language);
-					labelText.getTextStyle().setFontSize(10);
-					labelText.getTextStyle().setForegroundColor("#666666");
-					labelText.getTextStyle().setItalic(true);
-
-					// Make label transparent
-					languageLabel.getFill().setTransparent();
-					languageLabel.getBorder().setTransparent();
-				}
+			// Try to set font family (might fail in some cases)
+			try {
+				textStyle.setFontFamily("Courier New");
+				console.log("Font family set to Courier New");
+			} catch (fontError) {
+				console.log(`Font family error: ${fontError.message}, using default`);
 			}
+
+			// Add background color and border
+			try {
+				codeShape.getFill().setSolidFill("#f5f5f5");
+				console.log("Background color applied");
+			} catch (fillError) {
+				console.log(`Fill error: ${fillError.message}`);
+			}
+
+			try {
+				codeShape.getBorder().setWeight(2); // Thicker border for visibility
+				codeShape.getBorder().getLineFill().setSolidFill("#000000"); // Black border for visibility
+				console.log("Border applied");
+			} catch (borderError) {
+				console.log(`Border error: ${borderError.message}`);
+			}
+
+			// Set content alignment
+			try {
+				codeShape.setContentAlignment(SlidesApp.ContentAlignment.TOP);
+				console.log("Content alignment set");
+			} catch (alignError) {
+				console.log(`Alignment error: ${alignError.message}`);
+			}
+
+			console.log(`Code block ${i} created successfully`);
 		}
 
+		console.log("All code blocks processed successfully");
 		return true;
 	} catch (e) {
+		console.error(`Error adding code blocks to slide: ${e.message}`);
+		console.error(`Error stack: ${e.stack}`);
 		Logger.log(`Error adding code blocks to slide: ${e.message}`);
 		return false;
 	}
