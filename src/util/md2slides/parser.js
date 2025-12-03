@@ -14,22 +14,63 @@ function parseMarkdownToStructure(markdownText) {
 		const lines = markdownText.split("\n");
 		const slideStructure = [];
 		let currentSlide = null;
+		let inCodeBlock = false;
+		let codeBlockContent = [];
+		let codeBlockLanguage = "";
 
 		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i].trim();
+			const line = lines[i];
+			const trimmedLine = line.trim();
 
-			// Skip empty lines
-			if (line === "") continue;
+			// Check for code block markers
+			if (trimmedLine.startsWith("```")) {
+				if (!inCodeBlock) {
+					// Starting a code block
+					inCodeBlock = true;
+					// Extract language if specified (e.g., ```python or ```r)
+					codeBlockLanguage = trimmedLine.substring(3).trim();
+					codeBlockContent = [];
+				} else {
+					// Ending a code block
+					inCodeBlock = false;
+
+					// Add the code block to the current slide if it exists
+					if (currentSlide && codeBlockContent.length > 0) {
+						if (!currentSlide.codeBlocks) {
+							currentSlide.codeBlocks = [];
+						}
+						currentSlide.codeBlocks.push({
+							language: codeBlockLanguage,
+							content: codeBlockContent.join("\n"),
+						});
+					}
+
+					// Reset code block variables
+					codeBlockContent = [];
+					codeBlockLanguage = "";
+				}
+				continue; // Skip the ``` line itself
+			}
+
+			// If we're inside a code block, collect the content
+			if (inCodeBlock) {
+				// Preserve original line without trimming for code formatting
+				codeBlockContent.push(line);
+				continue;
+			}
+
+			// Skip empty lines outside of code blocks
+			if (trimmedLine === "") continue;
 
 			// Check for horizontal rule (---) as slide separator
-			if (line === "---") {
+			if (trimmedLine === "---") {
 				// Skip the separator line - don't add it to any slide content
 				continue;
 			}
 			// Check for speaker notes (> content)
-			if (line.startsWith("> ")) {
+			if (trimmedLine.startsWith("> ")) {
 				if (currentSlide) {
-					const speakerNote = line.substring(2).trim();
+					const speakerNote = trimmedLine.substring(2).trim();
 					if (!currentSlide.speakerNotes) {
 						currentSlide.speakerNotes = [];
 					}
@@ -37,9 +78,9 @@ function parseMarkdownToStructure(markdownText) {
 				}
 			}
 			// Check for H1 heading (# Heading)
-			else if (line.startsWith("# ")) {
+			else if (trimmedLine.startsWith("# ")) {
 				// Extract title and remove page numbering pattern if present
-				let title = line.substring(2).trim();
+				let title = trimmedLine.substring(2).trim();
 				// Remove patterns like "Page 1:" or "Page 10:" from the title
 				title = title.replace(/^Page\s+\d+:\s*/i, "");
 
@@ -49,13 +90,14 @@ function parseMarkdownToStructure(markdownText) {
 					title: title,
 					bodyItems: [],
 					speakerNotes: [],
+					codeBlocks: [],
 				};
 				slideStructure.push(currentSlide);
 			}
 			// Check for H2 heading (## Heading)
-			else if (line.startsWith("## ")) {
+			else if (trimmedLine.startsWith("## ")) {
 				// Extract title and remove page numbering pattern if present
-				let title = line.substring(3).trim();
+				let title = trimmedLine.substring(3).trim();
 				// Remove patterns like "Page 1:" or "Page 10:" from the title
 				title = title.replace(/^Page\s+\d+:\s*/i, "");
 
@@ -66,38 +108,42 @@ function parseMarkdownToStructure(markdownText) {
 					bodyItems: [],
 					speakerNotes: [],
 					listType: "bullet", // Default to bullet list
+					codeBlocks: [],
 				};
 				slideStructure.push(currentSlide);
 			}
 			// Add content to current slide if it's a TITLE_AND_BODY
 			else if (currentSlide && currentSlide.layout === "TITLE_AND_BODY") {
 				// Process list items and regular text
-				let content = line;
+				let content = trimmedLine;
 
 				// Detect and set list type based on the first list item encountered
 				if (currentSlide.bodyItems.length === 0) {
-					if (/^\(\d+\)\s/.test(line)) {
+					if (/^\(\d+\)\s/.test(trimmedLine)) {
 						currentSlide.listType = "numbered_parens";
-					} else if (/^\d+\.\s/.test(line)) {
+					} else if (/^\d+\.\s/.test(trimmedLine)) {
 						currentSlide.listType = "numbered";
-					} else if (/^[A-Z]\.\s/.test(line)) {
+					} else if (/^[A-Z]\.\s/.test(trimmedLine)) {
 						currentSlide.listType = "lettered";
-					} else if (line.startsWith("- ") || line.startsWith("* ")) {
+					} else if (
+						trimmedLine.startsWith("- ") ||
+						trimmedLine.startsWith("* ")
+					) {
 						currentSlide.listType = "bullet";
 					}
 				}
 
 				// Remove list markers if present
-				if (line.startsWith("- ")) {
-					content = line.substring(2).trim();
-				} else if (line.startsWith("* ")) {
-					content = line.substring(2).trim();
-				} else if (/^\(\d+\)\s/.test(line)) {
-					content = line.substring(line.indexOf(")") + 1).trim();
-				} else if (/^\d+\.\s/.test(line)) {
-					content = line.substring(line.indexOf(".") + 1).trim();
-				} else if (/^[A-Z]\.\s/.test(line)) {
-					content = line.substring(2).trim();
+				if (trimmedLine.startsWith("- ")) {
+					content = trimmedLine.substring(2).trim();
+				} else if (trimmedLine.startsWith("* ")) {
+					content = trimmedLine.substring(2).trim();
+				} else if (/^\(\d+\)\s/.test(trimmedLine)) {
+					content = trimmedLine.substring(trimmedLine.indexOf(")") + 1).trim();
+				} else if (/^\d+\.\s/.test(trimmedLine)) {
+					content = trimmedLine.substring(trimmedLine.indexOf(".") + 1).trim();
+				} else if (/^[A-Z]\.\s/.test(trimmedLine)) {
+					content = trimmedLine.substring(2).trim();
 				}
 
 				currentSlide.bodyItems.push(content);

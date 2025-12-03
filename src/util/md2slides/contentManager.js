@@ -28,6 +28,11 @@ function addContentToSlides(createdSlides) {
 				addBodyContentToSlide(slide, info.bodyItems);
 			}
 
+			// Add code blocks if they exist
+			if (info.codeBlocks && info.codeBlocks.length > 0) {
+				addCodeBlocksToSlide(slide, info.codeBlocks);
+			}
+
 			// Add speaker notes if they exist
 			if (info.speakerNotes && info.speakerNotes.length > 0) {
 				addSpeakerNotesToSlide(slide, info.speakerNotes);
@@ -280,11 +285,85 @@ function getTitleFromSlide(slide) {
 					return shapes[i].getText().asString();
 				}
 			} catch (err) {
-				continue;
+				// Skip this shape and continue to next one
 			}
 		}
 	}
 	return "";
+}
+
+/**
+ * Adds code blocks to a slide as separate text shapes
+ * @param {Slide} slide - The slide to add code blocks to
+ * @param {Array} codeBlocks - Array of code block objects with language and content
+ * @return {boolean} Success status
+ */
+function addCodeBlocksToSlide(slide, codeBlocks) {
+	try {
+		const slideWidth = slide.getPageWidth();
+		const slideHeight = slide.getPageHeight();
+
+		// Position code blocks at the bottom of the slide or after body content
+		const startY = slideHeight * 0.6; // Start at 60% of slide height
+		const codeBlockHeight = slideHeight * 0.25; // Each code block takes 25% of height
+		const padding = 20; // Padding between code blocks
+
+		for (let i = 0; i < codeBlocks.length; i++) {
+			const codeBlock = codeBlocks[i];
+
+			// Create a text box for the code block
+			const codeShape = slide.insertShape(
+				SlidesApp.ShapeType.TEXT_BOX,
+				slideWidth * 0.1, // Left position (10% from left)
+				startY + i * (codeBlockHeight + padding), // Top position
+				slideWidth * 0.8, // Width (80% of slide width)
+				codeBlockHeight, // Height
+			);
+
+			// Set the code content
+			const textRange = codeShape.getText();
+			textRange.setText(codeBlock.content);
+
+			// Apply code formatting
+			const textStyle = textRange.getTextStyle();
+			textStyle.setFontSize(12); // Fixed font size of 12 as requested
+			textStyle.setFontFamily("Courier New"); // Monospace font for code
+
+			// Add background color to distinguish code blocks
+			codeShape.getFill().setSolidFill("#f5f5f5"); // Light gray background
+
+			// Add border to make it look like a code block
+			const border = codeShape.getBorder();
+			border.setWeight(1);
+			border.getLineFill().setSolidFill("#cccccc"); // Light gray border
+
+			// If language is specified, add it as a label at the top
+			if (codeBlock.language) {
+				const languageLabel = slide.insertShape(
+					SlidesApp.ShapeType.TEXT_BOX,
+					slideWidth * 0.1, // Same left position as code block
+					startY + i * (codeBlockHeight + padding) - 15, // Just above the code block
+					100, // Small width for label
+					15, // Small height for label
+				);
+
+				const labelText = languageLabel.getText();
+				labelText.setText(codeBlock.language);
+				labelText.getTextStyle().setFontSize(10);
+				labelText.getTextStyle().setForegroundColor("#666666");
+				labelText.getTextStyle().setItalic(true);
+
+				// Remove border and background from label
+				languageLabel.getBorder().setTransparent();
+				languageLabel.getFill().setSolidFill("#ffffff");
+			}
+		}
+
+		return true;
+	} catch (e) {
+		Logger.log(`Error adding code blocks to slide: ${e.message}`);
+		return false;
+	}
 }
 
 /**
