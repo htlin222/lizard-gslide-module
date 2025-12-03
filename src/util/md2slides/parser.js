@@ -78,6 +78,16 @@ function parseMarkdownToStructure(markdownText) {
 					currentSlide.speakerNotes.push(speakerNote);
 				}
 			}
+			// Check for footer items (@ content)
+			else if (trimmedLine.startsWith("@ ")) {
+				if (currentSlide) {
+					const footerItem = trimmedLine.substring(2).trim();
+					if (!currentSlide.footerItems) {
+						currentSlide.footerItems = [];
+					}
+					currentSlide.footerItems.push(footerItem);
+				}
+			}
 			// Check for H1 heading (# Heading)
 			else if (trimmedLine.startsWith("# ")) {
 				// Extract title and remove page numbering pattern if present
@@ -92,6 +102,7 @@ function parseMarkdownToStructure(markdownText) {
 					bodyItems: [],
 					speakerNotes: [],
 					codeBlocks: [],
+					footerItems: [], // For @ prefixed lines
 				};
 				slideStructure.push(currentSlide);
 			}
@@ -113,6 +124,7 @@ function parseMarkdownToStructure(markdownText) {
 					speakerNotes: [],
 					listType: "bullet", // Default to bullet list
 					codeBlocks: [],
+					footerItems: [], // For @ prefixed lines
 				};
 				slideStructure.push(currentSlide);
 			}
@@ -131,6 +143,7 @@ function parseMarkdownToStructure(markdownText) {
 					speakerNotes: [],
 					listType: "bullet", // Default to bullet list
 					codeBlocks: [],
+					footerItems: [], // For @ prefixed lines
 					parentTitle: currentH2Title, // Store the parent H2 title
 				};
 				slideStructure.push(currentSlide);

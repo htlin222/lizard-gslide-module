@@ -42,6 +42,11 @@ function addContentToSlides(createdSlides) {
 			if (info.speakerNotes && info.speakerNotes.length > 0) {
 				addSpeakerNotesToSlide(slide, info.speakerNotes);
 			}
+
+			// Add footer items if they exist
+			if (info.footerItems && info.footerItems.length > 0) {
+				addFooterItemsToSlide(slide, info.footerItems);
+			}
 		}
 		return true;
 	} catch (error) {
@@ -468,6 +473,175 @@ function addSpeakerNotesToSlide(slide, speakerNotes) {
 		return true;
 	} catch (e) {
 		Logger.log(`Error adding speaker notes to slide: ${e.message}`);
+		return false;
+	}
+}
+
+/**
+ * Adds footer items to a slide (in the bottom text area)
+ * @param {Slide} slide - The slide to add footer items to
+ * @param {Array} footerItems - Array of footer item strings
+ * @return {boolean} Success status
+ */
+function addFooterItemsToSlide(slide, footerItems) {
+	try {
+		console.log(`Adding ${footerItems.length} footer items to slide`);
+
+		// Try to find an existing footer placeholder first
+		let footerAdded = false;
+
+		// Method 1: Look for FOOTER placeholder
+		footerAdded = tryAddFooterToPlaceholder(slide, footerItems);
+
+		// Method 2: If no footer placeholder, try to find the bottom-most text box
+		if (!footerAdded) {
+			footerAdded = tryAddFooterToBottomTextBox(slide, footerItems);
+		}
+
+		// Method 3: If still no success, create a new text box at the bottom
+		if (!footerAdded) {
+			footerAdded = createFooterTextBox(slide, footerItems);
+		}
+
+		if (footerAdded) {
+			console.log("Footer items added successfully");
+		} else {
+			console.log("Failed to add footer items");
+		}
+
+		return footerAdded;
+	} catch (e) {
+		Logger.log(`Error adding footer items to slide: ${e.message}`);
+		console.error(`Error adding footer items: ${e.message}`);
+		return false;
+	}
+}
+
+/**
+ * Tries to add footer items to a FOOTER placeholder
+ * @param {Slide} slide - The slide
+ * @param {Array} footerItems - Footer items to add
+ * @return {boolean} Success status
+ */
+function tryAddFooterToPlaceholder(slide, footerItems) {
+	try {
+		const footerShape = slide.getPlaceholder(SlidesApp.PlaceholderType.FOOTER);
+		if (footerShape && footerShape.asShape) {
+			const textRange = footerShape.asShape().getText();
+			const footerText = footerItems.join(" • ");
+			textRange.setText(footerText);
+
+			// Style the footer text
+			textRange.getTextStyle().setFontSize(10);
+			textRange.getTextStyle().setForegroundColor("#666666");
+
+			console.log("Footer added to FOOTER placeholder");
+			return true;
+		}
+	} catch (e) {
+		console.log(`Error getting footer placeholder: ${e.message}`);
+	}
+	return false;
+}
+
+/**
+ * Tries to add footer items to the bottom-most text box
+ * @param {Slide} slide - The slide
+ * @param {Array} footerItems - Footer items to add
+ * @return {boolean} Success status
+ */
+function tryAddFooterToBottomTextBox(slide, footerItems) {
+	try {
+		const shapes = slide.getShapes();
+		let bottomMostShape = null;
+		let bottomMostY = 0;
+
+		// Find the bottom-most text box (excluding title)
+		const titleText = getTitleFromSlide(slide);
+
+		for (let i = 0; i < shapes.length; i++) {
+			const shape = shapes[i];
+			try {
+				if (shape.getShapeType() === SlidesApp.ShapeType.TEXT_BOX) {
+					const shapeText = shape.getText().asString().trim();
+					// Skip if this is the title or already contains footer content
+					if (shapeText === titleText || shapeText.includes("•")) {
+						continue;
+					}
+
+					const top = shape.getTop();
+					if (top > bottomMostY) {
+						bottomMostY = top;
+						bottomMostShape = shape;
+					}
+				}
+			} catch (e) {
+				// Skip this shape if we can't get its properties
+			}
+		}
+
+		if (bottomMostShape) {
+			const textRange = bottomMostShape.getText();
+			const existingText = textRange.asString().trim();
+			const footerText = footerItems.join(" • ");
+
+			// Append footer items to existing content
+			if (existingText) {
+				textRange.setText(existingText + "\n\n" + footerText);
+			} else {
+				textRange.setText(footerText);
+			}
+
+			console.log("Footer added to bottom text box");
+			return true;
+		}
+	} catch (e) {
+		console.log(`Error adding footer to bottom text box: ${e.message}`);
+	}
+	return false;
+}
+
+/**
+ * Creates a new text box at the bottom for footer items
+ * @param {Slide} slide - The slide
+ * @param {Array} footerItems - Footer items to add
+ * @return {boolean} Success status
+ */
+function createFooterTextBox(slide, footerItems) {
+	try {
+		const slideWidth = slide.getWidth();
+		const slideHeight = slide.getHeight();
+
+		// Create footer text box at the bottom of the slide
+		const footerBox = slide.insertTextBox(
+			slideWidth * 0.05, // Left margin (5%)
+			slideHeight * 0.9, // Near bottom (90% down)
+			slideWidth * 0.9, // Width (90% of slide)
+			slideHeight * 0.08, // Height (8% of slide)
+		);
+
+		// Set footer content
+		const footerText = footerItems.join(" • ");
+		const textRange = footerBox.getText();
+		textRange.setText(footerText);
+
+		// Style the footer text
+		textRange.getTextStyle().setFontSize(10);
+		textRange.getTextStyle().setForegroundColor("#666666");
+
+		// Set paragraph alignment to center
+		try {
+			textRange
+				.getParagraphStyle()
+				.setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
+		} catch (alignError) {
+			console.log(`Footer alignment error: ${alignError.message}`);
+		}
+
+		console.log("Footer text box created at bottom of slide");
+		return true;
+	} catch (e) {
+		console.log(`Error creating footer text box: ${e.message}`);
 		return false;
 	}
 }
