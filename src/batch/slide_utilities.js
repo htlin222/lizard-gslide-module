@@ -146,8 +146,7 @@ function batchDeleteAllElements(slides, requests) {
 	const deletePatterns = [
 		"tab_",
 		"progress_",
-		"before_",
-		"after_",
+		"sections_",
 		"label_",
 		"outline_",
 		"obj_",
