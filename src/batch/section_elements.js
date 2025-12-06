@@ -14,7 +14,7 @@ function addSectionElementsUltra(slides, sectionsCache, requests, cache) {
 
 	const BOX_CONFIG = {
 		x: 200,
-		width: 300,
+		width: 500,
 		height: 300,
 		// Styles for different states
 		before: { fontSize: 30, color: cache.colors.inactive, bold: false },
