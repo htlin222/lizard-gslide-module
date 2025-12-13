@@ -126,6 +126,11 @@ function createCustomMenu() {
 			.addSeparator()
 			.addItem("📝 Markdown 轉換成投影片", "showMarkdownToSlidesDialog")
 			.addItem("📋 Markdown 側邊欄⭐", "showMarkdownSidebar")
+			.addItem("📤 匯出成 Markdown⭐", "showExportMarkdownDialog")
+			.addItem(
+				"📤 匯出 Markdown (含圖片)",
+				"showExportMarkdownWithImagesDialog",
+			)
 			.addItem("🎤 AI 演講者備註", "showSpeakerNoteSidebar")
 			.addSeparator()
 			.addItem("🎨 配色方案生成器", "openColorPaletteSidebar")

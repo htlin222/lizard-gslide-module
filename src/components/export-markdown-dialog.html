@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Google Sans", Arial, sans-serif;
+        margin: 0;
+        padding: 16px;
+        background: #f8f9fa;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      h3 {
+        margin: 0;
+        color: #202124;
+        font-weight: 500;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
+      button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+      }
+      .btn-primary {
+        background: #1a73e8;
+        color: white;
+      }
+      .btn-primary:hover {
+        background: #1557b0;
+      }
+      .btn-secondary {
+        background: #e8eaed;
+        color: #202124;
+      }
+      .btn-secondary:hover {
+        background: #dadce0;
+      }
+      .textarea-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      textarea {
+        flex: 1;
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #dadce0;
+        border-radius: 8px;
+        font-family: "Roboto Mono", "Consolas", monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        resize: none;
+        background: white;
+      }
+      textarea:focus {
+        outline: none;
+        border-color: #1a73e8;
+        box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+      }
+      .status {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #5f6368;
+      }
+      .status.success {
+        color: #188038;
+      }
+      .tips {
+        margin-top: 12px;
+        padding: 12px;
+        background: #e8f0fe;
+        border-radius: 8px;
+        font-size: 12px;
+        color: #174ea6;
+      }
+      .tips strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+      .tips ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+      .tips li {
+        margin: 4px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h3>Exported Markdown</h3>
+      <div class="actions">
+        <button class="btn-secondary" onclick="selectAll()">Select All</button>
+        <button class="btn-primary" onclick="copyToClipboard()">
+          Copy to Clipboard
+        </button>
+      </div>
+    </div>
+
+    <div class="textarea-container">
+      <textarea id="markdown-output" readonly><?= markdownContent ?></textarea>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <div class="tips">
+      <strong>Marp Markdown Format:</strong>
+      <ul>
+        <li><code># H1</code> - Section headers and title slides</li>
+        <li><code>## H2</code> - Regular slide titles</li>
+        <li><code>---</code> - Slide separator</li>
+        <li>Speaker notes are included as HTML comments</li>
+      </ul>
+    </div>
+
+    <script>
+      function selectAll() {
+        const textarea = document.getElementById("markdown-output");
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+        showStatus("All text selected");
+      }
+
+      function copyToClipboard() {
+        const textarea = document.getElementById("markdown-output");
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+
+        try {
+          document.execCommand("copy");
+          showStatus("Copied to clipboard!", true);
+        } catch (err) {
+          // Fallback for modern browsers
+          navigator.clipboard
+            .writeText(textarea.value)
+            .then(function () {
+              showStatus("Copied to clipboard!", true);
+            })
+            .catch(function () {
+              showStatus("Failed to copy. Please use Ctrl+C / Cmd+C");
+            });
+        }
+      }
+
+      function showStatus(message, isSuccess) {
+        const status = document.getElementById("status");
+        status.textContent = message;
+        status.className = "status" + (isSuccess ? " success" : "");
+
+        setTimeout(function () {
+          status.textContent = "";
+          status.className = "status";
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>
