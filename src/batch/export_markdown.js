@@ -297,27 +297,31 @@ function slugify(title) {
 }
 
 /**
- * Save image to Drive and return shareable URL
+ * Save image to Drive
  * @param {string} contentUrl - The image content URL from Slides
  * @param {GoogleAppsScript.Drive.Folder} folder - The folder to save to
  * @param {string} filename - The filename for the image
- * @returns {string|null} The shareable Drive URL or null if failed
+ * @returns {boolean} True if saved successfully, false otherwise
  */
 function saveImageToDrive(contentUrl, folder, filename) {
 	try {
-		const response = UrlFetchApp.fetch(contentUrl);
+		const response = UrlFetchApp.fetch(contentUrl, {
+			muteHttpExceptions: true,
+			followRedirects: true,
+		});
+
+		const responseCode = response.getResponseCode();
+		if (responseCode !== 200) {
+			Logger.log(`HTTP ${responseCode} for ${filename}`);
+			return false;
+		}
+
 		const blob = response.getBlob().setName(filename);
-		const file = folder.createFile(blob);
-
-		// Set sharing to "Anyone with link can view"
-		file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-
-		// Return direct view URL
-		const fileId = file.getId();
-		return `https://drive.google.com/uc?export=view&id=${fileId}`;
+		folder.createFile(blob);
+		return true;
 	} catch (e) {
 		Logger.log(`Failed to save image ${filename}: ${e.message}`);
-		return null;
+		return false;
 	}
 }
 
@@ -439,9 +443,10 @@ function exportSlidesToMarkdown(saveImagesToDrive) {
 					const filename = titleSlug
 						? `slide_${slideNum}_${titleSlug}_img_${imgIndex + 1}.png`
 						: `slide_${slideNum}_img_${imgIndex + 1}.png`;
-					const driveUrl = saveImageToDrive(img.url, assetsFolder, filename);
-					if (driveUrl) {
-						imageUrl = driveUrl;
+					const saved = saveImageToDrive(img.url, assetsFolder, filename);
+					if (saved) {
+						// Use relative path for markdown
+						imageUrl = `./assets/${filename}`;
 					}
 				}
 
@@ -533,8 +538,7 @@ function showExportMarkdownWithImagesDialog() {
 			"    📁 assets/\n" +
 			"        🖼️ slide_01_title_img_1.png\n" +
 			"        ...\n\n" +
-			"⚠️ 舊的 .md/.qmd 及 assets 內檔案會被清除\n" +
-			"📤 圖片會設為「知道連結的人都可以檢視」\n\n" +
+			"⚠️ 舊的 .md/.qmd 及 assets 內檔案會被清除\n\n" +
 			"要繼續嗎？",
 		ui.ButtonSet.YES_NO,
 	);
