@@ -125,7 +125,7 @@ After installation, a new menu item "🛠 工具選單" will appear in your Goog
 - **🎨 單頁美化** (Single Slide Beautification)
   - 📅 更新日期 (Update Date)
   - 📏 加上網格 (Add Grid)
-  - 🔰 加上badge (Add Badge)
+  - 🔰 加上 badge (Add Badge)
   - 🍡 貼上在同一處 (Paste in Place)
 
 - **🖖 新增** (Add Content)
@@ -171,4 +171,4 @@ Copyright © Hsieh-Ting Lin
 
 ## Author
 
-Hsieh-Ting Lin
+Hsieh-Ting Lin M.D.
