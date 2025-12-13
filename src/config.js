@@ -81,7 +81,7 @@ function createCustomMenu() {
 			.addToUi();
 
 		// Create the beautify menu as a top-level menu
-		ui.createMenu("🎨 加入元素")
+		ui.createMenu("✨ 加入元素")
 			.addItem("📏 開/關網格", "toggleGrids")
 			.addItem("❄ 為元素加上45度影子", "createOffsetBlueShape")
 			.addItem("↙ 加上一個大箭頭 ", "drawArrowOnCurrentSlide")
