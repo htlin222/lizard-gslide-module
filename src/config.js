@@ -100,7 +100,7 @@ function createCustomMenu() {
 			.addToUi();
 
 		// Create the graph menu as a top-level menu
-		ui.createMenu("📊 繪圖")
+		ui.createMenu("🎨 繪圖")
 			.addItem("📐 分割成網格⭐", "showSplitShapeDialog")
 			.addItem("📄 分割成多欄", "showMultipleColumnsDialog")
 			.addSeparator()
