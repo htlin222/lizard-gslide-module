@@ -66,7 +66,7 @@ function createCustomMenu() {
 		const ui = SlidesApp.getUi();
 
 		// Create the batch processing menu as a top-level menu
-		ui.createMenu("🗃 批次處理")
+		ui.createMenu("📦 批次處理")
 			.addItem("🛠 同時執行所有功能", "confirmRunAll")
 			.addSeparator()
 			.addItem("🎨 套用蜥蜴主題", "applyThemeToCurrentPresentation")
