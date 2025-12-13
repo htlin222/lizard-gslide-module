@@ -389,11 +389,14 @@ function exportSlidesToMarkdown(saveImagesToDrive) {
 		const slide = slides[index];
 		const content = extractSlideContent(slide);
 
-		// Add slide separator (except for first slide)
+		// Add slide separator (except for first slide, and not needed if slide has title)
 		if (index > 0) {
 			markdownParts.push("");
-			markdownParts.push("---");
-			markdownParts.push("");
+			// Only add --- separator if slide has no title (headings act as separators)
+			if (!content.title) {
+				markdownParts.push("---");
+				markdownParts.push("");
+			}
 		}
 
 		// Determine heading level based on layout
