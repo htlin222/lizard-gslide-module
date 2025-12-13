@@ -88,6 +88,20 @@ function parseMarkdownToStructure(markdownText) {
 					currentSlide.footerItems.push(footerItem);
 				}
 			}
+			// Check for image syntax ![alt](url)
+			else if (/^!\[.*?\]\(.*?\)$/.test(trimmedLine)) {
+				if (currentSlide) {
+					const imageMatch = trimmedLine.match(/^!\[(.*?)\]\((.*?)\)$/);
+					if (imageMatch) {
+						const alt = imageMatch[1] || "";
+						const url = imageMatch[2];
+						if (!currentSlide.images) {
+							currentSlide.images = [];
+						}
+						currentSlide.images.push({ alt: alt, url: url });
+					}
+				}
+			}
 			// Check for H1 heading (# Heading)
 			else if (trimmedLine.startsWith("# ")) {
 				// Extract title and remove page numbering pattern if present
@@ -103,6 +117,7 @@ function parseMarkdownToStructure(markdownText) {
 					speakerNotes: [],
 					codeBlocks: [],
 					footerItems: [], // For @ prefixed lines
+					images: [], // For ![alt](url) image syntax
 				};
 				slideStructure.push(currentSlide);
 			}
@@ -125,6 +140,7 @@ function parseMarkdownToStructure(markdownText) {
 					listType: "bullet", // Default to bullet list
 					codeBlocks: [],
 					footerItems: [], // For @ prefixed lines
+					images: [], // For ![alt](url) image syntax
 				};
 				slideStructure.push(currentSlide);
 			}
@@ -144,6 +160,7 @@ function parseMarkdownToStructure(markdownText) {
 					listType: "bullet", // Default to bullet list
 					codeBlocks: [],
 					footerItems: [], // For @ prefixed lines
+					images: [], // For ![alt](url) image syntax
 					parentTitle: currentH2Title, // Store the parent H2 title
 				};
 				slideStructure.push(currentSlide);

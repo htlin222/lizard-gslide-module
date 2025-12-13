@@ -47,6 +47,11 @@ function addContentToSlides(createdSlides) {
 			if (info.footerItems && info.footerItems.length > 0) {
 				addFooterItemsToSlide(slide, info.footerItems);
 			}
+
+			// Add images if they exist
+			if (info.images && info.images.length > 0) {
+				addImagesToSlide(slide, info.images);
+			}
 		}
 		return true;
 	} catch (error) {
@@ -526,7 +531,7 @@ function addFooterItemsToSlide(slide, footerItems) {
 function tryAddFooterToPlaceholder(slide, footerItems) {
 	try {
 		const footerShape = slide.getPlaceholder(SlidesApp.PlaceholderType.FOOTER);
-		if (footerShape && footerShape.asShape) {
+		if (footerShape?.asShape) {
 			const textRange = footerShape.asShape().getText();
 			const footerText = footerItems.join(" • ");
 			textRange.setText(footerText);
@@ -587,7 +592,7 @@ function tryAddFooterToBottomTextBox(slide, footerItems) {
 
 			// Append footer items to existing content
 			if (existingText) {
-				textRange.setText(existingText + "\n\n" + footerText);
+				textRange.setText(`${existingText}\n\n${footerText}`);
 			} else {
 				textRange.setText(footerText);
 			}
@@ -642,6 +647,62 @@ function createFooterTextBox(slide, footerItems) {
 		return true;
 	} catch (e) {
 		console.log(`Error creating footer text box: ${e.message}`);
+		return false;
+	}
+}
+
+/**
+ * Adds images to a slide from URLs using ![alt](url) markdown syntax
+ * @param {Slide} slide - The slide to add images to
+ * @param {Array} images - Array of image objects with {alt, url}
+ * @return {boolean} Success status
+ */
+function addImagesToSlide(slide, images) {
+	try {
+		console.log(`Adding ${images.length} images to slide`);
+
+		// Default position and size configuration
+		const defaultLeft = 360; // X position
+		const defaultTop = 30; // Y position
+		const maxWidth = 325; // Max width
+		const maxHeight = 300; // Max height
+		const imageGap = 10; // Gap between multiple images
+
+		for (let i = 0; i < images.length; i++) {
+			const imageData = images[i];
+			const url = imageData.url;
+			const alt = imageData.alt || "";
+
+			console.log(`Inserting image ${i}: alt="${alt}", url="${url}"`);
+
+			try {
+				// Calculate position for multiple images (stack vertically)
+				const left = defaultLeft;
+				const top = defaultTop + i * (maxHeight + imageGap);
+
+				// Insert image with position and size constraints
+				const image = slide.insertImage(url, left, top, maxWidth, maxHeight);
+
+				// Set alt text/title for the image
+				if (alt) {
+					image.setTitle(alt);
+					image.setDescription(alt);
+				}
+
+				console.log(`Image ${i} inserted successfully at (${left}, ${top})`);
+			} catch (imgError) {
+				console.error(`Error inserting image ${i}: ${imgError.message}`);
+				Logger.log(
+					`Error inserting image from URL "${url}": ${imgError.message}`,
+				);
+			}
+		}
+
+		console.log("All images processed");
+		return true;
+	} catch (e) {
+		console.error(`Error adding images to slide: ${e.message}`);
+		Logger.log(`Error adding images to slide: ${e.message}`);
 		return false;
 	}
 }
