@@ -103,6 +103,32 @@
       .tips li {
         margin: 4px 0;
       }
+      .folder-link {
+        margin-top: 12px;
+        padding: 12px;
+        background: #e6f4ea;
+        border-radius: 8px;
+        border-left: 4px solid #188038;
+      }
+      .folder-link a {
+        color: #188038;
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .folder-link a:hover {
+        text-decoration: underline;
+      }
+      .folder-link .folder-icon {
+        font-size: 18px;
+      }
+      .folder-link .label {
+        font-size: 12px;
+        color: #5f6368;
+        margin-bottom: 4px;
+      }
     </style>
   </head>
   <body>
@@ -124,6 +150,16 @@
     </div>
 
     <div class="status" id="status"></div>
+
+    <? if (typeof folderUrl !== 'undefined' && folderUrl) { ?>
+    <div class="folder-link">
+      <div class="label">檔案已儲存至 Google Drive：</div>
+      <a href="<?= folderUrl ?>" target="_blank">
+        <span class="folder-icon">📁</span>
+        <?= folderName ?>
+      </a>
+    </div>
+    <? } ?>
 
     <div class="tips">
       <strong>Marp Markdown Format:</strong>

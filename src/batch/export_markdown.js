@@ -500,6 +500,13 @@ function exportSlidesToMarkdown(saveImagesToDrive) {
 			quartoMarkdown,
 			"text/plain",
 		);
+
+		// Return markdown and folder URL for Drive exports
+		return {
+			markdown: marpMarkdown,
+			folderUrl: presentationFolder.getUrl(),
+			folderName: presentationTitle,
+		};
 	}
 
 	return marpMarkdown;
@@ -551,12 +558,14 @@ function showExportMarkdownWithImagesDialog() {
 	}
 
 	try {
-		const markdown = exportSlidesToMarkdown(true);
+		const result = exportSlidesToMarkdown(true);
 
 		const htmlTemplate = HtmlService.createTemplateFromFile(
 			"src/components/export-markdown-dialog.html",
 		);
-		htmlTemplate.markdownContent = markdown;
+		htmlTemplate.markdownContent = result.markdown;
+		htmlTemplate.folderUrl = result.folderUrl;
+		htmlTemplate.folderName = result.folderName;
 
 		const html = htmlTemplate
 			.evaluate()
