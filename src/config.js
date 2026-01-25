@@ -132,6 +132,7 @@ function createCustomMenu() {
 				"showExportMarkdownWithImagesDialog",
 			)
 			.addItem("🎤 AI 演講者備註", "showSpeakerNoteSidebar")
+			.addItem("📥 批次下載演講者備註 (JSON)", "showExportSpeakerNotesDialog")
 			.addSeparator()
 			.addItem("🎨 配色方案生成器", "openColorPaletteSidebar")
 			.addItem("**B** Markdown 粗體格式", "runApplyMarkdownBoldFormatting")
