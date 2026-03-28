@@ -1,6 +1,15 @@
+<div align="center">
+
 # Lizard Google Slides Module
 
-A Google Apps Script project that enhances Google Slides with automated formatting, styling, and content management features. This module provides a custom menu with various tools to improve slide design consistency and streamline presentation creation.
+[![GitHub stars](https://img.shields.io/github/stars/htlin222/lizard-gslide-module?style=flat-square)](https://github.com/htlin222/lizard-gslide-module/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/htlin222/lizard-gslide-module?style=flat-square)](https://github.com/htlin222/lizard-gslide-module/commits/main)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Google Apps Script](https://img.shields.io/badge/Google%20Apps%20Script-4285F4?style=flat-square&logo=google&logoColor=white)](https://developers.google.com/apps-script)
+
+**A Google Apps Script toolkit that supercharges Google Slides with automated formatting, batch styling, and content management -- so you can focus on your story, not your layouts.**
+
+</div>
 
 ![image](https://github.com/user-attachments/assets/b9930702-381d-4bc6-9458-8385bea9d7a7)
 
@@ -165,9 +174,15 @@ This project uses [clasp](https://github.com/google/clasp) for local development
 4. Make changes locally
 5. Push changes: `clasp push`
 
+## Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request.
+
 ## License
 
-Copyright © Hsieh-Ting Lin
+This project is licensed under the [MIT License](LICENSE).
+
+Copyright (c) Hsieh-Ting Lin
 
 ## Author
 
