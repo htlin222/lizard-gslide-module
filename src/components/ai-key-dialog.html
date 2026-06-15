@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <style>
+      body {
+        font-family: "Source Sans Pro", Arial, sans-serif;
+        margin: 0;
+        padding: 18px;
+        color: #333;
+        font-size: 13px;
+      }
+      h2 { font-size: 16px; margin: 0 0 4px; }
+      ol { padding-left: 18px; line-height: 1.7; color: #555; font-size: 12px; }
+      a { color: #3D6869; }
+      .key-row { display: flex; gap: 6px; margin-top: 10px; }
+      input[type="password"], input[type="text"] {
+        flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px;
+      }
+      .btn {
+        padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer;
+        font-size: 13px; background: #E7EAE7; color: #333;
+      }
+      .btn.primary { background: #3D6869; color: #fff; }
+      .btn:disabled { opacity: 0.5; cursor: default; }
+      #status { font-size: 12px; margin-top: 10px; min-height: 16px; }
+      .privacy { font-size: 10px; color: #888; margin-top: 12px; }
+    </style>
+  </head>
+  <body>
+    <h2>🔑 Set up AI</h2>
+    <p style="margin: 4px 0 8px; color: #666">
+      This feature needs your own Groq API key (free).
+    </p>
+    <ol>
+      <li>Open <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> (free, no card).</li>
+      <li>Click <b>Create API Key</b> and copy it (starts with <code>gsk_</code>).</li>
+      <li>Paste it below and press <b>Save &amp; Continue</b>.</li>
+    </ol>
+
+    <div class="key-row">
+      <input type="password" id="apiKey" placeholder="gsk_..." />
+      <button class="btn" type="button" onclick="toggle()">Show</button>
+    </div>
+    <div id="status"></div>
+
+    <div style="margin-top: 14px; text-align: right">
+      <button class="btn" type="button" onclick="google.script.host.close()">Cancel</button>
+      <button class="btn primary" id="saveBtn" type="button" onclick="save()">Save &amp; Continue</button>
+    </div>
+
+    <div class="privacy">
+      🔒 Stored privately on your Google account (UserProperties) — never shared with
+      other users and never sent to the add-on author.
+    </div>
+
+    <script>
+      // The server injects the name of the function to re-run after the key is saved.
+      var CONTINUE_FN = "<?= continueFnName ?>";
+
+      function toggle() {
+        var i = document.getElementById("apiKey");
+        i.type = i.type === "password" ? "text" : "password";
+      }
+
+      function setStatus(msg, color) {
+        var s = document.getElementById("status");
+        s.textContent = msg;
+        s.style.color = color || "#666";
+      }
+
+      function save() {
+        var key = document.getElementById("apiKey").value.trim();
+        var btn = document.getElementById("saveBtn");
+        if (!key) { setStatus("Please paste your key (gsk_...)", "#b26a00"); return; }
+
+        btn.disabled = true;
+        setStatus("Saving...", "#666");
+
+        google.script.run
+          .withSuccessHandler(function () {
+            setStatus("✓ Saved. Continuing...", "#2e7d32");
+            // Re-run the original AI function the user triggered, then close.
+            if (CONTINUE_FN) {
+              google.script.run
+                .withSuccessHandler(function () { google.script.host.close(); })
+                .withFailureHandler(function () { google.script.host.close(); })
+                [CONTINUE_FN]();
+            } else {
+              setTimeout(function () { google.script.host.close(); }, 600);
+            }
+          })
+          .withFailureHandler(function (err) {
+            btn.disabled = false;
+            setStatus(err.message || "Could not save key", "#c62828");
+          })
+          .saveUserApiKey(key);
+      }
+    </script>
+  </body>
+</html>

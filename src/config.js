@@ -94,6 +94,7 @@ function createCustomMenu() {
 			.addItem("🔢 加上數字遞增圓圈", "addNextNumberCircle")
 			.addSeparator()
 			.addItem("🍽 快速美化表格", "fastStyleSelectedTable")
+			.addItem("🔲 表格鑄造器⭐", "showTableMinterDialog")
 			.addItem("📊 平均間距置中", "runAveragePadding")
 			.addSeparator()
 			.addItem("🔍 檢視物件屬性", "showSelectedObjectPropertiesDialog")
@@ -131,6 +132,7 @@ function createCustomMenu() {
 				"📤 匯出 Markdown (含圖片)",
 				"showExportMarkdownWithImagesDialog",
 			)
+			.addItem("🔑 設定 AI 金鑰 (Groq)", "showAiKeySetup")
 			.addItem("🎤 AI 演講者備註", "showSpeakerNoteSidebar")
 			.addItem("📥 批次下載演講者備註 (JSON)", "showExportSpeakerNotesDialog")
 			.addSeparator()
@@ -444,6 +446,23 @@ function showMarkdownSidebar() {
 		console.error("Error showing Markdown sidebar: " + e.message);
 		SlidesApp.getUi().alert(
 			"Error: Could not open the Markdown sidebar: " + e.message,
+		);
+	}
+}
+
+/**
+ * Shows the Table Minter dialog.
+ * Lets users turn a Markdown table into a Google Slides-ready styled table
+ * on the clipboard (paste into Slides for a native table).
+ */
+function showTableMinterDialog() {
+	try {
+		const dialog = createTableMinterDialog();
+		SlidesApp.getUi().showModalDialog(dialog, "🔲 表格鑄造器 Table Minter");
+	} catch (e) {
+		console.error("Error showing Table Minter dialog: " + e.message);
+		SlidesApp.getUi().alert(
+			"Error: Could not open the Table Minter dialog: " + e.message,
 		);
 	}
 }

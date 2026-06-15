@@ -48,6 +48,19 @@ function createMarkdownSidebar() {
 }
 
 /**
+ * Creates and returns the Table Minter dialog UI.
+ * Generates Google Slides-ready HTML tables from Markdown for clipboard paste.
+ *
+ * @return {HtmlOutput} The HTML output for the table minter dialog
+ */
+function createTableMinterDialog() {
+	const template = createModularHtmlTemplate(
+		"src/components/table-minter/index",
+	);
+	return template.evaluate().setWidth(640).setHeight(520);
+}
+
+/**
  * Creates and returns the Flowchart sidebar UI with all components loaded.
  *
  * @return {HtmlOutput} The HTML output for the flowchart sidebar

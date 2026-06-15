@@ -157,28 +157,29 @@ function getCurrentSpeakerNotes() {
 }
 
 /**
- * Calls OpenAI API to generate speaker notes
- * @param {string} apiKey - OpenAI API key
- * @param {string} slideContent - Content from the slide
- * @param {string} prompt - User prompt/instructions
- * @return {Object} API response with generated content
+ * Generates speaker notes via Groq for the given slide content.
+ *
+ * SECURITY: the API key is NOT a parameter. It is read server-side from the
+ * current user's UserProperties inside callGroq_() (see src/util/aiKey.js).
+ * The client never sends the key.
+ *
+ * @param {string} slideContent - Content from the slide.
+ * @param {string} prompt - User prompt/instructions.
+ * @return {Object} API response with generated content.
  */
-function callOpenAI(apiKey, slideContent, prompt) {
-	try {
-		if (!apiKey || apiKey.trim() === "" || apiKey === "YOUR_API_KEY") {
-			throw new Error("Please provide a valid OpenAI API key");
-		}
+function generateSpeakerNotesAI(slideContent, prompt) {
+	if (!slideContent || slideContent.trim() === "") {
+		return {
+			success: false,
+			error: "No slide content found to process",
+			generatedText: "",
+		};
+	}
 
-		if (!slideContent || slideContent.trim() === "") {
-			throw new Error("No slide content found to process");
-		}
+	const systemMessage =
+		"You are a helpful assistant that creates speaker notes for presentations. Generate clear, concise, and helpful speaker notes based on the slide content provided.";
 
-		const url = "https://api.openai.com/v1/chat/completions";
-
-		const systemMessage =
-			"You are a helpful assistant that creates speaker notes for presentations. Generate clear, concise, and helpful speaker notes based on the slide content provided.";
-
-		const userMessage = `Please create speaker notes for this slide content:
+	const userMessage = `Please create speaker notes for this slide content:
 
 SLIDE CONTENT:
 ${slideContent}
@@ -193,59 +194,10 @@ Please provide speaker notes that:
 4. Are natural to read aloud
 5. Help the presenter engage with the audience`;
 
-		const body = {
-			model: "gpt-4o-mini",
-			messages: [
-				{
-					role: "system",
-					content: systemMessage,
-				},
-				{
-					role: "user",
-					content: userMessage,
-				},
-			],
-			max_tokens: 1000,
-			temperature: 0.7,
-		};
-
-		const response = UrlFetchApp.fetch(url, {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${apiKey}`,
-				"Content-Type": "application/json",
-			},
-			payload: JSON.stringify(body),
-		});
-
-		const responseData = JSON.parse(response.getContentText());
-
-		if (response.getResponseCode() !== 200) {
-			throw new Error(
-				`OpenAI API error (${response.getResponseCode()}): ${responseData.error ? responseData.error.message : "Unknown error"}`,
-			);
-		}
-
-		if (!responseData.choices || responseData.choices.length === 0) {
-			throw new Error("No response generated from OpenAI API");
-		}
-
-		const generatedText = responseData.choices[0].message.content.trim();
-
-		return {
-			success: true,
-			generatedText: generatedText,
-			usage: responseData.usage || {},
-			model: responseData.model || body.model,
-		};
-	} catch (e) {
-		console.error("Error calling OpenAI API: " + e.message);
-		return {
-			success: false,
-			error: e.message,
-			generatedText: "",
-		};
-	}
+	return callGroq_(systemMessage, userMessage, {
+		maxTokens: 1000,
+		temperature: 0.7,
+	});
 }
 
 /**

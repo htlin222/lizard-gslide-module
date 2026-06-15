@@ -1,0 +1,624 @@
+<script>
+  /**
+   * Shows a status message in the dialog.
+   * @param {string} message
+   * @param {string} type - 'success' | 'error' | 'info'
+   */
+  function showStatus(message, type = "info") {
+    const el = document.getElementById("statusMessage");
+    el.textContent = message;
+    el.className = `status-message status-${type}`;
+    el.style.display = "block";
+    if (type === "success" || type === "info") {
+      setTimeout(() => {
+        el.style.display = "none";
+      }, 5000);
+    }
+  }
+
+  /**
+   * Escapes HTML-special characters so cell text renders literally.
+   * @param {string} s
+   * @return {string}
+   */
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  /**
+   * Generates a docs-internal-guid-style UUID, matching the wrapper Google
+   * Slides emits when copying a native table.
+   * @return {string}
+   */
+  function generateGuid() {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  /**
+   * Detects a Markdown separator row, e.g. "| --- | :--: |".
+   * @param {string} line
+   * @return {boolean}
+   */
+  function isSeparatorRow(line) {
+    const stripped = line.replace(/[\s|]/g, "");
+    return stripped.length > 0 && /^[:\-]+$/.test(stripped) && stripped.indexOf("-") !== -1;
+  }
+
+  /**
+   * Robustly extracts just the Markdown table from a blob of text. LLMs often
+   * wrap the table in prose ("Here is your markdown:") or code fences — this
+   * keeps the largest contiguous run of pipe-bearing lines, preferring a run
+   * that contains a separator row.
+   * @param {string} text
+   * @return {string}
+   */
+  function extractMarkdownTable(text) {
+    const lines = (text || "").split(/\r?\n/);
+    const blocks = [];
+    let cur = [];
+    for (const line of lines) {
+      const t = line.trim();
+      if (/^```/.test(t)) continue; // skip code-fence markers
+      if (t.indexOf("|") !== -1) {
+        cur.push(line);
+      } else if (cur.length) {
+        blocks.push(cur);
+        cur = [];
+      }
+    }
+    if (cur.length) blocks.push(cur);
+    if (!blocks.length) return (text || "").trim();
+
+    const score = (b) => (b.some(isSeparatorRow) ? 1000 : 0) + b.length;
+    blocks.sort((a, b) => score(b) - score(a));
+    return blocks[0].join("\n").trim();
+  }
+
+  /**
+   * Extracts the first Markdown heading (e.g. "# Table: …") as plain text.
+   * @param {string} text
+   * @return {string} the heading text without the leading #'s, or "".
+   */
+  function extractTitle(text) {
+    const lines = (text || "").split(/\r?\n/);
+    for (const l of lines) {
+      const m = l.match(/^\s*#+\s*(.+?)\s*$/);
+      if (m) return m[1].trim();
+    }
+    return "";
+  }
+
+  /**
+   * Parses a Markdown table into header + body rows.
+   * Tolerates optional leading/trailing pipes, surrounding prose, and fences.
+   * @param {string} md
+   * @return {{header: string[], body: string[][]} | null}
+   */
+  function parseMarkdownTable(md) {
+    const table = extractMarkdownTable(md);
+    const lines = table
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length && l.indexOf("|") !== -1);
+
+    if (lines.length === 0) return null;
+
+    const splitCells = (line) => {
+      let t = line.trim();
+      if (t.startsWith("|")) t = t.slice(1);
+      if (t.endsWith("|")) t = t.slice(0, -1);
+      return t.split("|").map((c) => c.trim());
+    };
+
+    const header = splitCells(lines[0]);
+    const body = [];
+    for (let i = 1; i < lines.length; i++) {
+      if (isSeparatorRow(lines[i])) continue; // skip the Markdown separator row
+      body.push(splitCells(lines[i]));
+    }
+    return { header, body };
+  }
+
+  /**
+   * Builds one <td> cell matching the Google Slides clipboard format.
+   * Header text uses the accent color; all body text is black.
+   * @param {string} text
+   * @param {{isHeader: boolean, theme: string, fontSize: number}} opts
+   * @return {string}
+   */
+  function buildCell(text, opts) {
+    // All row bottoms are thin gray (incl. the header's bottom — the 2nd line).
+    // Only the very top of the header gets the thick accent stroke.
+    const border = "solid #CCCCCC 0.75px";
+    const borderTop = opts.isHeader ? `solid ${opts.theme} 1.5px` : "none";
+
+    const tdStyle =
+      "vertical-align:middle;border-left:none;border-right:none;" +
+      `border-top:${borderTop};` +
+      `border-bottom:${border};` +
+      "padding-top:7px;padding-right:10px;padding-bottom:7px;padding-left:10px";
+
+    const pStyle = "line-height:1.2;margin-top:0pt;margin-bottom:0pt;";
+
+    const weight = opts.isHeader ? "700" : "400";
+    const color = opts.isHeader ? opts.theme : "#000000";
+
+    const spanStyle =
+      `font-size:${opts.fontSize}pt;font-family:'Source Sans Pro',sans-serif;` +
+      `color:${color};background-color:transparent;font-weight:${weight};` +
+      "font-style:normal;font-variant:normal;text-decoration:none;" +
+      "vertical-align:baseline;white-space:pre;white-space:pre-wrap;";
+
+    return (
+      `<td style="${tdStyle}">` +
+      `<p dir="ltr" style="${pStyle}">` +
+      `<span style="${spanStyle}">${escapeHtml(text)}</span></p></td>`
+    );
+  }
+
+  /**
+   * Distributes a total table width across columns, proportional to each
+   * column's longest cell. Returns null when no total width is requested.
+   * @param {{header: string[], body: string[][]}} data
+   * @param {number} totalWidth
+   * @return {number[] | null}
+   */
+  function computeColWidths(data, totalWidth) {
+    if (!totalWidth || totalWidth <= 0) return null;
+    const ncol = data.header.length;
+    const rows = [data.header].concat(data.body);
+    const weights = [];
+    for (let c = 0; c < ncol; c++) {
+      let max = 1;
+      for (let r = 0; r < rows.length; r++) {
+        const len = (rows[r][c] || "").length;
+        if (len > max) max = len;
+      }
+      weights.push(max);
+    }
+    const sum = weights.reduce((a, b) => a + b, 0);
+    return weights.map((w) => Math.max(1, Math.round((totalWidth * w) / sum)));
+  }
+
+  /**
+   * Mints the inner <table> HTML (no meta/wrapper) from parsed table data.
+   * @param {{header: string[], body: string[][]}} data
+   * @param {{theme: string, fontSize: number, width: number}} style
+   * @return {string}
+   */
+  function buildTableHtml(data, style) {
+    const ncol = data.header.length;
+    const widths = computeColWidths(data, style.width);
+    let cols = "";
+    for (let c = 0; c < ncol; c++) {
+      cols += widths ? `<col width="${widths[c]}px" />` : "<col />";
+    }
+    const colgroup = "<colgroup>" + cols + "</colgroup>";
+
+    let rows = '<tr style="height:33px">';
+    for (let c = 0; c < ncol; c++) {
+      rows += buildCell(data.header[c] || "", {
+        isHeader: true,
+        theme: style.theme,
+        fontSize: style.fontSize,
+      });
+    }
+    rows += "</tr>";
+
+    for (let r = 0; r < data.body.length; r++) {
+      rows += '<tr style="height:36px">';
+      for (let c = 0; c < ncol; c++) {
+        rows += buildCell(data.body[r][c] || "", {
+          isHeader: false,
+          theme: style.theme,
+          fontSize: style.fontSize,
+        });
+      }
+      rows += "</tr>";
+    }
+
+    return (
+      '<table style="border:none;border-collapse:collapse">' +
+      colgroup +
+      rows +
+      "</table>"
+    );
+  }
+
+  /**
+   * Builds the title as a styled heading paragraph (accent, bold, +6pt).
+   * @param {string} title
+   * @param {number} fontSize - body font size; title renders at +6pt
+   * @param {string} theme
+   * @return {string} HTML, or "" when there is no title.
+   */
+  function buildTitleHtml(title, fontSize, theme) {
+    if (!title) return "";
+    const spanStyle =
+      `font-size:${fontSize}pt;font-family:'Source Sans Pro',sans-serif;` +
+      `color:#000000;background-color:transparent;font-weight:700;` +
+      "font-style:normal;font-variant:normal;text-decoration:none;" +
+      "vertical-align:baseline;white-space:pre;white-space:pre-wrap;";
+    return (
+      '<p dir="ltr" style="line-height:1.2;margin-top:0pt;margin-bottom:6pt;">' +
+      `<span style="${spanStyle}">${escapeHtml(title)}</span></p>`
+    );
+  }
+
+  /**
+   * Wraps the table in the meta + docs-internal-guid <b> wrapper that makes
+   * Slides treat the paste as a native table.
+   * @param {string} tableHtml
+   * @return {string}
+   */
+  function wrapForClipboard(tableHtml) {
+    return (
+      "<meta charset='utf-8'>" +
+      `<b style="font-weight:normal;" id="docs-internal-guid-${generateGuid()}">` +
+      tableHtml +
+      "</b>"
+    );
+  }
+
+  /**
+   * Builds a tab-separated plain-text fallback for the clipboard.
+   * @param {{header: string[], body: string[][]}} data
+   * @return {string}
+   */
+  function buildPlainText(data) {
+    const rows = [data.header].concat(data.body);
+    return rows.map((r) => r.join("\t")).join("\n");
+  }
+
+  /** @return {string} */
+  function getTheme() {
+    return document.getElementById("themeColor").value || "#3D6869";
+  }
+
+  /** @return {number} requested total table width in px (0 = auto) */
+  function getWidth() {
+    const v = parseInt(document.getElementById("tableWidth").value, 10);
+    return isNaN(v) || v <= 0 ? 0 : v;
+  }
+
+  /** @return {number} body/header font size in pt (defaults to 14) */
+  function getFontSize() {
+    const v = parseInt(document.getElementById("fontSize").value, 10);
+    return isNaN(v) || v <= 0 ? 14 : v;
+  }
+
+  /** @return {string} the table title (empty if none) */
+  function getTitle() {
+    return document.getElementById("titleInput").value.trim();
+  }
+
+  /** @return {{theme: string, fontSize: number, width: number}} */
+  function getStyle() {
+    return { theme: getTheme(), fontSize: getFontSize(), width: getWidth() };
+  }
+
+  /** @return {number} insert left position in pt (default 25) */
+  function getLeft() {
+    const v = parseFloat(document.getElementById("posLeft").value);
+    return isNaN(v) ? 25 : v;
+  }
+
+  /** @return {number} insert top position in pt (default 100) */
+  function getTop() {
+    const v = parseFloat(document.getElementById("posTop").value);
+    return isNaN(v) ? 100 : v;
+  }
+
+  /** @return {string} the currently active tab name */
+  function activeTab() {
+    return document.querySelector(".dialog-root").getAttribute("data-tab");
+  }
+
+  /** @return {HTMLTextAreaElement} the textarea for the active tab */
+  function activeTextarea() {
+    return activeTab() === "context"
+      ? document.getElementById("contextInput")
+      : document.getElementById("tableInput");
+  }
+
+  /**
+   * Switches between the Context, Markdown and Preview tabs.
+   * @param {string} name - 'context' | 'markdown' | 'preview'
+   */
+  function switchTab(name) {
+    document.querySelector(".dialog-root").setAttribute("data-tab", name);
+    ["context", "markdown", "preview"].forEach((n) => {
+      document.getElementById("tab-" + n).classList.toggle("active", n === name);
+      document
+        .getElementById("panel-" + n)
+        .classList.toggle("active", n === name);
+    });
+    if (name === "preview") {
+      updatePreview();
+    } else {
+      activeTextarea().focus();
+    }
+  }
+
+  /**
+   * Re-renders the live preview from the Markdown source + accent + width.
+   */
+  function updatePreview() {
+    const preview = document.getElementById("tablePreview");
+    const data = parseMarkdownTable(
+      document.getElementById("tableInput").value,
+    );
+    if (!data || data.header.length === 0) {
+      preview.innerHTML =
+        '<span class="placeholder">Your styled table will appear here…</span>';
+      return;
+    }
+    const style = getStyle();
+    const titleHtml = buildTitleHtml(getTitle(), style.fontSize, style.theme);
+    preview.innerHTML = titleHtml + buildTableHtml(data, style);
+  }
+
+  /**
+   * Writes HTML (and plain-text) to the clipboard. Tries the async Clipboard
+   * API first, then falls back to a copy-event handler via execCommand.
+   * @param {string} html
+   * @param {string} plain
+   * @return {Promise<void>}
+   */
+  function writeToClipboard(html, plain) {
+    if (navigator.clipboard && window.ClipboardItem) {
+      try {
+        const item = new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([plain], { type: "text/plain" }),
+        });
+        return navigator.clipboard.write([item]);
+      } catch (e) {
+        // fall through to execCommand fallback
+      }
+    }
+    return new Promise((resolve, reject) => {
+      function handler(e) {
+        e.clipboardData.setData("text/html", html);
+        e.clipboardData.setData("text/plain", plain);
+        e.preventDefault();
+        document.removeEventListener("copy", handler);
+        resolve();
+      }
+      document.addEventListener("copy", handler);
+      const ok = document.execCommand("copy");
+      if (!ok) {
+        document.removeEventListener("copy", handler);
+        reject(new Error("execCommand copy failed"));
+      }
+    });
+  }
+
+  /**
+   * Mints the current table and writes it to the clipboard.
+   * @return {Promise<void>} rejects with message "empty" when there is no table.
+   */
+  function doCopy() {
+    const data = parseMarkdownTable(
+      document.getElementById("tableInput").value,
+    );
+    if (!data || data.header.length === 0) {
+      return Promise.reject(new Error("empty"));
+    }
+    const style = getStyle();
+    const title = getTitle();
+    const titleHtml = buildTitleHtml(title, style.fontSize, style.theme);
+    const fullHtml = wrapForClipboard(titleHtml + buildTableHtml(data, style));
+    const plain = (title ? title + "\n\n" : "") + buildPlainText(data);
+    return writeToClipboard(fullHtml, plain);
+  }
+
+  /** @param {Error} err */
+  function handleCopyError(err) {
+    if (err && err.message === "empty") {
+      showStatus("No table to copy — add a Markdown table first.", "error");
+    } else {
+      showStatus(
+        "❌ Could not copy automatically. " + ((err && err.message) || ""),
+        "error",
+      );
+    }
+  }
+
+  /** Copies the table to the clipboard (dialog stays open). */
+  function copyTable() {
+    doCopy()
+      .then(() => {
+        showStatus(
+          "✅ Copied! Paste into Google Slides (Cmd/Ctrl+V) for a styled table.",
+          "success",
+        );
+      })
+      .catch(handleCopyError);
+  }
+
+  /**
+   * Inserts the table directly onto the current slide at the given Left/Top
+   * position via the Slides API (server-side), bypassing clipboard paste.
+   */
+  function insertIntoSlide() {
+    const data = parseMarkdownTable(
+      document.getElementById("tableInput").value,
+    );
+    if (!data || data.header.length === 0) {
+      showStatus("No table to insert — add a Markdown table first.", "error");
+      return;
+    }
+    const btn = document.getElementById("insertButton");
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Inserting…";
+    showStatus("📐 Inserting table into the slide…", "info");
+
+    const style = getStyle();
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = label;
+        if (res && res.success) {
+          if (res.warnings && res.warnings.length) {
+            // Table inserted, but some styling steps were rejected by the API.
+            // Surface exactly which so we can fix them (don't auto-close).
+            showStatus("⚠ Inserted, style issues → " + res.warnings.join(" | "), "error");
+          } else {
+            google.script.host.close();
+          }
+        } else {
+          showStatus("❌ " + ((res && res.error) || "Insert failed."), "error");
+        }
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = label;
+        showStatus("❌ " + (err.message || "Insert error"), "error");
+      })
+      .insertTableIntoSlide({
+        header: data.header,
+        body: data.body,
+        theme: style.theme,
+        fontSize: style.fontSize,
+        widthPx: style.width,
+        left: getLeft(),
+        top: getTop(),
+        title: getTitle(),
+      });
+  }
+
+  /** Copies the table, then closes the dialog. */
+  function copyAndClose() {
+    doCopy()
+      .then(() => {
+        google.script.host.close();
+      })
+      .catch(handleCopyError);
+  }
+
+  /** Clears the active tab's textarea. */
+  function clearActive() {
+    const t = activeTextarea();
+    t.value = "";
+    if (t.id === "tableInput") updatePreview();
+    document.getElementById("statusMessage").style.display = "none";
+    t.focus();
+  }
+
+  /** Pastes clipboard text into the active tab's textarea. */
+  function pasteToActive() {
+    const t = activeTextarea();
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard
+        .readText()
+        .then((text) => {
+          t.value = text;
+          if (t.id === "tableInput") updatePreview();
+          t.focus();
+          showStatus("📋 Pasted from clipboard!", "success");
+        })
+        .catch(() => {
+          showStatus(
+            "❌ Could not read clipboard. Paste manually (Cmd/Ctrl+V).",
+            "error",
+          );
+          t.focus();
+        });
+    } else {
+      showStatus("💡 Paste manually using Cmd/Ctrl+V.", "info");
+      t.focus();
+    }
+  }
+
+  /**
+   * Sends the Context tab text to Groq, extracts the table, and drops the
+   * result into the Markdown tab.
+   */
+  function generateFromContext() {
+    const ctx = document.getElementById("contextInput").value.trim();
+    if (!ctx) {
+      showStatus("Paste some content in the Context tab first.", "error");
+      return;
+    }
+    const btn = document.getElementById("generateButton");
+    btn.disabled = true;
+    btn.textContent = "Generating…";
+    showStatus("🤖 Generating table with AI…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        if (res && res.needKey) {
+          showStatus(res.error, "error");
+          return;
+        }
+        if (!res || !res.success) {
+          showStatus("❌ " + ((res && res.error) || "AI generation failed."), "error");
+          return;
+        }
+        const out = res.generatedText || "";
+        const md = extractMarkdownTable(out);
+        if (!md) {
+          showStatus("❌ AI returned no table. Try rephrasing the context.", "error");
+          return;
+        }
+        const title = extractTitle(out);
+        if (title) document.getElementById("titleInput").value = title;
+        document.getElementById("tableInput").value = md;
+        switchTab("markdown");
+        updatePreview();
+        showStatus("✅ Table generated — review it, then open Preview to copy.", "success");
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        showStatus("❌ " + (err.message || "AI error"), "error");
+      })
+      .generateTableMarkdownFromContext(ctx);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("tableInput");
+    const color = document.getElementById("themeColor");
+    const hex = document.getElementById("themeColorHex");
+
+    input.focus();
+    input.addEventListener("input", updatePreview);
+    document
+      .getElementById("titleInput")
+      .addEventListener("input", updatePreview);
+    color.addEventListener("input", function () {
+      hex.textContent = color.value.toUpperCase();
+      updatePreview();
+    });
+    document
+      .getElementById("tableWidth")
+      .addEventListener("input", updatePreview);
+    document
+      .getElementById("fontSize")
+      .addEventListener("input", updatePreview);
+
+    // Cmd/Ctrl+Enter copies from the Markdown tab.
+    input.addEventListener("keydown", function (event) {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        copyTable();
+      }
+    });
+
+    showStatus(
+      "💡 Context → ✨ AI → Markdown → Preview → Copy.",
+      "info",
+    );
+  });
+</script>

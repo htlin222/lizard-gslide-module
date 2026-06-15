@@ -1,0 +1,127 @@
+<div class="dialog-root" data-tab="markdown">
+  <div class="tab-bar">
+    <button type="button" class="tab" id="tab-context" onclick="switchTab('context')">
+      Context
+    </button>
+    <button type="button" class="tab active" id="tab-markdown" onclick="switchTab('markdown')">
+      Markdown
+    </button>
+    <button type="button" class="tab" id="tab-preview" onclick="switchTab('preview')">
+      Preview
+    </button>
+  </div>
+
+  <div class="tab-content">
+    <!-- Context tab: paste anything, AI turns it into a Markdown table -->
+    <div class="tab-panel" id="panel-context">
+      <textarea
+        id="contextInput"
+        class="minter-input"
+        placeholder="Paste anything — notes, raw data, a paragraph, CSV, lab values…
+
+Then hit ✨ Generate with AI to turn it into a Markdown table.
+The result lands in the Markdown tab for review."
+      ></textarea>
+    </div>
+
+    <!-- Markdown tab: the table source + style controls -->
+    <div class="tab-panel active" id="panel-markdown">
+      <input
+        type="text"
+        id="titleInput"
+        class="title-input"
+        placeholder="Table title (optional) — e.g. Table: CBC Trend"
+      />
+      <textarea
+        id="tableInput"
+        class="minter-input"
+        placeholder="Paste or type a Markdown table:
+
+| Test       | 06/13 | 06/14 | 06/15 | Ref     |
+|------------|------:|------:|------:|--------:|
+| Hb (g/dL)  | 11.5  | 10.8  | 9.5 ↓ | 13–17   |
+| Plt (×10³) | 155   | 153   | 152   | 150–400 |
+
+All cells are left-aligned, transparent background.
+The last column is muted gray (reference range)."
+      ></textarea>
+    </div>
+
+    <!-- Preview tab: rendered table -->
+    <div class="tab-panel" id="panel-preview">
+      <div class="table-preview" id="tablePreview">
+        <span class="placeholder">Your styled table will appear here…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Persistent style controls, shared across all tabs -->
+  <div class="controls-row controls-bar">
+    <label for="themeColor">Accent color</label>
+    <input type="color" id="themeColor" value="#3D6869" />
+    <span id="themeColorHex">#3D6869</span>
+
+    <label for="fontSize" class="width-label">Font (pt)</label>
+    <input type="number" id="fontSize" class="width-input" min="1" step="1" value="14" />
+
+    <label for="tableWidth" class="width-label">Max width (px)</label>
+    <input
+      type="number"
+      id="tableWidth"
+      class="width-input"
+      min="0"
+      step="10"
+      value="848"
+      placeholder="auto"
+    />
+
+    <label for="posLeft" class="width-label">Left (pt)</label>
+    <input type="number" id="posLeft" class="width-input" step="1" value="25" />
+
+    <label for="posTop" class="width-label">Top (pt)</label>
+    <input type="number" id="posTop" class="width-input" step="1" value="100" />
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button edit-only" onclick="clearActive()">
+      Clear
+    </button>
+    <button type="button" class="paste-button edit-only" onclick="pasteToActive()">
+      Paste
+    </button>
+    <button
+      type="button"
+      class="copy-button ctx-only"
+      id="generateButton"
+      onclick="generateFromContext()"
+    >
+      ✨ Generate with AI
+    </button>
+    <button
+      type="button"
+      class="copy-button-secondary preview-only"
+      id="copyButton"
+      onclick="copyTable()"
+    >
+      Copy
+    </button>
+    <button
+      type="button"
+      class="copy-button-secondary preview-only"
+      id="copyCloseButton"
+      onclick="copyAndClose()"
+    >
+      Copy &amp; Close
+    </button>
+    <button
+      type="button"
+      class="copy-button preview-only"
+      id="insertButton"
+      onclick="insertIntoSlide()"
+    >
+      📐 Insert at position
+    </button>
+  </div>
+</div>

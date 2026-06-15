@@ -273,23 +273,31 @@
       </button>
     </div>
 
-    <!-- OpenAI API Configuration -->
+    <!-- Groq API key (BYOK) -->
     <div class="section">
-      <details>
-        <summary>🔑 API Key</summary>
-        <div style="margin-top: 8px">
-          <div class="api-key-input">
-            <input type="password" id="apiKey" placeholder="sk-..." value="" />
-          </div>
+      <details id="apiKeyPanel">
+        <summary><span id="apiKeySummary">🔑 API Key</span></summary>
+
+        <!-- First-run guide: how to get a free key -->
+        <ol id="apiKeyHelp" style="font-size: 11px; color: #555; margin: 8px 0 4px; padding-left: 18px; line-height: 1.6">
+          <li>Open <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> (free, no card).</li>
+          <li>Click <b>Create API Key</b> and copy it (starts with <code>gsk_</code>).</li>
+          <li>Paste it below and press <b>Save Key</b>.</li>
+        </ol>
+
+        <div class="api-key-input" style="margin-top: 6px">
+          <input type="password" id="apiKey" placeholder="gsk_..." value="" />
         </div>
-        <button
-          type="button"
-          style="margin-top: 8px"
-          class="secondary-btn"
-          onclick="toggleApiKeyVisibility()"
-        >
-          Show API KEY
-        </button>
+        <div id="apiKeyStatus" style="font-size: 11px; margin-top: 6px"></div>
+        <div style="font-size: 10px; color: #888; margin-top: 4px">
+          🔒 Stored privately on your Google account — never shared with other users or sent to us.
+        </div>
+
+        <div class="button-group" style="margin-top: 8px">
+          <button type="button" class="success-btn" onclick="saveApiKey()">Save Key</button>
+          <button type="button" class="secondary-btn" onclick="toggleApiKeyVisibility()">Show</button>
+          <button type="button" class="secondary-btn" onclick="clearApiKey()">Clear</button>
+        </div>
       </details>
     </div>
 
@@ -343,24 +351,75 @@
         loadSlideContent();
         loadCurrentNotes();
 
-        // Load saved API key
-        const savedApiKey = localStorage.getItem("openai_api_key");
-        if (savedApiKey) {
-          document.getElementById("apiKey").value = savedApiKey;
-        }
+        // Ask the SERVER whether a key is stored. We never receive the key itself.
+        refreshApiKeyStatus();
       });
+
+      function refreshApiKeyStatus() {
+        google.script.run
+          .withSuccessHandler(applyApiKeyState)
+          .hasUserApiKey();
+      }
+
+      // Single source of truth for the whole key-driven UX.
+      function applyApiKeyState(hasKey) {
+        const status = document.getElementById("apiKeyStatus");
+        const summary = document.getElementById("apiKeySummary");
+        const help = document.getElementById("apiKeyHelp");
+        const panel = document.getElementById("apiKeyPanel");
+        const generateBtn = document.getElementById("generateBtn");
+
+        if (hasKey) {
+          status.textContent = "✓ Key saved on your account";
+          status.style.color = "#2e7d32";
+          summary.innerHTML = "🔑 API Key &nbsp;<span style='color:#2e7d32'>✓ ready</span>";
+          help.style.display = "none"; // hide the how-to once they're set up
+          panel.open = false; // collapse so it's out of the way
+          generateBtn.disabled = false;
+          generateBtn.title = "";
+        } else {
+          status.textContent = "⚠️ No key saved yet — add one to enable AI.";
+          status.style.color = "#b26a00";
+          summary.innerHTML = "🔑 API Key &nbsp;<span style='color:#b26a00'>⚠️ setup needed</span>";
+          help.style.display = "block";
+          panel.open = true; // auto-expand so first-run users see the steps
+          generateBtn.disabled = true; // can't generate without a key
+          generateBtn.title = "Add your Groq API key first";
+        }
+      }
+
+      function saveApiKey() {
+        const input = document.getElementById("apiKey");
+        const apiKey = input.value.trim();
+        if (!apiKey) {
+          showError("Please paste your Groq key (gsk_...)");
+          return;
+        }
+        google.script.run
+          .withSuccessHandler(function () {
+            input.value = ""; // clear the key out of the DOM immediately
+            input.type = "password";
+            showSuccess("API key saved securely");
+            refreshApiKeyStatus();
+          })
+          .withFailureHandler(function (err) {
+            showError(err.message || "Could not save key");
+          })
+          .saveUserApiKey(apiKey);
+      }
+
+      function clearApiKey() {
+        google.script.run
+          .withSuccessHandler(function () {
+            showSuccess("API key removed");
+            refreshApiKeyStatus();
+          })
+          .clearUserApiKey();
+      }
 
       function toggleApiKeyVisibility() {
         const apiKeyInput = document.getElementById("apiKey");
-        const toggleBtn = document.querySelector(".api-key-toggle");
-
-        if (apiKeyInput.type === "password") {
-          apiKeyInput.type = "text";
-          toggleBtn.textContent = "🙈";
-        } else {
-          apiKeyInput.type = "password";
-          toggleBtn.textContent = "👁️";
-        }
+        apiKeyInput.type = apiKeyInput.type === "password" ? "text" : "password";
       }
 
       function loadSlideContent() {
@@ -418,14 +477,8 @@
       let startTime;
 
       function generateSpeakerNotes() {
-        const apiKey = document.getElementById("apiKey").value.trim();
         const prompt = document.getElementById("prompt").value.trim();
         const generateBtn = document.getElementById("generateBtn");
-
-        if (!apiKey || apiKey === "YOUR_API_KEY") {
-          showError("Please enter a valid OpenAI API key");
-          return;
-        }
 
         if (!currentSlideContent || !currentSlideContent.hasContent) {
           showError(
@@ -433,9 +486,6 @@
           );
           return;
         }
-
-        // Save API key
-        localStorage.setItem("openai_api_key", apiKey);
 
         // Start timer
         startTime = Date.now();
@@ -460,10 +510,11 @@
         generatedNotesDiv.innerHTML =
           '<div class="loading">🤖 Generating speaker notes with AI...</div>';
 
+        // No key is passed — the server reads it from your account.
         google.script.run
           .withSuccessHandler(onNotesGenerated)
           .withFailureHandler(onGenerationError)
-          .callOpenAI(apiKey, currentSlideContent.allText, prompt);
+          .generateSpeakerNotesAI(currentSlideContent.allText, prompt);
       }
 
       function onNotesGenerated(response) {
