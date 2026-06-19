@@ -186,7 +186,7 @@ function insertKpiIntoSlide(payload) {
 		// then the whole row is centered across the page — NOT stretched to fill.
 		const valueSize = 38;
 		const labelSize = 17;
-		const lineSpacing = 150; // 1.5x line height
+		const lineSpacing = 115; // 1.15x line height
 		const padX = 22;
 		const padY = 16;
 		const margin = 30;
