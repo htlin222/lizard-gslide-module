@@ -190,13 +190,19 @@ function insertTimelineIntoSlide(payload) {
 				node.getBorder().setWeight(2);
 				group.push(node);
 
-				// Alternate date above / label below to reduce overlap.
+				// Alternate the stack above / below the line to reduce overlap.
+				// In both cases the date sits outermost (matching the dialog
+				// preview, which renders date first then label toward the line).
 				const above = i % 2 === 0;
 				const textW = Math.max(usableW / Math.max(n, 1), 70);
 				const textH = 28;
-				const dateY = above ? cy - nodeSize / 2 - textH - 4 : cy + nodeSize / 2 + 4;
-				const labelY = above
+				// Date: top slot when above, top (nearest line) slot when below.
+				const dateY = above
 					? cy - nodeSize / 2 - 2 * textH - 6
+					: cy + nodeSize / 2 + 4;
+				// Label: nearest the line when above, below the date when below.
+				const labelY = above
+					? cy - nodeSize / 2 - textH - 4
 					: cy + nodeSize / 2 + textH + 6;
 
 				if (items[i].date) {
@@ -205,7 +211,7 @@ function insertTimelineIntoSlide(payload) {
 							slide,
 							items[i].date,
 							cx - textW / 2,
-							above ? dateY : dateY,
+							dateY,
 							textW,
 							textH,
 							tpl.dateColor,
@@ -222,7 +228,7 @@ function insertTimelineIntoSlide(payload) {
 							slide,
 							items[i].label,
 							cx - textW / 2,
-							above ? labelY : labelY,
+							labelY,
 							textW,
 							textH,
 							tpl.labelColor,

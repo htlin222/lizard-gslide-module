@@ -39,9 +39,12 @@ function insertIconIntoSlide(payload) {
 		const presentation = SlidesApp.getActivePresentation();
 		const selection = presentation.getSelection();
 
-		// Icon box geometry: roughly square, scaled to the glyph size with padding.
-		const W = Math.max(size * 1.6, 40);
-		const H = Math.max(size * 1.6, 40);
+		// Icon box geometry: roughly square, sized generously from the glyph size so
+		// the emoji/glyph is never clipped (emoji render taller/wider than their em,
+		// and the text box adds internal line spacing). Matches the dialog preview,
+		// which shows the glyph un-clipped with generous padding.
+		const W = Math.max(size * 2.2, 60);
+		const H = Math.max(size * 2.2, 60);
 
 		// Determine target slide + position.
 		let slide = null;

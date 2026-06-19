@@ -193,6 +193,7 @@ function insertGalleryIntoSlide(payload) {
 		const captionGap = 4;
 
 		const warnings = [];
+		const cropRequests = [];
 
 		items.forEach(function (item, i) {
 			const pos = positions[i];
@@ -214,20 +215,60 @@ function insertGalleryIntoSlide(payload) {
 			}
 
 			try {
-				// Aspect-preserving fit within the cell region, then center.
+				// Match the dialog preview, which renders every image as a uniform
+				// cell with `object-fit: cover` (fills the whole cell, cropped to the
+				// cell aspect — NOT letterbox-fit). Read the intrinsic size BEFORE
+				// resizing (insertImage leaves the element at its natural dimensions),
+				// then fill the cell and crop the overflowing edges so the visible
+				// area keeps the cell aspect. Border wraps the full cell, like preview.
 				const natW = image.getWidth();
 				const natH = image.getHeight();
-				let drawW = pos.w;
-				let drawH = imgRegionH;
+
+				image.setWidth(pos.w);
+				image.setHeight(imgRegionH);
+				image.setLeft(pos.x);
+				image.setTop(pos.y);
+
+				// Compute a "cover" crop: trim the long axis so the remaining region
+				// matches the cell aspect. CropProperties offsets are fractions of the
+				// (post-crop) image dimensions chopped off each edge.
 				if (natW > 0 && natH > 0) {
-					const scale = Math.min(pos.w / natW, imgRegionH / natH);
-					drawW = natW * scale;
-					drawH = natH * scale;
+					const cellAspect = pos.w / imgRegionH;
+					const natAspect = natW / natH;
+					let leftOff = 0;
+					let rightOff = 0;
+					let topOff = 0;
+					let bottomOff = 0;
+					if (natAspect > cellAspect) {
+						// Image too wide → crop left/right.
+						const keep = cellAspect / natAspect; // fraction of width kept
+						const trim = (1 - keep) / 2;
+						leftOff = trim;
+						rightOff = trim;
+					} else if (natAspect < cellAspect) {
+						// Image too tall → crop top/bottom.
+						const keep = natAspect / cellAspect; // fraction of height kept
+						const trim = (1 - keep) / 2;
+						topOff = trim;
+						bottomOff = trim;
+					}
+					if (leftOff || rightOff || topOff || bottomOff) {
+						cropRequests.push({
+							updateImageProperties: {
+								objectId: image.getObjectId(),
+								fields: "cropProperties",
+								imageProperties: {
+									cropProperties: {
+										leftOffset: leftOff,
+										rightOffset: rightOff,
+										topOffset: topOff,
+										bottomOffset: bottomOff,
+									},
+								},
+							},
+						});
+					}
 				}
-				image.setWidth(drawW);
-				image.setHeight(drawH);
-				image.setLeft(pos.x + (pos.w - drawW) / 2);
-				image.setTop(pos.y + (imgRegionH - drawH) / 2);
 
 				if (tpl.border && tpl.borderWidth > 0) {
 					image.getBorder().getLineFill().setSolidFill(tpl.borderColor);
@@ -264,6 +305,20 @@ function insertGalleryIntoSlide(payload) {
 				}
 			}
 		});
+
+		// Apply all "cover" crops in one batch. Cropping is cosmetic; if it fails
+		// the images simply remain stretched-to-fill rather than cropped, so we
+		// degrade gracefully and still report success.
+		if (cropRequests.length) {
+			try {
+				Slides.Presentations.batchUpdate(
+					{ requests: cropRequests },
+					presentation.getId(),
+				);
+			} catch (cropErr) {
+				console.warn("Gallery crop step failed: " + cropErr.message);
+			}
+		}
 
 		return { success: true, warnings: warnings };
 	} catch (e) {

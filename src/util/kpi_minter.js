@@ -254,12 +254,13 @@ function renderKpiCard_(slide, x, y, w, h, item, tpl, font) {
 	}
 
 	// Trend arrow: colored independently (last `arrow.length` chars of the value
-	// line — the arrow plus the leading space).
+	// line — the arrow plus the leading space). Slightly smaller than the value,
+	// matching the preview proportion (preview value 24px / arrow 20px).
 	if (arrow && arrowColor) {
 		const arrowStart = value.length + 1; // skip "value "
 		const arrowRange = textRange.getRange(arrowStart, valueLine.length);
 		if (arrowRange) {
-			arrowRange.getTextStyle().setForegroundColor(arrowColor);
+			arrowRange.getTextStyle().setForegroundColor(arrowColor).setFontSize(32);
 		}
 	}
 
@@ -272,7 +273,7 @@ function renderKpiCard_(slide, x, y, w, h, item, tpl, font) {
 			labelRange
 				.getTextStyle()
 				.setBold(false)
-				.setFontSize(13)
+				.setFontSize(17)
 				.setForegroundColor(tpl.labelColor)
 				.setFontFamily(font);
 		}

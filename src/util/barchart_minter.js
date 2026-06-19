@@ -224,7 +224,7 @@ function insertBarChartIntoSlide(payload) {
 					labelH,
 				);
 				catShape.getText().setText(bars[i].label || "");
-				styleBarLabel_(catShape, font, 9, "#333333", false);
+				styleBarLabel_(catShape, font, 9, "#555555", false);
 				group.push(catShape);
 			}
 		} else {
@@ -275,7 +275,7 @@ function insertBarChartIntoSlide(payload) {
 					slot,
 				);
 				catShape.getText().setText(bars[i].label || "");
-				styleBarLabel_(catShape, font, 9, "#333333", false);
+				styleBarLabel_(catShape, font, 9, "#555555", false);
 				catShape.setContentAlignment(SlidesApp.ContentAlignment.MIDDLE);
 				try {
 					catShape
