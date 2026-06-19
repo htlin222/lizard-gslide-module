@@ -21,6 +21,9 @@ pnpm-debug.log*
 # Build output
 # NOTE: dist/ is intentionally TRACKED — it holds the self-update bundle
 # (dist/bundle.json + dist/version.json) that cloned decks fetch from GitHub raw.
+# Negation overrides a global ~/.gitignore_global that ignores dist/.
+!dist/
+!dist/**
 build/
 out/
 .cache/
