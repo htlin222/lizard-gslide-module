@@ -9,6 +9,8 @@
     <!-- Load callout minter form -->
     <?!= include('src/components/callout-minter/form'); ?>
 
+    <script>window.__MINTER_PRELOAD__ = <?!= preloadJson ?>;</script>
+
     <!-- Load scripts -->
     <?!= include('src/components/callout-minter/scripts'); ?>
   </body>

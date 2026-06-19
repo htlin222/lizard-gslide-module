@@ -47,100 +47,108 @@ function createMarkdownSidebar() {
 	return template.evaluate().setTitle("Markdown to Slides").setWidth(320);
 }
 
-/**
- * Creates and returns the Table Minter dialog UI.
- * Generates Google Slides-ready HTML tables from Markdown for clipboard paste.
- *
- * @return {HtmlOutput} The HTML output for the table minter dialog
- */
-function createTableMinterDialog() {
-	const template = createModularHtmlTemplate(
-		"src/components/table-minter/index",
-	);
-	return template.evaluate().setWidth(640).setHeight(520);
-}
+// Uniform size for every minter dialog (wide + consistent across all minters).
+const MINTER_DIALOG_WIDTH_ = 780;
+const MINTER_DIALOG_HEIGHT_ = 620;
 
 /**
- * Creates and returns the Grid Minter dialog UI.
- * Turns content into a grid of styled "unit" cards inserted onto the slide.
+ * Factory for a minter dialog. Evaluates the modular template at the uniform
+ * minter size and inlines `preload` (templates / items) into the HTML as
+ * window.__MINTER_PRELOAD__ — so the dialog does NOT need a second
+ * google.script.run round-trip on load (faster open).
  *
- * @return {HtmlOutput} The HTML output for the grid minter dialog
- */
-function createGridMinterDialog() {
-	const template = createModularHtmlTemplate(
-		"src/components/grid-minter/index",
-	);
-	return template.evaluate().setWidth(680).setHeight(560);
-}
-
-/**
- * Creates and returns the Callout Minter dialog UI.
- * Inserts (or converts a selection into) a styled callout from a template.
- *
- * @return {HtmlOutput} The HTML output for the callout minter dialog
- */
-function createCalloutMinterDialog() {
-	const template = createModularHtmlTemplate(
-		"src/components/callout-minter/index",
-	);
-	return template.evaluate().setWidth(460).setHeight(560);
-}
-
-/**
- * Factory for a minter dialog: builds + evaluates a modular template at the
- * given path and sizes it. Shared by all the small minter dialogs.
  * @param {string} path - component index path (without extension)
- * @param {number} width
- * @param {number} height
+ * @param {Object} [preload] - data inlined for the dialog to read on load
  * @return {HtmlOutput}
  */
-function createMinterDialog_(path, width, height) {
-	return createModularHtmlTemplate(path).evaluate().setWidth(width).setHeight(height);
+function createMinterDialog_(path, preload) {
+	const template = createModularHtmlTemplate(path);
+	template.preloadJson = JSON.stringify(preload || {});
+	return template
+		.evaluate()
+		.setWidth(MINTER_DIALOG_WIDTH_)
+		.setHeight(MINTER_DIALOG_HEIGHT_);
 }
 
-/** @return {HtmlOutput} KPI / Big Number minter dialog */
+/** @return {HtmlOutput} Table Minter dialog (no on-load fetch). */
+function createTableMinterDialog() {
+	return createMinterDialog_("src/components/table-minter/index", {});
+}
+
+/** @return {HtmlOutput} Grid Minter dialog. */
+function createGridMinterDialog() {
+	return createMinterDialog_("src/components/grid-minter/index", {
+		styles: getStyleDefinitions(),
+	});
+}
+
+/** @return {HtmlOutput} Callout Minter dialog. */
+function createCalloutMinterDialog() {
+	return createMinterDialog_("src/components/callout-minter/index", {
+		templates: getCalloutTemplates(),
+	});
+}
+
+/** @return {HtmlOutput} KPI / Big Number minter dialog. */
 function createKpiMinterDialog() {
-	return createMinterDialog_("src/components/kpi-minter/index", 640, 560);
+	return createMinterDialog_("src/components/kpi-minter/index", {
+		templates: getKpiTemplates(),
+	});
 }
 
-/** @return {HtmlOutput} Timeline / Roadmap minter dialog */
+/** @return {HtmlOutput} Timeline / Roadmap minter dialog. */
 function createTimelineMinterDialog() {
-	return createMinterDialog_("src/components/timeline-minter/index", 640, 560);
+	return createMinterDialog_("src/components/timeline-minter/index", {
+		templates: getTimelineTemplates(),
+	});
 }
 
-/** @return {HtmlOutput} Comparison minter dialog */
+/** @return {HtmlOutput} Comparison minter dialog. */
 function createCompareMinterDialog() {
-	return createMinterDialog_("src/components/compare-minter/index", 680, 560);
+	return createMinterDialog_("src/components/compare-minter/index", {
+		templates: getCompareTemplates(),
+	});
 }
 
-/** @return {HtmlOutput} Steps minter dialog */
+/** @return {HtmlOutput} Steps minter dialog. */
 function createStepsMinterDialog() {
-	return createMinterDialog_("src/components/steps-minter/index", 640, 560);
+	return createMinterDialog_("src/components/steps-minter/index", {
+		templates: getStepsTemplates(),
+	});
 }
 
-/** @return {HtmlOutput} Image Gallery minter dialog */
+/** @return {HtmlOutput} Image Gallery minter dialog. */
 function createGalleryMinterDialog() {
-	return createMinterDialog_("src/components/gallery-minter/index", 680, 560);
+	return createMinterDialog_("src/components/gallery-minter/index", {
+		templates: getGalleryTemplates(),
+	});
 }
 
-/** @return {HtmlOutput} Agenda / TOC minter dialog */
+/** @return {HtmlOutput} Agenda / TOC minter dialog. */
 function createAgendaMinterDialog() {
-	return createMinterDialog_("src/components/agenda-minter/index", 600, 560);
+	return createMinterDialog_("src/components/agenda-minter/index", {
+		items: getAgendaItems(),
+		templates: getAgendaTemplates(),
+	});
 }
 
-/** @return {HtmlOutput} Takeaways minter dialog */
+/** @return {HtmlOutput} Takeaways minter dialog. */
 function createTakeawaysMinterDialog() {
-	return createMinterDialog_("src/components/takeaways-minter/index", 640, 560);
+	return createMinterDialog_("src/components/takeaways-minter/index", {
+		templates: getTakeawaysTemplates(),
+	});
 }
 
-/** @return {HtmlOutput} Icon minter dialog */
+/** @return {HtmlOutput} Icon minter dialog (no on-load fetch). */
 function createIconMinterDialog() {
-	return createMinterDialog_("src/components/icon-minter/index", 460, 560);
+	return createMinterDialog_("src/components/icon-minter/index", {});
 }
 
-/** @return {HtmlOutput} Bar Chart minter dialog */
+/** @return {HtmlOutput} Bar Chart minter dialog. */
 function createBarChartMinterDialog() {
-	return createMinterDialog_("src/components/barchart-minter/index", 640, 560);
+	return createMinterDialog_("src/components/barchart-minter/index", {
+		templates: getBarChartTemplates(),
+	});
 }
 
 /**

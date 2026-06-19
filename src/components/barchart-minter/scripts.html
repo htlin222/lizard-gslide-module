@@ -310,18 +310,24 @@
       radios[i].addEventListener("change", updatePreview);
     }
 
-    google.script.run
-      .withSuccessHandler(function (templates) {
-        TEMPLATES = templates || [];
-        if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
-      })
-      .withFailureHandler(function (err) {
-        showStatus(
-          "❌ Could not load templates: " + (err.message || ""),
-          "error",
-        );
-      })
-      .getBarChartTemplates();
+    var __pre = window.__MINTER_PRELOAD__ || {};
+    if (__pre.templates && __pre.templates.length) {
+      TEMPLATES = __pre.templates;
+      selectTemplate(TEMPLATES[0].id);
+    } else {
+      google.script.run
+        .withSuccessHandler(function (templates) {
+          TEMPLATES = templates || [];
+          if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
+        })
+        .withFailureHandler(function (err) {
+          showStatus(
+            "❌ Could not load templates: " + (err.message || ""),
+            "error",
+          );
+        })
+        .getBarChartTemplates();
+    }
 
     showStatus("💡 輸入資料 → 選方向/配色 → Insert。", "info");
   });

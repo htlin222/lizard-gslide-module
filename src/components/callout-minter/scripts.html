@@ -269,15 +269,21 @@
       .getElementById("bodyInput")
       .addEventListener("input", updatePreview);
 
-    google.script.run
-      .withSuccessHandler(function (templates) {
-        TEMPLATES = templates || [];
-        if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
-      })
-      .withFailureHandler(function (err) {
-        showStatus("❌ Could not load templates: " + (err.message || ""), "error");
-      })
-      .getCalloutTemplates();
+    var __pre = window.__MINTER_PRELOAD__ || {};
+    if (__pre.templates && __pre.templates.length) {
+      TEMPLATES = __pre.templates;
+      selectTemplate(TEMPLATES[0].id);
+    } else {
+      google.script.run
+        .withSuccessHandler(function (templates) {
+          TEMPLATES = templates || [];
+          if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
+        })
+        .withFailureHandler(function (err) {
+          showStatus("❌ Could not load templates: " + (err.message || ""), "error");
+        })
+        .getCalloutTemplates();
+    }
 
     showStatus("💡 選範本 → 填內容 → Insert（有選 shape 就會轉換它）。", "info");
   });

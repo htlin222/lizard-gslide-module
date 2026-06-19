@@ -32,6 +32,27 @@
  * @return {Array<string>} ordered, de-duplicated section titles
  */
 function getAgendaItems() {
+	// Cache briefly so repeat dialog opens don't re-scan every slide. The short
+	// TTL keeps it fresh enough as the deck changes.
+	try {
+		const cache = CacheService.getDocumentCache();
+		if (cache) {
+			const hit = cache.get("agenda_items_v1");
+			if (hit) return JSON.parse(hit);
+		}
+		const items = computeAgendaItems_();
+		if (cache) cache.put("agenda_items_v1", JSON.stringify(items), 30);
+		return items;
+	} catch (e) {
+		return computeAgendaItems_();
+	}
+}
+
+/**
+ * Computes agenda items by scanning the deck (uncached). See getAgendaItems().
+ * @return {Array<string>} ordered, de-duplicated section titles
+ */
+function computeAgendaItems_() {
 	try {
 		const presentation = SlidesApp.getActivePresentation();
 		const slides = presentation.getSlides();

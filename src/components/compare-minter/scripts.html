@@ -288,19 +288,26 @@
     if (!ta.value.trim()) ta.value = EXAMPLE_MD;
     ta.addEventListener("input", updatePreview);
 
-    google.script.run
-      .withSuccessHandler(function (templates) {
-        TEMPLATES = templates || [];
-        if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
-        updatePreview();
-      })
-      .withFailureHandler(function (err) {
-        showStatus(
-          "❌ Could not load templates: " + (err.message || ""),
-          "error",
-        );
-      })
-      .getCompareTemplates();
+    var __pre = window.__MINTER_PRELOAD__ || {};
+    if (__pre.templates && __pre.templates.length) {
+      TEMPLATES = __pre.templates;
+      selectTemplate(TEMPLATES[0].id);
+      updatePreview();
+    } else {
+      google.script.run
+        .withSuccessHandler(function (templates) {
+          TEMPLATES = templates || [];
+          if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
+          updatePreview();
+        })
+        .withFailureHandler(function (err) {
+          showStatus(
+            "❌ Could not load templates: " + (err.message || ""),
+            "error",
+          );
+        })
+        .getCompareTemplates();
+    }
 
     showStatus("💡 用 --- 分欄 → 選範本 → Insert。", "info");
   });

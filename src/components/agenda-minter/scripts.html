@@ -196,33 +196,48 @@
       .getElementById("itemsInput")
       .addEventListener("input", updatePreview);
 
+    var __pre = window.__MINTER_PRELOAD__ || {};
+
     // Load templates.
-    google.script.run
-      .withSuccessHandler(function (templates) {
-        TEMPLATES = templates || [];
-        if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
-      })
-      .withFailureHandler(function (err) {
-        showStatus(
-          "❌ Could not load templates: " + (err.message || ""),
-          "error",
-        );
-      })
-      .getAgendaTemplates();
+    if (__pre.templates && __pre.templates.length) {
+      TEMPLATES = __pre.templates || [];
+      if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
+    } else {
+      google.script.run
+        .withSuccessHandler(function (templates) {
+          TEMPLATES = templates || [];
+          if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
+        })
+        .withFailureHandler(function (err) {
+          showStatus(
+            "❌ Could not load templates: " + (err.message || ""),
+            "error",
+          );
+        })
+        .getAgendaTemplates();
+    }
 
     // Auto-detect section titles and pre-fill the textarea.
-    google.script.run
-      .withSuccessHandler(function (items) {
-        const list = items || [];
-        if (list.length) {
-          document.getElementById("itemsInput").value = list.join("\n");
-        }
-        updatePreview();
-      })
-      .withFailureHandler(function () {
-        updatePreview();
-      })
-      .getAgendaItems();
+    if (__pre.items) {
+      const list = __pre.items || [];
+      if (list.length) {
+        document.getElementById("itemsInput").value = list.join("\n");
+      }
+      updatePreview();
+    } else {
+      google.script.run
+        .withSuccessHandler(function (items) {
+          const list = items || [];
+          if (list.length) {
+            document.getElementById("itemsInput").value = list.join("\n");
+          }
+          updatePreview();
+        })
+        .withFailureHandler(function () {
+          updatePreview();
+        })
+        .getAgendaItems();
+    }
 
     showStatus("💡 已自動偵測章節 → 編輯項目 → Insert。", "info");
   });

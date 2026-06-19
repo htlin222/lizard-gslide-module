@@ -331,15 +331,21 @@
       });
     }
 
-    google.script.run
-      .withSuccessHandler(function (templates) {
-        TEMPLATES = templates || [];
-        if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
-      })
-      .withFailureHandler(function (err) {
-        showStatus("❌ Could not load templates: " + (err.message || ""), "error");
-      })
-      .getTimelineTemplates();
+    var __pre = window.__MINTER_PRELOAD__ || {};
+    if (__pre.templates && __pre.templates.length) {
+      TEMPLATES = __pre.templates;
+      selectTemplate(TEMPLATES[0].id);
+    } else {
+      google.script.run
+        .withSuccessHandler(function (templates) {
+          TEMPLATES = templates || [];
+          if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
+        })
+        .withFailureHandler(function (err) {
+          showStatus("❌ Could not load templates: " + (err.message || ""), "error");
+        })
+        .getTimelineTemplates();
+    }
 
     renderOrient();
     showStatus("💡 每行一個里程碑（date | label）→ 選方向與範本 → Insert。", "info");

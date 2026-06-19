@@ -406,15 +406,21 @@
     });
 
     // Pull the resolved style colors so the preview matches the real cards.
-    google.script.run
-      .withSuccessHandler(function (styles) {
-        if (styles) STYLE_COLORS = styles;
-        updatePreview();
-      })
-      .withFailureHandler(function () {
-        updatePreview();
-      })
-      .getStyleDefinitions();
+    var __pre = window.__MINTER_PRELOAD__ || {};
+    if (__pre.styles) {
+      STYLE_COLORS = __pre.styles;
+      updatePreview();
+    } else {
+      google.script.run
+        .withSuccessHandler(function (styles) {
+          if (styles) STYLE_COLORS = styles;
+          updatePreview();
+        })
+        .withFailureHandler(function () {
+          updatePreview();
+        })
+        .getStyleDefinitions();
+    }
 
     showStatus("💡 Context → ✨ AI → Markdown → Preview → Insert.", "info");
   });
