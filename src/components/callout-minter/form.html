@@ -1,0 +1,46 @@
+<div class="dialog-root">
+  <div class="cm-body">
+    <p class="cm-hint">
+      選了一個 shape → 套用標注框樣式並群組；沒選 → 在投影片中央插入一個全新標注框。
+    </p>
+
+    <label class="cm-label">範本 Template</label>
+    <div class="template-chips" id="templateChips">
+      <span class="placeholder">Loading templates…</span>
+    </div>
+
+    <label class="cm-label" for="headerInput">標題 Header（QUOTE 範本可留空）</label>
+    <input
+      type="text"
+      id="headerInput"
+      class="cm-input"
+      placeholder="e.g. INFO / 注意 / 重點"
+    />
+
+    <label class="cm-label" for="bodyInput">內文 Body</label>
+    <textarea
+      id="bodyInput"
+      class="cm-textarea"
+      placeholder="標注框的內文。轉換模式下若留空，會保留原本 shape 的文字。"
+    ></textarea>
+
+    <label class="cm-label">預覽 Preview</label>
+    <div class="callout-preview" id="calloutPreview">
+      <span class="placeholder">預覽會顯示在這裡…</span>
+    </div>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button" onclick="clearForm()">Clear</button>
+    <button
+      type="button"
+      class="primary-button"
+      id="insertButton"
+      onclick="insertCallout()"
+    >
+      📌 Insert / Convert
+    </button>
+  </div>
+</div>

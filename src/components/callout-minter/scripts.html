@@ -1,0 +1,196 @@
+<script>
+  /** Templates fetched from the server (with resolved colors). */
+  var TEMPLATES = [];
+  /** Currently selected template id. */
+  var selectedId = null;
+  /** True once the user edits the header, so we stop auto-filling it. */
+  var headerTouched = false;
+
+  /**
+   * Shows a status message in the dialog.
+   * @param {string} message
+   * @param {string} type - 'success' | 'error' | 'info'
+   */
+  function showStatus(message, type = "info") {
+    const el = document.getElementById("statusMessage");
+    el.textContent = message;
+    el.className = `status-message status-${type}`;
+    el.style.display = "block";
+    if (type === "success" || type === "info") {
+      setTimeout(() => {
+        el.style.display = "none";
+      }, 5000);
+    }
+  }
+
+  /** @param {string} s @return {string} */
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  /** @return {Object|null} the selected template */
+  function currentTemplate() {
+    for (const t of TEMPLATES) if (t.id === selectedId) return t;
+    return null;
+  }
+
+  /** Renders the clickable template chips. */
+  function renderChips() {
+    const wrap = document.getElementById("templateChips");
+    wrap.innerHTML = "";
+    TEMPLATES.forEach((t) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tpl-chip" + (t.id === selectedId ? " active" : "");
+      chip.innerHTML =
+        '<span class="swatch" style="background:' +
+        t.barColor +
+        '"></span>' +
+        escapeHtml(t.name);
+      chip.onclick = () => selectTemplate(t.id);
+      wrap.appendChild(chip);
+    });
+  }
+
+  /**
+   * Selects a template, auto-fills the header default (unless the user edited
+   * it), and refreshes chips + preview.
+   * @param {string} id
+   */
+  function selectTemplate(id) {
+    selectedId = id;
+    const t = currentTemplate();
+    if (t && !headerTouched) {
+      document.getElementById("headerInput").value = t.headerLabel || "";
+    }
+    renderChips();
+    updatePreview();
+  }
+
+  /** Re-renders the live HTML preview of the callout. */
+  function updatePreview() {
+    const preview = document.getElementById("calloutPreview");
+    const t = currentTemplate();
+    if (!t) {
+      preview.innerHTML = '<span class="placeholder">預覽會顯示在這裡…</span>';
+      return;
+    }
+    const header = document.getElementById("headerInput").value.trim();
+    const body =
+      document.getElementById("bodyInput").value.trim() || "Your text here…";
+
+    let inner;
+    if (t.style === "quote" || !header) {
+      // Left bar + body only (no header banner).
+      inner =
+        '<div class="cp-bar" style="background:' +
+        t.barColor +
+        '"></div>' +
+        '<div class="cp-body cp-quote" style="background:' +
+        t.bodyFill +
+        ";color:" +
+        t.bodyText +
+        ";border-color:" +
+        t.bodyBorder +
+        '">' +
+        escapeHtml(body) +
+        "</div>";
+    } else {
+      inner =
+        '<div class="cp-bar" style="background:' +
+        t.barColor +
+        '"></div>' +
+        '<div class="cp-content">' +
+        '<div class="cp-header" style="background:' +
+        t.headerFill +
+        ";color:" +
+        t.headerText +
+        ";border-color:" +
+        t.bodyBorder +
+        '">' +
+        escapeHtml(header) +
+        "</div>" +
+        '<div class="cp-body" style="background:' +
+        t.bodyFill +
+        ";color:" +
+        t.bodyText +
+        ";border-color:" +
+        t.bodyBorder +
+        '">' +
+        escapeHtml(body) +
+        "</div>" +
+        "</div>";
+    }
+    preview.innerHTML = '<div class="cp-wrap">' + inner + "</div>";
+  }
+
+  /** Clears header + body (keeps the selected template). */
+  function clearForm() {
+    headerTouched = false;
+    document.getElementById("bodyInput").value = "";
+    const t = currentTemplate();
+    document.getElementById("headerInput").value = (t && t.headerLabel) || "";
+    document.getElementById("statusMessage").style.display = "none";
+    updatePreview();
+  }
+
+  /** Inserts (or converts the selection into) the callout via the server. */
+  function insertCallout() {
+    const t = currentTemplate();
+    if (!t) {
+      showStatus("Pick a template first.", "error");
+      return;
+    }
+    const btn = document.getElementById("insertButton");
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Working…";
+    showStatus("📌 Inserting callout…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = label;
+        if (res && res.success) {
+          google.script.host.close();
+        } else {
+          showStatus("❌ " + ((res && res.error) || "Insert failed."), "error");
+        }
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = label;
+        showStatus("❌ " + (err.message || "Insert error"), "error");
+      })
+      .insertCalloutIntoSlide({
+        templateId: selectedId,
+        header: document.getElementById("headerInput").value,
+        body: document.getElementById("bodyInput").value,
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("headerInput").addEventListener("input", function () {
+      headerTouched = true;
+      updatePreview();
+    });
+    document
+      .getElementById("bodyInput")
+      .addEventListener("input", updatePreview);
+
+    google.script.run
+      .withSuccessHandler(function (templates) {
+        TEMPLATES = templates || [];
+        if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
+      })
+      .withFailureHandler(function (err) {
+        showStatus("❌ Could not load templates: " + (err.message || ""), "error");
+      })
+      .getCalloutTemplates();
+
+    showStatus("💡 選範本 → 填內容 → Insert（有選 shape 就會轉換它）。", "info");
+  });
+</script>

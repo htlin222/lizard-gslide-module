@@ -96,6 +96,7 @@ function createCustomMenu() {
 			// Tables
 			.addItem("🔲 表格鑄造器⭐", "showTableMinterDialog")
 			.addItem("🔳 網格鑄造器⭐", "showGridMinterDialog")
+			.addItem("📌 Callout 鑄造器⭐", "showCalloutMinterDialog")
 			.addItem("🍽 快速美化表格", "fastStyleSelectedTable")
 			.addSeparator()
 			// Images
@@ -129,7 +130,6 @@ function createCustomMenu() {
 			.addItem("⇢ 兩者間加上水平線⭐", "insertHorizontalDashedLineBetween")
 			.addSeparator()
 			// Restyle a shape
-			.addItem("🎹 轉換成標注框⭐", "convertShapeToCallout")
 			.addItem("**B** 套用粗體樣式", "applyBoldStyleToSelectedShape")
 			.addToUi();
 
@@ -496,6 +496,23 @@ function showGridMinterDialog() {
 		console.error("Error showing Grid Minter dialog: " + e.message);
 		SlidesApp.getUi().alert(
 			"Error: Could not open the Grid Minter dialog: " + e.message,
+		);
+	}
+}
+
+/**
+ * Shows the Callout Minter dialog.
+ * Inserts a styled callout from a template, or converts the selected shape into
+ * one (header banner + left accent bar), with a live HTML preview.
+ */
+function showCalloutMinterDialog() {
+	try {
+		const dialog = createCalloutMinterDialog();
+		SlidesApp.getUi().showModalDialog(dialog, "📌 Callout 鑄造器 Callout Minter");
+	} catch (e) {
+		console.error("Error showing Callout Minter dialog: " + e.message);
+		SlidesApp.getUi().alert(
+			"Error: Could not open the Callout Minter dialog: " + e.message,
 		);
 	}
 }

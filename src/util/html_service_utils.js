@@ -74,6 +74,19 @@ function createGridMinterDialog() {
 }
 
 /**
+ * Creates and returns the Callout Minter dialog UI.
+ * Inserts (or converts a selection into) a styled callout from a template.
+ *
+ * @return {HtmlOutput} The HTML output for the callout minter dialog
+ */
+function createCalloutMinterDialog() {
+	const template = createModularHtmlTemplate(
+		"src/components/callout-minter/index",
+	);
+	return template.evaluate().setWidth(460).setHeight(560);
+}
+
+/**
  * Creates and returns the Flowchart sidebar UI with all components loaded.
  *
  * @return {HtmlOutput} The HTML output for the flowchart sidebar

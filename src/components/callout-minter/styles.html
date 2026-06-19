@@ -1,0 +1,243 @@
+<style>
+  /* Callout minter dialog styles */
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family:
+      "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .dialog-root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .cm-body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 14px 14px 4px;
+    box-sizing: border-box;
+  }
+
+  .cm-hint {
+    margin: 0 0 12px;
+    padding: 8px 10px;
+    background: #f1f3f4;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.4;
+  }
+
+  .cm-label {
+    display: block;
+    margin: 12px 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .cm-input,
+  .cm-textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 13px;
+    box-sizing: border-box;
+  }
+
+  .cm-textarea {
+    min-height: 64px;
+    resize: vertical;
+  }
+
+  .cm-input:focus,
+  .cm-textarea:focus {
+    border-color: #4285f4;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+  }
+
+  /* Template chips */
+  .template-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .template-chips .placeholder {
+    color: #999;
+    font-style: italic;
+    font-size: 12px;
+  }
+
+  .tpl-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid #dadce0;
+    border-radius: 14px;
+    background: #fff;
+    font-size: 12px;
+    color: #3c4043;
+    cursor: pointer;
+    transition:
+      border-color 0.12s ease,
+      box-shadow 0.12s ease;
+  }
+
+  .tpl-chip:hover {
+    border-color: #c6c9cc;
+  }
+
+  .tpl-chip.active {
+    border-color: #4285f4;
+    box-shadow: 0 0 0 1px #4285f4 inset;
+    font-weight: 600;
+  }
+
+  .tpl-chip .swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Callout preview */
+  .callout-preview {
+    min-height: 70px;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    padding: 14px;
+    background: #fff;
+  }
+
+  .callout-preview .placeholder {
+    color: #999;
+    font-style: italic;
+    font-size: 12px;
+  }
+
+  .cp-wrap {
+    display: flex;
+    align-items: stretch;
+    max-width: 320px;
+  }
+
+  .cp-bar {
+    width: 4px;
+    flex-shrink: 0;
+    border-radius: 2px 0 0 2px;
+  }
+
+  .cp-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cp-header {
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid transparent;
+    border-bottom: none;
+  }
+
+  .cp-body {
+    padding: 8px;
+    font-size: 12px;
+    line-height: 1.35;
+    border: 1px solid transparent;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .cp-body.cp-quote {
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* Status + buttons */
+  .status-message {
+    margin: 0 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: none;
+    flex-shrink: 0;
+  }
+
+  .status-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .status-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .status-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+  }
+
+  .button-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    background: white;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
+  }
+
+  .button-row button {
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1;
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease;
+  }
+
+  .clear-button {
+    background-color: #fff;
+    color: #3c4043;
+    border: 1px solid #dadce0;
+  }
+
+  .clear-button:hover {
+    background-color: #f1f3f4;
+    border-color: #c6c9cc;
+  }
+
+  .primary-button {
+    flex: 1;
+    background-color: #3d6869;
+    color: #fff;
+  }
+
+  .primary-button:hover {
+    background-color: #335a5b;
+  }
+
+  .primary-button:disabled {
+    background-color: #b9c7c7;
+    cursor: default;
+  }
+</style>
