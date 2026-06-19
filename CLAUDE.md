@@ -43,6 +43,33 @@ clasp open-container
 clasp open
 ```
 
+### clasp / git worktree Gotchas
+
+- **`clasp push` scans the whole tree.** `.clasp.json` here uses `rootDir: ""`
+  and `skipSubdirectories: false`, so clasp walks every subdirectory — including
+  any git worktrees created under `.claude/worktrees/`.
+- **Duplicate-file collision.** A worktree (e.g. `.claude/worktrees/t/`) holds a
+  full copy of the source tree. Because all `.js`/`.html` files flatten to the
+  same Apps Script names, clasp fails with
+  `A file with this name already exists in the current project: appsscript`
+  (two `appsscript.json`, etc.). Plain `clasp push` may also just print
+  `Skipping push.`
+- **`.claspignore`'s `.*` does NOT recurse.** The catch-all `.*` only ignores
+  dotfiles/dirs at the root; it does not exclude a dotdir's *contents*. To keep
+  clasp out of session files/worktrees, `.claspignore` has an explicit
+  `.claude/**` entry — keep it.
+- **Verify before pushing:** `clasp status` should show source files at repo-root
+  paths (e.g. `src/util/grid_minter.js`), with **zero** `worktrees` entries. If
+  you see `.claude/worktrees/...` lines, the ignore rule is missing or broke.
+- **Don't commit the worktree.** `git status` lists `.claude/worktrees/t/` as
+  untracked — never `git add` it; commit only the real source changes.
+- **`clasp push --force`** skips the manifest-overwrite confirmation that the
+  non-interactive shell otherwise auto-declines.
+- **Never `git reset --hard` with uncommitted work present** — it silently
+  discards working-tree edits (this is how an earlier CLAUDE.md edit was lost).
+  To test whether a commit conflicts, use `git cherry-pick -n` then
+  `git cherry-pick --abort` (not `reset --hard`), or test on a throwaway branch.
+
 ### Testing
 
 - No automated testing framework is configured
