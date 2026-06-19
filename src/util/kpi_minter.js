@@ -182,19 +182,66 @@ function insertKpiIntoSlide(payload) {
 		}
 		if (!slide) return { success: false, error: "No slide available." };
 
-		// Grid-style equal positioning across the page width.
+		// Each card is sized to fit its own content (value + label) with padding,
+		// then the whole row is centered across the page — NOT stretched to fill.
+		const valueSize = 38;
+		const labelSize = 17;
+		const lineSpacing = 150; // 1.5x line height
+		const padX = 22;
+		const padY = 16;
 		const margin = 30;
-		const gap = 15;
 		const top = 140;
-		const cardH = 110;
 		const n = items.length;
-		const usableW = pageW - 2 * margin;
-		const cardW = (usableW - (n - 1) * gap) / n;
 
+		// Measure each card from its content.
+		const cards = [];
 		for (let i = 0; i < n; i++) {
 			const item = items[i];
-			const x = margin + i * (cardW + gap);
-			renderKpiCard_(slide, x, top, cardW, cardH, item, tpl, font);
+			const arrow = trendArrow_(item.trend);
+			const valueLine = arrow
+				? (item.value || "") + " " + arrow
+				: item.value || "";
+			const vW = estimateKpiTextWidth_(valueLine, valueSize);
+			const lW = item.label ? estimateKpiTextWidth_(item.label, labelSize) : 0;
+			const w = Math.max(Math.max(vW, lW) + 2 * padX, 72);
+			const vH = valueSize * (lineSpacing / 100);
+			const lH = item.label ? labelSize * (lineSpacing / 100) : 0;
+			const h = vH + lH + (item.label ? 4 : 0) + 2 * padY;
+			cards.push({ item: item, w: w, h: h });
+		}
+
+		// Center the row; shrink the gap if the cards would overflow the page.
+		const sumW = cards.reduce(function (s, c) {
+			return s + c.w;
+		}, 0);
+		let gap = 24;
+		const usableW = pageW - 2 * margin;
+		if (n > 1 && sumW + (n - 1) * gap > usableW) {
+			gap = Math.max((usableW - sumW) / (n - 1), 6);
+		}
+		const totalW = sumW + (n - 1) * gap;
+		let x = Math.max((pageW - totalW) / 2, margin);
+		const maxH = cards.reduce(function (m, c) {
+			return Math.max(m, c.h);
+		}, 0);
+
+		for (let i = 0; i < n; i++) {
+			const c = cards[i];
+			const y = top + (maxH - c.h) / 2; // vertically center within the row band
+			renderKpiCard_(
+				slide,
+				x,
+				y,
+				c.w,
+				c.h,
+				c.item,
+				tpl,
+				font,
+				valueSize,
+				labelSize,
+				lineSpacing,
+			);
+			x += c.w + gap;
 		}
 
 		return { success: true, count: n };
@@ -202,6 +249,29 @@ function insertKpiIntoSlide(payload) {
 		console.error("Error inserting KPI: " + e.message);
 		return { success: false, error: e.message };
 	}
+}
+
+/**
+ * Rough estimate of a string's rendered width in points at a given font size.
+ * CJK / full-width glyphs count as ~1em, other characters as ~0.55em. Used to
+ * size each card to its content.
+ * @param {string} s
+ * @param {number} fontSize
+ * @return {number}
+ */
+function estimateKpiTextWidth_(s, fontSize) {
+	const str = String(s == null ? "" : s);
+	let w = 0;
+	for (let i = 0; i < str.length; i++) {
+		const code = str.charCodeAt(i);
+		const wide =
+			(code >= 0x1100 && code <= 0x9fff) || // CJK & friends
+			(code >= 0xac00 && code <= 0xd7a3) || // Hangul
+			(code >= 0x3000 && code <= 0x303f) || // CJK punctuation
+			(code >= 0xff00 && code <= 0xffef); // full-width forms
+		w += fontSize * (wide ? 1.0 : 0.55);
+	}
+	return w;
 }
 
 /**
@@ -215,8 +285,11 @@ function insertKpiIntoSlide(payload) {
  * @param {{value:string,label:string,trend:string}} item
  * @param {{valueColor:string,labelColor:string,cardFill:string,cardBorder:string}} tpl
  * @param {string} font
+ * @param {number} valueSize
+ * @param {number} labelSize
+ * @param {number} lineSpacing - line height as a percentage (150 = 1.5x)
  */
-function renderKpiCard_(slide, x, y, w, h, item, tpl, font) {
+function renderKpiCard_(slide, x, y, w, h, item, tpl, font, valueSize, labelSize, lineSpacing) {
 	const value = item.value || "";
 	const label = item.label || "";
 	const arrow = trendArrow_(item.trend);
@@ -237,10 +310,11 @@ function renderKpiCard_(slide, x, y, w, h, item, tpl, font) {
 	const textRange = box.getText();
 	textRange.setText(combined);
 
-	// Base styling for the whole box.
+	// Base styling for the whole box: centered, 1.5x line height.
 	textRange.getParagraphStyle().setParagraphAlignment(
 		SlidesApp.ParagraphAlignment.CENTER,
 	);
+	textRange.getParagraphStyle().setLineSpacing(lineSpacing);
 
 	// Value line: bold, big, theme valueColor.
 	const valueRange = textRange.getRange(0, valueLine.length);
@@ -248,19 +322,21 @@ function renderKpiCard_(slide, x, y, w, h, item, tpl, font) {
 		valueRange
 			.getTextStyle()
 			.setBold(true)
-			.setFontSize(38)
+			.setFontSize(valueSize)
 			.setForegroundColor(tpl.valueColor)
 			.setFontFamily(font);
 	}
 
-	// Trend arrow: colored independently (last `arrow.length` chars of the value
-	// line — the arrow plus the leading space). Slightly smaller than the value,
-	// matching the preview proportion (preview value 24px / arrow 20px).
+	// Trend arrow: colored independently (the arrow plus the leading space),
+	// slightly smaller than the value to match the preview proportion.
 	if (arrow && arrowColor) {
 		const arrowStart = value.length + 1; // skip "value "
 		const arrowRange = textRange.getRange(arrowStart, valueLine.length);
 		if (arrowRange) {
-			arrowRange.getTextStyle().setForegroundColor(arrowColor).setFontSize(32);
+			arrowRange
+				.getTextStyle()
+				.setForegroundColor(arrowColor)
+				.setFontSize(Math.round(valueSize * 0.84));
 		}
 	}
 
@@ -273,7 +349,7 @@ function renderKpiCard_(slide, x, y, w, h, item, tpl, font) {
 			labelRange
 				.getTextStyle()
 				.setBold(false)
-				.setFontSize(17)
+				.setFontSize(labelSize)
 				.setForegroundColor(tpl.labelColor)
 				.setFontFamily(font);
 		}
