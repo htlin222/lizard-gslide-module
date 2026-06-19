@@ -263,26 +263,4 @@ function addTabNavigationUltra(slideId, sections, currentSection, requests, cach
 		);
 		xPos += widths[idx];
 	});
-
-	// Bottom line
-	const lineId = `tab_line_${slideId}_${getNextGuid()}`;
-	requests.push(
-		{
-			createLine: {
-				objectId: lineId, lineCategory: 'STRAIGHT',
-				elementProperties: {
-					pageObjectId: slideId,
-					size: { height: { magnitude: 0, unit: 'PT' }, width: { magnitude: 720, unit: 'PT' } },
-					transform: { ...cache.transforms.identity, translateX: 0, translateY: 14 }
-				}
-			}
-		},
-		{
-			updateLineProperties: {
-				objectId: lineId,
-				lineProperties: { lineFill: { solidFill: { color: { rgbColor: cache.colors.main } } } },
-				fields: 'lineFill.solidFill.color'
-			}
-		}
-	);
 }
