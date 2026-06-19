@@ -134,7 +134,7 @@
   }
 
   .kpi-card {
-    /* Content-fit, not stretched to fill the row. */
+    /* Content-fit, not stretched to fill the row; JS unifies all to max size. */
     flex: 0 0 auto;
     min-width: 72px;
     border: 1px solid transparent;
@@ -142,6 +142,9 @@
     padding: 12px 18px;
     text-align: center;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .kpi-value {

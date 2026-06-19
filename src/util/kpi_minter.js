@@ -210,38 +210,39 @@ function insertKpiIntoSlide(payload) {
 			cards.push({ item: item, w: w, h: h });
 		}
 
-		// Center the row; shrink the gap if the cards would overflow the page.
-		const sumW = cards.reduce(function (s, c) {
-			return s + c.w;
+		// Unify every card to the largest measured width & height so the row is
+		// visually consistent.
+		const maxW = cards.reduce(function (m, c) {
+			return Math.max(m, c.w);
 		}, 0);
-		let gap = 24;
-		const usableW = pageW - 2 * margin;
-		if (n > 1 && sumW + (n - 1) * gap > usableW) {
-			gap = Math.max((usableW - sumW) / (n - 1), 6);
-		}
-		const totalW = sumW + (n - 1) * gap;
-		let x = Math.max((pageW - totalW) / 2, margin);
 		const maxH = cards.reduce(function (m, c) {
 			return Math.max(m, c.h);
 		}, 0);
 
+		// Center the row; shrink the gap only if it would overflow the page.
+		let gap = 24;
+		const usableW = pageW - 2 * margin;
+		if (n > 1 && n * maxW + (n - 1) * gap > usableW) {
+			gap = Math.max((usableW - n * maxW) / (n - 1), 6);
+		}
+		const totalW = n * maxW + (n - 1) * gap;
+		let x = Math.max((pageW - totalW) / 2, margin);
+
 		for (let i = 0; i < n; i++) {
-			const c = cards[i];
-			const y = top + (maxH - c.h) / 2; // vertically center within the row band
 			renderKpiCard_(
 				slide,
 				x,
-				y,
-				c.w,
-				c.h,
-				c.item,
+				top,
+				maxW,
+				maxH,
+				cards[i].item,
 				tpl,
 				font,
 				valueSize,
 				labelSize,
 				lineSpacing,
 			);
-			x += c.w + gap;
+			x += maxW + gap;
 		}
 
 		return { success: true, count: n };

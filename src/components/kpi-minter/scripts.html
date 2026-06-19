@@ -156,6 +156,20 @@
         "</div>";
     });
     preview.innerHTML = html;
+
+    // Unify every card to the largest card's width & height (mirrors the server,
+    // which standardizes on the max-size card).
+    const cardEls = preview.querySelectorAll(".kpi-card");
+    let mw = 0;
+    let mh = 0;
+    cardEls.forEach(function (el) {
+      mw = Math.max(mw, el.offsetWidth);
+      mh = Math.max(mh, el.offsetHeight);
+    });
+    cardEls.forEach(function (el) {
+      el.style.width = mw + "px";
+      el.style.height = mh + "px";
+    });
   }
 
   /** Clears the textarea (keeps the selected template). */
