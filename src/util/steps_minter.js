@@ -27,8 +27,10 @@ function buildStepsTemplates_() {
 		(typeof accent_color !== "undefined" && accent_color) || "#f29424";
 	const text =
 		(typeof text_color !== "undefined" && text_color) || "#000000";
-	const sub =
-		(typeof sub1_color !== "undefined" && sub1_color) || "#666666";
+	// Description text must be a readable mid-gray (matches the dialog preview's
+	// #666). Do NOT use sub1_color — that's a near-white background tint
+	// (#E7EAE7) and renders almost invisible on a white slide.
+	const sub = "#666666";
 	return [
 		{
 			id: "main",

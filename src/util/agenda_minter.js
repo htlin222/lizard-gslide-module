@@ -135,7 +135,9 @@ function buildAgendaTemplates_() {
 	const accent =
 		(typeof accent_color !== "undefined" && accent_color) || "#f29424";
 	const text = (typeof text_color !== "undefined" && text_color) || "#000000";
-	const sub1 = (typeof sub1_color !== "undefined" && sub1_color) || "#666666";
+	// Readable mid-gray for subdued item text. NOT sub1_color — that's a
+	// near-white background tint (#E7EAE7) and would be almost invisible.
+	const sub1 = "#666666";
 	return [
 		{
 			id: "numbered",
