@@ -183,48 +183,8 @@ function logAllSlidesElements() {
   });
 }
 
-function logCurrentSlideElements() {
-  try {
-    // Get the active presentation
-    const presentation = SlidesApp.getActivePresentation();
-    
-    // Get the selection to find current slide
-    const selection = SlidesApp.getActivePresentation().getSelection();
-    let currentSlide;
-    
-    // Try to get current slide from selection
-    if (selection && selection.getCurrentPage()) {
-      currentSlide = selection.getCurrentPage();
-    } else {
-      // Fallback to first slide if no selection
-      currentSlide = presentation.getSlides()[0];
-      console.log("Note: Using first slide as fallback (no current slide detected)");
-    }
-    
-    console.log(`Current Slide ID: ${currentSlide.getObjectId()}`);
-    console.log('='.repeat(40));
-    
-    // Get all elements on current slide
-    const elements = currentSlide.getPageElements();
-    
-    console.log(`Total elements: ${elements.length}`);
-    console.log('');
-    
-    // Log each element with its order
-    elements.forEach((element, index) => {
-      console.log(`${index + 1}. ${element.getPageElementType()} (ID: ${element.getObjectId()})`);
-      
-      // Add brief content info for text elements
-      if (element.getPageElementType() === SlidesApp.PageElementType.SHAPE) {
-        const shape = element.asShape();
-        const text = shape.getText().asString().trim();
-        if (text) {
-          console.log(`   Text: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
-        }
-      }
-    });
-    
-  } catch (error) {
-    console.log(`Error: ${error.toString()}`);
-  }
-}
+// NOTE: a second, duplicate logCurrentSlideElements() definition lived here and
+// was removed to eliminate a global function-name collision (the last
+// declaration silently won under Apps Script's flat global namespace). The
+// richer version above — which reports per-type details for IMAGE/TABLE/VIDEO —
+// is retained.

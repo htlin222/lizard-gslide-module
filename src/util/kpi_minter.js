@@ -29,11 +29,13 @@
  * @return {Array<{id,name,valueColor,labelColor,cardFill,cardBorder}>}
  */
 function buildKpiTemplates_() {
-	const main = (typeof main_color !== "undefined" && main_color) || "#3D6869";
-	const accent =
-		(typeof accent_color !== "undefined" && accent_color) || "#f29424";
-	const text = (typeof text_color !== "undefined" && text_color) || "#333333";
-	const sub1 = (typeof sub1_color !== "undefined" && sub1_color) || "#E7EAE7";
+	// Resolve the palette through the shared resolver (shared/theme_colors.js)
+	// instead of re-declaring per-color typeof fallbacks here.
+	const theme = getThemeColors();
+	const main = theme.main;
+	const accent = theme.accent;
+	const text = theme.text;
+	const sub1 = theme.sub1;
 	return [
 		{
 			id: "main",

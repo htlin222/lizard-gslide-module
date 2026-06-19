@@ -112,38 +112,10 @@ function createConnection(
 	return line;
 }
 
-/**
- * Finds the next available A-level ID on the current slide
- * @param {GoogleAppsScript.Slides.Slide} slide - The slide to check
- * @returns {string} - The next available A-level ID (A1, A2, A3, etc.)
- */
-function findNextAvailableRootId(slide) {
-	const allShapes = slide.getShapes();
-	const usedRootIds = new Set();
-
-	// Collect all A-level IDs already in use
-	for (const shape of allShapes) {
-		const graphId = getShapeGraphId(shape);
-		if (graphId) {
-			const parsed = parseGraphId(graphId);
-			if (parsed && parsed.current.startsWith("A")) {
-				// Extract the number from IDs like A1, A2, A3
-				const match = parsed.current.match(/^A(\d+)$/);
-				if (match) {
-					usedRootIds.add(Number.parseInt(match[1]));
-				}
-			}
-		}
-	}
-
-	// Find the smallest available number
-	let nextNumber = 1;
-	while (usedRootIds.has(nextNumber)) {
-		nextNumber++;
-	}
-
-	return `A${nextNumber}`;
-}
+// findNextAvailableRootId(slide) lives in flowchart/childCreationUtils.js.
+// The identical copy that used to be defined here was removed to eliminate a
+// global function-name collision; this file's callers resolve to that single
+// shared definition.
 
 /**
  * Creates a specific connection between two shapes with explicit sides

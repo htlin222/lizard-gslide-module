@@ -240,11 +240,18 @@ function applyStyle6() {
 }
 
 /**
- * Apply a default style to a specific shape object
+ * Apply a numbered default style (1-6) to a specific shape object.
+ *
+ * Renamed from applyStyleToShape to avoid a global name collision with
+ * flowchart/markdownUtils.js's applyStyleToShape(shape, styleObject), which
+ * takes a resolved style OBJECT rather than a style NUMBER. In Apps Script's
+ * flat global namespace the duplicate name silently shadowed one of the two
+ * depending on file load order.
+ *
  * @param {Shape} shape - The shape object to apply style to
  * @param {number} styleNumber - The style number to apply (1-6)
  */
-function applyStyleToShape(shape, styleNumber) {
+function applyDefaultStyleToShape(shape, styleNumber) {
 	if (!shape || !styleNumber) {
 		return;
 	}

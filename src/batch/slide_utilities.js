@@ -172,16 +172,7 @@ function batchDeleteAllElements(slides, requests) {
 	}
 }
 
-/**
- * Convert hex color to RGB format for Google Slides API
- */
-function hexToRgb(hex) {
-	const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-	return m
-		? {
-				red: Number.parseInt(m[1], 16) / 255,
-				green: Number.parseInt(m[2], 16) / 255,
-				blue: Number.parseInt(m[3], 16) / 255,
-			}
-		: { red: 0, green: 0, blue: 0 };
-}
+// hexToRgb(hex) now lives in shared/color_utils.js (single source of truth).
+// The duplicate definition that used to be here was removed to avoid a global
+// name collision; the canonical version keeps the same { red, green, blue }
+// 0–1 shape and the same black fallback on malformed input.

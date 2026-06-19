@@ -116,7 +116,7 @@ function splitSelectedShape(rows, columns, gap) {
 				}
 
 				// Copy the styling from the original shape
-				copyShapeStyle(originalShape, newShape);
+				copyShapeStyleForSplit_(originalShape, newShape);
 
 				// Add to our array of new shapes
 				newShapes.push(newShape);
@@ -148,11 +148,18 @@ function splitSelectedShape(rows, columns, gap) {
 }
 
 /**
- * Copies the style from one shape to another.
+ * Copies the style from one shape to another (split-shape local helper).
+ *
+ * Renamed from copyShapeStyle to avoid a global name collision with
+ * flowchart/shapeUtils.js's copyShapeStyle(source, target, copyTextContent),
+ * which has a different (3-arg) signature. In Apps Script's flat global
+ * namespace the duplicate name silently shadowed one of the two depending on
+ * file load order.
+ *
  * @param {Shape} sourceShape - The shape to copy style from.
  * @param {Shape} targetShape - The shape to apply the style to.
  */
-function copyShapeStyle(sourceShape, targetShape) {
+function copyShapeStyleForSplit_(sourceShape, targetShape) {
 	try {
 		// Copy fill
 		try {

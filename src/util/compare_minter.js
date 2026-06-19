@@ -1,3 +1,7 @@
+// TODO(shared-migration): adopt the shared core like grid_minter.js/kpi_minter.js —
+//   • replace the typeof *_color fallback block with getThemeColors() (shared/theme_colors.js)
+//   • replace inline createShape/updateShapeProperties/updateTextStyle literals with
+//     shared/shape_requests.js builders + rgbColor_ (hexToRgbColor_ is now a shared alias)
 /**
  * Server-side core for the Comparison (對照) Minter dialog.
  *

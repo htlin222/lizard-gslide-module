@@ -274,22 +274,11 @@ function createColorPalettePage(colors, schemeName) {
 }
 
 /**
- * 將 HEX 顏色轉換為 RGB 物件（Google Slides API 格式）
- * @param {string} hex - HEX 顏色值
- * @returns {Object} RGB 顏色物件
+ * hexToRgb(hex) now lives in shared/color_utils.js (single source of truth).
+ * The duplicate definition that used to be here was removed to avoid a global
+ * name collision with batch/slide_utilities.js's identical copy; the canonical
+ * version also expands 3-digit shorthand, matching the old normalizeHex path.
  */
-function hexToRgb(hex) {
-	const normalizedHex = normalizeHex(hex).replace("#", "");
-	const r = parseInt(normalizedHex.substr(0, 2), 16) / 255;
-	const g = parseInt(normalizedHex.substr(2, 2), 16) / 255;
-	const b = parseInt(normalizedHex.substr(4, 2), 16) / 255;
-
-	return {
-		red: r,
-		green: g,
-		blue: b,
-	};
-}
 
 /**
  * 開啟配色方案側邊欄

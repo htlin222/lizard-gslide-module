@@ -54,19 +54,10 @@ function generateTableMarkdownFromContext(context) {
 	});
 }
 
-/**
- * Converts "#RRGGBB" to an API rgbColor object (components in 0..1).
- * @param {string} hex
- * @return {{red: number, green: number, blue: number}}
- */
-function hexToRgbColor_(hex) {
-	const h = (hex || "#000000").replace("#", "");
-	return {
-		red: parseInt(h.substring(0, 2), 16) / 255,
-		green: parseInt(h.substring(2, 4), 16) / 255,
-		blue: parseInt(h.substring(4, 6), 16) / 255,
-	};
-}
+// hexToRgbColor_(hex) now lives in shared/color_utils.js as a back-compat alias
+// for the canonical hexToRgb(). The local definition was removed so there is a
+// single source of truth (this used to be the only definition, borrowed
+// cross-file by grid_minter.js).
 
 /**
  * Builds one updateTableBorderProperties request.
@@ -85,7 +76,7 @@ function tableBorderRequest_(tableId, range, position, hex, weight, alpha) {
 			borderPosition: position,
 			tableBorderProperties: {
 				tableBorderFill: {
-					solidFill: { color: { rgbColor: hexToRgbColor_(hex) }, alpha: alpha },
+					solidFill: { color: { rgbColor: hexToRgb(hex) }, alpha: alpha },
 				},
 				weight: { magnitude: weight, unit: "PT" },
 				dashStyle: "SOLID",
@@ -245,7 +236,7 @@ function insertTableIntoSlide(payload) {
 						style: {
 							foregroundColor: {
 								opaqueColor: {
-									rgbColor: hexToRgbColor_(isHeader ? theme : "#000000"),
+									rgbColor: hexToRgb(isHeader ? theme : "#000000"),
 								},
 							},
 							bold: isHeader,

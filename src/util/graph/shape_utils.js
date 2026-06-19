@@ -159,12 +159,19 @@ function formatErrorMessage(operation, message) {
 }
 
 /**
- * Shows a consistent alert dialog.
+ * Shows a consistent alert dialog (graph module).
+ *
+ * Renamed from showAlert to avoid a global name collision with
+ * flowchart/shapeUtils.js's showAlert(message, title), whose argument order is
+ * REVERSED. In Apps Script's flat global namespace the duplicate name silently
+ * shadowed one of the two depending on file load order, so callers risked
+ * passing title/message in the wrong slots.
+ *
  * @param {string} title - Dialog title
  * @param {string} message - Dialog message
  * @param {string} type - Type of alert ('info', 'warning', 'error')
  */
-function showAlert(title, message, type = "info") {
+function showGraphAlert_(title, message, type = "info") {
 	const ui = SlidesApp.getUi();
 
 	// Add emoji based on type

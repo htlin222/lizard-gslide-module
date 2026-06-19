@@ -1,3 +1,6 @@
+// TODO(shared-migration): replace the typeof *_color fallback block with
+//   getThemeColors() (shared/theme_colors.js); see kpi_minter.js for the pattern.
+//   If/when this minter moves to batch requests, use shared/shape_requests.js builders.
 /**
  * Server-side core for the Callout Minter dialog.
  *
