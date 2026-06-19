@@ -69,6 +69,30 @@ clasp open
   discards working-tree edits (this is how an earlier CLAUDE.md edit was lost).
   To test whether a commit conflicts, use `git cherry-pick -n` then
   `git cherry-pick --abort` (not `reset --hard`), or test on a throwaway branch.
+- **A global `~/.gitignore_global` can silently block `git add`** even after you
+  remove the pattern from the repo `.gitignore` (e.g. it ignores `dist/`). If a
+  `git add` reports "paths are ignored" but the repo `.gitignore` looks clean, run
+  `git check-ignore -v <path>` — it names the actual rule + file. Fix with a
+  repo-level negation (`!dist/`, `!dist/**`) and/or `git add -f` (once tracked,
+  ignores no longer apply; CI runners have no global ignore so they're unaffected).
+- **`appsscript.json` is gitignored — `appsscript.example.json` is the committed
+  source of truth.** Both CI workflows (`clasp-push.yml`, `build-bundle.yml`)
+  `cp appsscript.example.json appsscript.json` before pushing/building, since the
+  real manifest is absent on the runner. So edit BOTH manifests together (scopes,
+  advanced services) or CI silently ships the example's version.
+
+### Self-update for cloned decks
+
+Clones pull updates themselves — no central push needed. `src/util/self_update.js`
+(menu **⚙ 設定與批次 → 🔄 更新腳本**) fetches `dist/bundle.json` from GitHub raw and
+overwrites the clone's own content via the Apps Script API (`projects.updateContent`,
+authed with `ScriptApp.getOAuthToken()`). `dist/` is built by
+`scripts/build-bundle.mjs` + `.github/workflows/build-bundle.yml` on every push to
+`main` (and **committed back with `[skip ci]`** to avoid a workflow loop). `dist/` is
+TRACKED in git (the pull reads it from raw). One-time per account: enable the Apps
+Script API at `script.google.com/home/usersettings`. `cloned.txt` +
+`batch_push_to_cloned_project.sh` remain only as a recovery fallback (force `clasp
+push` to a clone whose self-update broke).
 
 ### Testing
 
