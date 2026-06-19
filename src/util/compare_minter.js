@@ -25,6 +25,62 @@
  */
 
 /**
+ * Groq system prompt for turning free-form context into comparison-column
+ * markdown that parseCompareColumns_() understands.
+ */
+var COMPARE_AI_SYSTEM_PROMPT = [
+	"You convert the user's content into a side-by-side comparison.",
+	"Output EXACTLY this format and nothing else:",
+	"- Each column is a block that starts with a title line beginning with '# '.",
+	"- After the title line, put one bullet point per line (plain text, NO leading bullet character).",
+	"- Separate consecutive columns with a line that contains only '---'.",
+	"Example:",
+	"# 方案 A",
+	"成本較低",
+	"導入快速",
+	"---",
+	"# 方案 B",
+	"效能較高",
+	"可擴充性佳",
+	"Strict rules:",
+	"- No preamble, no explanation, no closing remarks, no code fences.",
+	"- The very first line MUST start with '# '.",
+	"- Produce EXACTLY 2 columns unless the input clearly implies more.",
+	"- Give each column 2–5 bullet points.",
+	"- Keep every line concise; do not invent facts that aren't implied by the input.",
+].join("\n");
+
+/**
+ * Generates comparison-column Markdown from free-form context via Groq.
+ * Called from the dialog through google.script.run.
+ *
+ * @param {string} context - Arbitrary text the user pasted.
+ * @return {{success: boolean, generatedText?: string, error?: string, needKey?: boolean}}
+ */
+function generateCompareFromContext(context) {
+	const text = (context || "").trim();
+	if (!text) {
+		return { success: false, error: "No context provided." };
+	}
+
+	// Don't throw on a missing key — let the dialog show a friendly prompt to
+	// run the explicit "🔑 設定 AI 金鑰 (Groq)" menu item.
+	if (!hasUserApiKey()) {
+		return {
+			success: false,
+			needKey: true,
+			error:
+				"No AI key set. Run 🖖 跨頁功能 → 🔑 設定 AI 金鑰 (Groq) first, then try again.",
+		};
+	}
+
+	return callGroq_(COMPARE_AI_SYSTEM_PROMPT, text, {
+		maxTokens: 2000,
+		temperature: 0.3,
+	});
+}
+
+/**
  * Single source of truth for comparison templates. Each template carries the
  * per-column header fill/text and body border/text so columns share one look.
  * Colors resolve from the global palette where applicable.

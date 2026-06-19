@@ -146,6 +146,58 @@ function getTakeawaysTemplates() {
 }
 
 /**
+ * Groq system prompt for turning free-form context into takeaway points.
+ * Output is ONLY key-point lines, one per line, in the exact `title | desc`
+ * format the points textarea expects (the description after "|" is optional).
+ */
+var TAKEAWAYS_AI_SYSTEM_PROMPT = [
+	"You convert the user's content into a short list of key takeaways.",
+	"Output ONLY the key-point lines and nothing else.",
+	"Each line is ONE takeaway in the EXACT format: title | desc",
+	"- 'title' is a short label (1–4 words).",
+	"- ' | desc' is ONE concise supporting phrase; the description is optional.",
+	"Example output:",
+	"更快 | 交付時間從數週縮短到數天",
+	"更穩 | 自動化檢查減少回歸錯誤",
+	"可擴充 | 不需重寫即可承載十倍流量",
+	"Strict rules:",
+	"- No preamble, no explanation, no closing remarks, no code fences.",
+	"- Produce between 3 and 5 takeaways.",
+	"- Keep titles short; give each at most one concise description phrase.",
+	"- Do not invent facts that aren't implied by the input.",
+].join("\n");
+
+/**
+ * Generates takeaway point lines (`title | desc`, one per line) from free-form
+ * context via Groq. Called from the dialog through google.script.run.
+ *
+ * @param {string} context - Arbitrary text the user pasted.
+ * @return {{success: boolean, generatedText?: string, error?: string, needKey?: boolean}}
+ */
+function generateTakeawaysFromContext(context) {
+	const text = (context || "").trim();
+	if (!text) {
+		return { success: false, error: "No context provided." };
+	}
+
+	// Don't throw on a missing key — let the dialog show a friendly prompt to
+	// run the explicit "🔑 設定 AI 金鑰 (Groq)" menu item.
+	if (!hasUserApiKey()) {
+		return {
+			success: false,
+			needKey: true,
+			error:
+				"No AI key set. Run 🖖 跨頁功能 → 🔑 設定 AI 金鑰 (Groq) first, then try again.",
+		};
+	}
+
+	return callGroq_(TAKEAWAYS_AI_SYSTEM_PROMPT, text, {
+		maxTokens: 1500,
+		temperature: 0.3,
+	});
+}
+
+/**
  * Parses the points textarea into an array of {title, desc}. One point per line;
  * the title and an optional description are separated by the first "|".
  *

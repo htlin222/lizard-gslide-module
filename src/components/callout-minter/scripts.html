@@ -127,6 +127,94 @@
     preview.innerHTML = '<div class="cp-wrap">' + inner + "</div>";
   }
 
+  /**
+   * Strips code-fence markers so the AI parser sees clean text even when an LLM
+   * wraps its reply in ```.
+   * @param {string} text
+   * @return {string}
+   */
+  function cleanAiText(text) {
+    return (text || "")
+      .split(/\r?\n/)
+      .filter((l) => !/^```/.test(l.trim()))
+      .join("\n")
+      .trim();
+  }
+
+  /**
+   * Sends the Context textarea to Groq, then fills the Header input and Body
+   * textarea from the two-line "HEADER: …" / "BODY: …" reply. Tolerant: if the
+   * format isn't followed, the first line becomes the header and the rest the
+   * body. Refreshes the preview afterward.
+   */
+  function generateFromContext() {
+    const ctx = document.getElementById("contextInput").value.trim();
+    if (!ctx) {
+      showStatus("先在上方貼上一段內容。", "error");
+      return;
+    }
+    const btn = document.getElementById("generateButton");
+    btn.disabled = true;
+    btn.textContent = "Generating…";
+    showStatus("🤖 AI 產生標注中…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        if (res && res.needKey) {
+          showStatus(res.error, "error");
+          return;
+        }
+        if (!res || !res.success) {
+          showStatus(
+            "❌ " + ((res && res.error) || "AI generation failed."),
+            "error",
+          );
+          return;
+        }
+        const text = cleanAiText(res.generatedText || "");
+        if (!text) {
+          showStatus("❌ AI returned nothing. Try rephrasing the context.", "error");
+          return;
+        }
+        const lines = text.split(/\r?\n/).filter((l) => l.trim().length);
+        let header = "";
+        let body = "";
+        for (const line of lines) {
+          const h = line.match(/^\s*HEADER:\s*(.*)$/i);
+          const b = line.match(/^\s*BODY:\s*(.*)$/i);
+          if (h && !header) {
+            header = h[1].trim();
+          } else if (b && !body) {
+            body = b[1].trim();
+          } else if (header && !b && !h) {
+            body = (body ? body + " " : "") + line.trim();
+          }
+        }
+        // Tolerant fallback: format not followed → first line = header, rest = body.
+        if (!header && !body) {
+          header = (lines[0] || "").trim();
+          body = lines.slice(1).join(" ").trim();
+        }
+        if (header) {
+          headerTouched = true;
+          document.getElementById("headerInput").value = header;
+        }
+        if (body) {
+          document.getElementById("bodyInput").value = body;
+        }
+        updatePreview();
+        showStatus("✅ 已產生標注 — 檢查後即可 Insert。", "success");
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        showStatus("❌ " + (err.message || "AI error"), "error");
+      })
+      .generateCalloutFromContext(ctx);
+  }
+
   /** Clears header + body (keeps the selected template). */
   function clearForm() {
     headerTouched = false;

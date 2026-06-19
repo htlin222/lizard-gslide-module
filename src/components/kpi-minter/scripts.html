@@ -179,6 +179,67 @@
     updatePreview();
   }
 
+  /**
+   * Strips code-fence markers so the KPI parser sees clean lines even when an
+   * LLM wraps its output in ```.
+   * @param {string} text
+   * @return {string}
+   */
+  function stripFences(text) {
+    return (text || "")
+      .split(/\r?\n/)
+      .filter((l) => !/^```/.test(l.trim()))
+      .join("\n")
+      .trim();
+  }
+
+  /**
+   * Sends the Context textarea to Groq, then writes the resulting KPI lines into
+   * the main input and refreshes the preview.
+   */
+  function generateFromContext() {
+    const ctx = document.getElementById("contextInput").value.trim();
+    if (!ctx) {
+      showStatus("先在上方貼上一段內容。", "error");
+      return;
+    }
+    const btn = document.getElementById("generateButton");
+    btn.disabled = true;
+    btn.textContent = "🤖 Generating…";
+    showStatus("🤖 Generating KPI lines with AI…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        if (res && res.needKey) {
+          showStatus(res.error, "error");
+          return;
+        }
+        if (!res || !res.success) {
+          showStatus(
+            "❌ " + ((res && res.error) || "AI generation failed."),
+            "error",
+          );
+          return;
+        }
+        const out = stripFences(res.generatedText || "");
+        if (!out) {
+          showStatus("❌ AI 沒有產生 KPI 行，請換個說法再試。", "error");
+          return;
+        }
+        document.getElementById("linesInput").value = out;
+        updatePreview();
+        showStatus("✅ KPI 行已產生 — 檢查後即可 Insert。", "success");
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        showStatus("❌ " + (err.message || "AI error"), "error");
+      })
+      .generateKpiFromContext(ctx);
+  }
+
   /** Inserts the KPI cards via the server. */
   function insertKpi() {
     const t = currentTemplate();

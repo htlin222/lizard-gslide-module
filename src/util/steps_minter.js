@@ -65,6 +65,59 @@ function getStepsTemplates() {
 }
 
 /**
+ * Groq system prompt for turning free-form context into step lines.
+ * Output is ONLY step lines, one per line, in EXACTLY `title | desc` format
+ * (desc optional) — no preamble, explanation, or code fences.
+ */
+const STEPS_AI_SYSTEM_PROMPT = [
+	"You convert the user's content into a numbered list of process steps.",
+	"Output ONLY step lines, one per line, in EXACTLY this format:",
+	"title | desc",
+	"The desc part is optional (a line may be just the title).",
+	"Example:",
+	"收案 | 篩選符合條件的病人",
+	"隨機分組 | 1:1 分配至兩組",
+	"追蹤 | 每月回診評估",
+	"分析 | 主要終點統計",
+	"Strict rules:",
+	"- No preamble, no explanation, no closing remarks, no code fences.",
+	"- Output between 3 and 6 step lines.",
+	"- Keep titles short (2–6 characters or words).",
+	"- Keep each desc to one short phrase.",
+	"- Order the steps logically.",
+].join("\n");
+
+/**
+ * Generates step lines from free-form context via Groq.
+ * Called from the dialog through google.script.run.
+ *
+ * @param {string} context - Arbitrary text the user pasted.
+ * @return {{success: boolean, generatedText?: string, error?: string, needKey?: boolean}}
+ */
+function generateStepsFromContext(context) {
+	const text = (context || "").trim();
+	if (!text) {
+		return { success: false, error: "No context provided." };
+	}
+
+	// Don't throw on a missing key — let the dialog show a friendly prompt to
+	// run the explicit "🔑 設定 AI 金鑰 (Groq)" menu item.
+	if (!hasUserApiKey()) {
+		return {
+			success: false,
+			needKey: true,
+			error:
+				"No AI key set. Run 🖖 跨頁功能 → 🔑 設定 AI 金鑰 (Groq) first, then try again.",
+		};
+	}
+
+	return callGroq_(STEPS_AI_SYSTEM_PROMPT, text, {
+		maxTokens: 1200,
+		temperature: 0.3,
+	});
+}
+
+/**
  * Parses the steps textarea (one step per line, `title | desc`) into an array of
  * {title, desc}. Blank lines are ignored; the description is optional.
  *

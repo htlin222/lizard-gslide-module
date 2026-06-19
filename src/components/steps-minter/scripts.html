@@ -171,6 +171,70 @@
     preview.innerHTML = html;
   }
 
+  /**
+   * Strips code-fence markers so the steps parser sees clean lines even when an
+   * LLM wraps its output in ```.
+   * @param {string} text
+   * @return {string}
+   */
+  function cleanSteps(text) {
+    return (text || "")
+      .split(/\r?\n/)
+      .filter((l) => !/^```/.test(l.trim()))
+      .join("\n")
+      .trim();
+  }
+
+  /**
+   * Sends the Context textarea text to Groq, then writes the resulting step
+   * lines into the steps input and refreshes the preview.
+   */
+  function generateFromContext() {
+    var ctx = (document.getElementById("contextInput").value || "").trim();
+    if (!ctx) {
+      showStatus("先在上方貼上一段內容。", "error");
+      return;
+    }
+    var btn = document.getElementById("generateButton");
+    btn.disabled = true;
+    btn.textContent = "Generating…";
+    showStatus("🤖 Generating steps with AI…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        if (res && res.needKey) {
+          showStatus(res.error, "error");
+          return;
+        }
+        if (!res || !res.success) {
+          showStatus(
+            "❌ " + ((res && res.error) || "AI generation failed."),
+            "error",
+          );
+          return;
+        }
+        var md = cleanSteps(res.generatedText || "");
+        if (!md) {
+          showStatus(
+            "❌ AI returned no steps. Try rephrasing the context.",
+            "error",
+          );
+          return;
+        }
+        document.getElementById("stepsInput").value = md;
+        updatePreview();
+        showStatus("✅ 步驟已生成 — 檢查後即可 Insert。", "success");
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        showStatus("❌ " + (err.message || "AI error"), "error");
+      })
+      .generateStepsFromContext(ctx);
+  }
+
   /** Clears the steps text (keeps template + orientation). */
   function clearForm() {
     document.getElementById("stepsInput").value = "";

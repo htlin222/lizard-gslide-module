@@ -75,6 +75,52 @@ function getCalloutTemplates() {
 }
 
 /**
+ * Groq system prompt for turning free-form context into a single callout. The
+ * model must reply with EXACTLY two lines — a tiny HEADER label and a concise
+ * BODY — and nothing else, so the dialog can map them straight to its fields.
+ */
+var CALLOUT_AI_SYSTEM_PROMPT = [
+	"You convert the user's content into ONE callout (highlight box).",
+	"Output EXACTLY two lines and nothing else:",
+	"First line:  HEADER: <a very short label, 1-3 words>",
+	"Second line: BODY: <one or two concise sentences>",
+	"Strict rules:",
+	"- No preamble, no explanation, no closing remarks, no code fences.",
+	"- Keep the header tiny (e.g. 重點 / 注意 / INFO).",
+	"- Keep the body concise; do not invent facts not implied by the input.",
+].join("\n");
+
+/**
+ * Generates a callout (HEADER + BODY) from free-form context via Groq.
+ * Called from the dialog through google.script.run.
+ *
+ * @param {string} context - Arbitrary text the user pasted.
+ * @return {{success: boolean, generatedText?: string, error?: string, needKey?: boolean}}
+ */
+function generateCalloutFromContext(context) {
+	const text = (context || "").trim();
+	if (!text) {
+		return { success: false, error: "No context provided." };
+	}
+
+	// Don't throw on a missing key — let the dialog show a friendly prompt to
+	// run the explicit "🔑 設定 AI 金鑰 (Groq)" menu item.
+	if (!hasUserApiKey()) {
+		return {
+			success: false,
+			needKey: true,
+			error:
+				"No AI key set. Run 🖖 跨頁功能 → 🔑 設定 AI 金鑰 (Groq) first, then try again.",
+		};
+	}
+
+	return callGroq_(CALLOUT_AI_SYSTEM_PROMPT, text, {
+		maxTokens: 500,
+		temperature: 0.3,
+	});
+}
+
+/**
  * Inserts (or converts a selection into) a styled callout.
  *
  * @param {{templateId: string, header: string, body: string}} payload

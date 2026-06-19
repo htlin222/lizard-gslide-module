@@ -83,6 +83,57 @@ function getTimelineTemplates() {
 }
 
 /**
+ * Groq system prompt for turning free-form context into timeline milestones.
+ * Output is ONLY milestone lines in the exact "date | label" format, one per
+ * line, ordered chronologically — no preamble, explanation, or code fences.
+ */
+const TIMELINE_AI_SYSTEM_PROMPT = [
+	"You convert the user's content into a list of timeline milestones.",
+	"Output ONLY milestone lines, one per line, in EXACTLY this format:",
+	"date | label",
+	"Example:",
+	"2024 Q1 | 收案開始",
+	"2024 Q3 | 期中分析",
+	"2025 | 主要終點分析",
+	"Strict rules:",
+	"- No preamble, no explanation, no closing remarks, no code fences.",
+	"- Output between 3 and 7 milestone lines.",
+	"- Keep each label concise.",
+	"- Order the milestones chronologically.",
+	"- Each line MUST contain a single '|' separating the date from the label.",
+].join("\n");
+
+/**
+ * Generates timeline milestone lines from free-form context via Groq.
+ * Called from the dialog through google.script.run.
+ *
+ * @param {string} context - Arbitrary text the user pasted.
+ * @return {{success: boolean, generatedText?: string, error?: string, needKey?: boolean}}
+ */
+function generateTimelineFromContext(context) {
+	const text = (context || "").trim();
+	if (!text) {
+		return { success: false, error: "No context provided." };
+	}
+
+	// Don't throw on a missing key — let the dialog show a friendly prompt to
+	// run the explicit "🔑 設定 AI 金鑰 (Groq)" menu item.
+	if (!hasUserApiKey()) {
+		return {
+			success: false,
+			needKey: true,
+			error:
+				"No AI key set. Run 🖖 跨頁功能 → 🔑 設定 AI 金鑰 (Groq) first, then try again.",
+		};
+	}
+
+	return callGroq_(TIMELINE_AI_SYSTEM_PROMPT, text, {
+		maxTokens: 1200,
+		temperature: 0.3,
+	});
+}
+
+/**
  * Resolves a template object from a templateId, falling back to the first.
  * @param {string} templateId
  * @return {Object}

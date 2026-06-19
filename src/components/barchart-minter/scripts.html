@@ -187,6 +187,69 @@
     preview.innerHTML = html;
   }
 
+  /**
+   * Strips code-fence markers so the data parser sees clean `label | value`
+   * lines even when an LLM wraps the output in ```.
+   * @param {string} text
+   * @return {string}
+   */
+  function cleanDataText(text) {
+    return (text || "")
+      .split(/\r?\n/)
+      .filter(function (l) {
+        return !/^```/.test(l.trim());
+      })
+      .join("\n")
+      .trim();
+  }
+
+  /**
+   * Sends the Context textarea to Groq, then drops the resulting
+   * `label | value` lines into the data textarea and refreshes the preview.
+   */
+  function generateFromContext() {
+    var ctx = document.getElementById("contextInput").value.trim();
+    if (!ctx) {
+      showStatus("請先貼上一段含數據的文字。", "error");
+      return;
+    }
+    var btn = document.getElementById("generateButton");
+    btn.disabled = true;
+    btn.textContent = "Generating…";
+    showStatus("🤖 Generating bar chart data with AI…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        if (res && res.needKey) {
+          showStatus(res.error, "error");
+          return;
+        }
+        if (!res || !res.success) {
+          showStatus(
+            "❌ " + ((res && res.error) || "AI generation failed."),
+            "error",
+          );
+          return;
+        }
+        var data = cleanDataText(res.generatedText || "");
+        if (!data) {
+          showStatus("❌ AI returned no data. Try rephrasing the context.", "error");
+          return;
+        }
+        document.getElementById("dataInput").value = data;
+        updatePreview();
+        showStatus("✅ Data generated — review it, then Insert.", "success");
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        showStatus("❌ " + (err.message || "AI error"), "error");
+      })
+      .generateBarChartFromContext(ctx);
+  }
+
   /** Clears the data input (keeps the selected template). */
   function clearForm() {
     document.getElementById("dataInput").value = "";

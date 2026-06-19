@@ -53,6 +53,56 @@ function getBarChartTemplates() {
 }
 
 /**
+ * Groq system prompt for turning free-form context into bar-chart data lines.
+ * Output is ONLY `label | value` lines (value numeric), nothing else.
+ */
+var BARCHART_AI_SYSTEM_PROMPT = [
+	"You convert the user's content into bar-chart data.",
+	"Output ONLY data lines, one bar per line, in EXACTLY this format:",
+	"label | value",
+	"Example:",
+	"2022 | 12",
+	"2023 | 18",
+	"2024 | 27",
+	"Strict rules:",
+	"- No preamble, no explanation, no closing remarks, no code fences.",
+	"- Produce between 3 and 8 bars.",
+	"- The value MUST be a number. Strip units, currency symbols, and % signs; keep only the number.",
+	"- Keep labels short.",
+	"- Do not invent data that isn't implied by the input.",
+].join("\n");
+
+/**
+ * Generates bar-chart data (`label | value` lines) from free-form context via
+ * Groq. Called from the dialog through google.script.run.
+ *
+ * @param {string} context - Arbitrary text the user pasted.
+ * @return {{success: boolean, generatedText?: string, error?: string, needKey?: boolean}}
+ */
+function generateBarChartFromContext(context) {
+	const text = (context || "").trim();
+	if (!text) {
+		return { success: false, error: "No context provided." };
+	}
+
+	// Don't throw on a missing key — let the dialog show a friendly prompt to
+	// run the explicit "🔑 設定 AI 金鑰 (Groq)" menu item.
+	if (!hasUserApiKey()) {
+		return {
+			success: false,
+			needKey: true,
+			error:
+				"No AI key set. Run 🖖 跨頁功能 → 🔑 設定 AI 金鑰 (Groq) first, then try again.",
+		};
+	}
+
+	return callGroq_(BARCHART_AI_SYSTEM_PROMPT, text, {
+		maxTokens: 1500,
+		temperature: 0.3,
+	});
+}
+
+/**
  * Parses `label | value` lines into {label, value} bars. Non-numeric values are
  * treated as 0 (and the line is kept, so the category still shows). Lines
  * without a separator use the whole line as the label with value 0.

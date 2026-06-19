@@ -114,6 +114,59 @@ function getKpiTemplates() {
 }
 
 /**
+ * Groq system prompt for turning free-form context into KPI lines. Built from an
+ * array .join("\n") (mirrors the Grid/Table minters). The model must output ONLY
+ * KPI lines in the exact `value | label | trend` format parseKpiLines_() reads.
+ */
+const KPI_AI_SYSTEM_PROMPT = [
+	"You convert the user's content into a short set of KPI / big-number stat lines.",
+	"Output ONLY the KPI lines, one KPI per line, in this EXACT format:",
+	"  value | label | trend",
+	"where `trend` is OPTIONAL and, when present, one of exactly: up, down, flat.",
+	"Use `up` for an improvement / increase, `down` for a decline / worse outcome,",
+	"and `flat` for no meaningful change. Omit the trend entirely when it doesn't apply.",
+	"Example output lines:",
+	"87% | 疾病控制率 | up",
+	"HR 0.62 | 主要終點 | down",
+	"n = 1,204 | 收案人數",
+	"Strict rules:",
+	"- No preamble, no explanation, no closing remarks, no code fences.",
+	"- Output between 2 and 6 lines.",
+	"- Keep each `value` short (a number, percentage, ratio, or n=…).",
+	"- Do NOT invent numbers that aren't implied by the input.",
+].join("\n");
+
+/**
+ * Generates KPI lines from free-form context via Groq. Called from the dialog
+ * through google.script.run.
+ *
+ * @param {string} context - Arbitrary text the user pasted.
+ * @return {{success: boolean, generatedText?: string, error?: string, needKey?: boolean}}
+ */
+function generateKpiFromContext(context) {
+	const text = (context || "").trim();
+	if (!text) {
+		return { success: false, error: "No context provided." };
+	}
+
+	// Don't throw on a missing key — let the dialog show a friendly prompt to
+	// run the explicit "🔑 設定 AI 金鑰 (Groq)" menu item.
+	if (!hasUserApiKey()) {
+		return {
+			success: false,
+			needKey: true,
+			error:
+				"No AI key set. Run 🖖 跨頁功能 → 🔑 設定 AI 金鑰 (Groq) first, then try again.",
+		};
+	}
+
+	return callGroq_(KPI_AI_SYSTEM_PROMPT, text, {
+		maxTokens: 600,
+		temperature: 0.3,
+	});
+}
+
+/**
  * Parses KPI lines into an array of {value, label, trend}. Each non-empty line
  * is `value | label | trend` (trend optional). Tolerant of full-width "｜".
  *

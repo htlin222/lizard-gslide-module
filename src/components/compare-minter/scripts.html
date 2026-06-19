@@ -171,6 +171,72 @@
     preview.innerHTML = html;
   }
 
+  /**
+   * Strips code-fence markers so the column parser sees clean markdown even when
+   * an LLM wraps the output in ``` fences.
+   * @param {string} text
+   * @return {string}
+   */
+  function cleanCompareMarkdown(text) {
+    return (text || "")
+      .split(/\r?\n/)
+      .filter(function (l) {
+        return !/^```/.test(l.trim());
+      })
+      .join("\n")
+      .trim();
+  }
+
+  /**
+   * Sends the Context textarea text to Groq, then drops the resulting comparison
+   * markdown into the main content textarea and refreshes the preview.
+   */
+  function generateFromContext() {
+    var ctx = (document.getElementById("contextInput").value || "").trim();
+    if (!ctx) {
+      showStatus("請先在上方貼上要比較的內容。", "error");
+      return;
+    }
+    var btn = document.getElementById("generateButton");
+    btn.disabled = true;
+    btn.textContent = "Generating…";
+    showStatus("🤖 Generating comparison with AI…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        if (res && res.needKey) {
+          showStatus(res.error, "error");
+          return;
+        }
+        if (!res || !res.success) {
+          showStatus(
+            "❌ " + ((res && res.error) || "AI generation failed."),
+            "error",
+          );
+          return;
+        }
+        var md = cleanCompareMarkdown(res.generatedText || "");
+        document.getElementById("markdownInput").value = md;
+        updatePreview();
+        if (!parseColumns().length) {
+          showStatus(
+            "❌ AI returned no columns. Try rephrasing the context.",
+            "error",
+          );
+          return;
+        }
+        showStatus("✅ Generated — review it, then Insert.", "success");
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        showStatus("❌ " + (err.message || "AI error"), "error");
+      })
+      .generateCompareFromContext(ctx);
+  }
+
   /** Clears the textarea (keeps the selected template). */
   function clearForm() {
     document.getElementById("markdownInput").value = "";

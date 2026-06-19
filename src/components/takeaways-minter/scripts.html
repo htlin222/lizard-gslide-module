@@ -184,6 +184,70 @@
     preview.innerHTML = html;
   }
 
+  /**
+   * Strips code-fence markers so the points parser sees clean lines even when an
+   * LLM wraps its output in ```.
+   * @param {string} text
+   * @return {string}
+   */
+  function cleanPointsText(text) {
+    return (text || "")
+      .split(/\r?\n/)
+      .filter(function (l) {
+        return !/^```/.test(l.trim());
+      })
+      .join("\n")
+      .trim();
+  }
+
+  /**
+   * Sends the Context textarea text to Groq, then writes the resulting takeaway
+   * lines (`title | desc`) into the points textarea and refreshes the preview.
+   * Does NOT overwrite the heading field.
+   */
+  function generateFromContext() {
+    var ctx = document.getElementById("contextInput").value.trim();
+    if (!ctx) {
+      showStatus("貼上一段內容後再產生重點。", "error");
+      return;
+    }
+    var btn = document.getElementById("generateButton");
+    btn.disabled = true;
+    btn.textContent = "Generating…";
+    showStatus("🤖 AI 產生重點中…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        if (res && res.needKey) {
+          showStatus(res.error, "error");
+          return;
+        }
+        if (!res || !res.success) {
+          showStatus(
+            "❌ " + ((res && res.error) || "AI generation failed."),
+            "error",
+          );
+          return;
+        }
+        var text = cleanPointsText(res.generatedText || "");
+        if (!text) {
+          showStatus("❌ AI 沒有回傳重點，請換個說法再試。", "error");
+          return;
+        }
+        document.getElementById("pointsInput").value = text;
+        updatePreview();
+        showStatus("✅ 已產生重點 — 檢視後即可 Insert。", "success");
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        showStatus("❌ " + (err.message || "AI error"), "error");
+      })
+      .generateTakeawaysFromContext(ctx);
+  }
+
   /** Clears heading + points (keeps the selected template). */
   function clearForm() {
     document.getElementById("headingInput").value = "";

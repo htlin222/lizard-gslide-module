@@ -4,6 +4,21 @@
       選了一個 shape → 套用標注框樣式並群組；沒選 → 在投影片中央插入一個全新標注框。
     </p>
 
+    <label class="cm-label" for="contextInput">貼上內容 → AI 轉成標注（選填）</label>
+    <textarea
+      id="contextInput"
+      class="cm-textarea"
+      placeholder="貼上一段內容，AI 產生 Header + 內文…"
+    ></textarea>
+    <button
+      type="button"
+      class="ai-button"
+      id="generateButton"
+      onclick="generateFromContext()"
+    >
+      ✨ Generate with AI
+    </button>
+
     <label class="cm-label">範本 Template</label>
     <div class="template-chips" id="templateChips">
       <span class="placeholder">Loading templates…</span>
