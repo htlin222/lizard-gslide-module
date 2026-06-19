@@ -1,0 +1,57 @@
+<div class="dialog-root">
+  <div class="cm-body">
+    <p class="cm-hint">
+      每行一個長條：<code>label | value</code>。例：<code>2022 | 12</code>。非數字的值會被當成 0。
+    </p>
+
+    <label class="cm-label" for="dataInput">資料 Data（label | value）</label>
+    <textarea
+      id="dataInput"
+      class="cm-textarea"
+      placeholder="2022 | 12&#10;2023 | 18&#10;2024 | 27"
+    >2022 | 12
+2023 | 18
+2024 | 27</textarea>
+
+    <label class="cm-label">方向 Orientation</label>
+    <div class="cm-toggle-row">
+      <label class="cm-radio">
+        <input type="radio" name="orientation" value="vertical" checked />
+        直向 Vertical
+      </label>
+      <label class="cm-radio">
+        <input type="radio" name="orientation" value="horizontal" />
+        橫向 Horizontal
+      </label>
+    </div>
+
+    <label class="cm-toggle">
+      <input type="checkbox" id="showValues" checked />
+      顯示數值標籤 Show value labels
+    </label>
+
+    <label class="cm-label">配色 Template</label>
+    <div class="template-chips" id="templateChips">
+      <span class="placeholder">Loading templates…</span>
+    </div>
+
+    <label class="cm-label">預覽 Preview</label>
+    <div class="bar-preview" id="barPreview">
+      <span class="placeholder">預覽會顯示在這裡…</span>
+    </div>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button" onclick="clearForm()">Clear</button>
+    <button
+      type="button"
+      class="primary-button"
+      id="insertButton"
+      onclick="insertBarChart()"
+    >
+      📊 Insert
+    </button>
+  </div>
+</div>

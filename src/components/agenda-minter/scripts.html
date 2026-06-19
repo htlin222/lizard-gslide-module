@@ -1,0 +1,229 @@
+<script>
+  /** Templates fetched from the server (with resolved colors). */
+  var TEMPLATES = [];
+  /** Currently selected template id. */
+  var selectedId = null;
+
+  /**
+   * Shows a status message in the dialog.
+   * @param {string} message
+   * @param {string} type - 'success' | 'error' | 'info'
+   */
+  function showStatus(message, type = "info") {
+    const el = document.getElementById("statusMessage");
+    el.textContent = message;
+    el.className = `status-message status-${type}`;
+    el.style.display = "block";
+    if (type === "success" || type === "info") {
+      setTimeout(() => {
+        el.style.display = "none";
+      }, 5000);
+    }
+  }
+
+  /** @param {string} s @return {string} */
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  /** @return {Object|null} the selected template */
+  function currentTemplate() {
+    for (const t of TEMPLATES) if (t.id === selectedId) return t;
+    return null;
+  }
+
+  /** Reads the textarea into a clean array of items. */
+  function getItems() {
+    return document
+      .getElementById("itemsInput")
+      .value.split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter((s) => s.length);
+  }
+
+  /** Renders the clickable template chips. */
+  function renderChips() {
+    const wrap = document.getElementById("templateChips");
+    wrap.innerHTML = "";
+    TEMPLATES.forEach((t) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tpl-chip" + (t.id === selectedId ? " active" : "");
+      chip.innerHTML =
+        '<span class="swatch" style="background:' +
+        t.markerColor +
+        '"></span>' +
+        escapeHtml(t.name);
+      chip.onclick = () => selectTemplate(t.id);
+      wrap.appendChild(chip);
+    });
+  }
+
+  /**
+   * Selects a template and refreshes chips + preview.
+   * @param {string} id
+   */
+  function selectTemplate(id) {
+    selectedId = id;
+    renderChips();
+    updatePreview();
+  }
+
+  /** Builds the HTML for one list item (numbered or bulleted). */
+  function itemHtml(t, label, text) {
+    return (
+      '<li class="ap-item">' +
+      '<span class="ap-marker" style="color:' +
+      t.markerColor +
+      '">' +
+      escapeHtml(label) +
+      "</span>" +
+      '<span style="color:' +
+      t.itemColor +
+      '">' +
+      escapeHtml(text) +
+      "</span>" +
+      "</li>"
+    );
+  }
+
+  /** Re-renders the live HTML preview of the agenda. */
+  function updatePreview() {
+    const preview = document.getElementById("agendaPreview");
+    const t = currentTemplate();
+    if (!t) {
+      preview.innerHTML = '<span class="placeholder">預覽會顯示在這裡…</span>';
+      return;
+    }
+    const items = getItems();
+    if (!items.length) {
+      preview.innerHTML =
+        '<span class="placeholder">輸入項目後會顯示預覽…</span>';
+      return;
+    }
+
+    const isNumbered = t.layout !== "bulleted";
+    const useTwoCol = t.layout === "twoColumn" || items.length > 8;
+
+    function listFor(arr, offset) {
+      let html = '<ul class="ap-list">';
+      arr.forEach((text, i) => {
+        const label = isNumbered ? offset + i + 1 + "." : "•";
+        html += itemHtml(t, label, text);
+      });
+      html += "</ul>";
+      return html;
+    }
+
+    let body;
+    if (useTwoCol) {
+      const half = Math.ceil(items.length / 2);
+      const col1 = items.slice(0, half);
+      const col2 = items.slice(half);
+      body =
+        '<div class="ap-cols">' +
+        '<div class="ap-col">' +
+        listFor(col1, 0) +
+        "</div>" +
+        '<div class="ap-col">' +
+        listFor(col2, col1.length) +
+        "</div>" +
+        "</div>";
+    } else {
+      body = listFor(items, 0);
+    }
+
+    preview.innerHTML =
+      '<div class="ap-heading" style="color:' +
+      t.headingColor +
+      '">' +
+      escapeHtml(t.heading || "Agenda") +
+      "</div>" +
+      body;
+  }
+
+  /** Clears the items textarea (keeps the selected template). */
+  function clearForm() {
+    document.getElementById("itemsInput").value = "";
+    document.getElementById("statusMessage").style.display = "none";
+    updatePreview();
+  }
+
+  /** Inserts the agenda block via the server. */
+  function insertAgenda() {
+    const t = currentTemplate();
+    if (!t) {
+      showStatus("Pick a template first.", "error");
+      return;
+    }
+    const items = getItems();
+    if (!items.length) {
+      showStatus("Add at least one agenda item.", "error");
+      return;
+    }
+    const btn = document.getElementById("insertButton");
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Working…";
+    showStatus("📑 Inserting agenda…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = label;
+        if (res && res.success) {
+          google.script.host.close();
+        } else {
+          showStatus("❌ " + ((res && res.error) || "Insert failed."), "error");
+        }
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = label;
+        showStatus("❌ " + (err.message || "Insert error"), "error");
+      })
+      .insertAgendaIntoSlide({
+        templateId: selectedId,
+        items: items,
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document
+      .getElementById("itemsInput")
+      .addEventListener("input", updatePreview);
+
+    // Load templates.
+    google.script.run
+      .withSuccessHandler(function (templates) {
+        TEMPLATES = templates || [];
+        if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
+      })
+      .withFailureHandler(function (err) {
+        showStatus(
+          "❌ Could not load templates: " + (err.message || ""),
+          "error",
+        );
+      })
+      .getAgendaTemplates();
+
+    // Auto-detect section titles and pre-fill the textarea.
+    google.script.run
+      .withSuccessHandler(function (items) {
+        const list = items || [];
+        if (list.length) {
+          document.getElementById("itemsInput").value = list.join("\n");
+        }
+        updatePreview();
+      })
+      .withFailureHandler(function () {
+        updatePreview();
+      })
+      .getAgendaItems();
+
+    showStatus("💡 已自動偵測章節 → 編輯項目 → Insert。", "info");
+  });
+</script>

@@ -87,19 +87,34 @@ function createCustomMenu() {
 
 		// ── Menu 2: add new elements to the current slide ──
 		ui.createMenu("✨ 加入元素")
+			// All "minter" generators live in one submenu so the menu stays tidy.
+			.addSubMenu(
+				ui
+					.createMenu("🏭 鑄造器")
+					.addItem("🔲 表格鑄造器⭐", "showTableMinterDialog")
+					.addItem("🔳 網格鑄造器⭐", "showGridMinterDialog")
+					.addItem("📌 Callout 鑄造器⭐", "showCalloutMinterDialog")
+					.addSeparator()
+					.addItem("📊 KPI 大數字鑄造器⭐", "showKpiMinterDialog")
+					.addItem("📈 長條圖鑄造器⭐", "showBarChartMinterDialog")
+					.addItem("⚖ 對照鑄造器⭐", "showCompareMinterDialog")
+					.addItem("⏱ 時間軸鑄造器⭐", "showTimelineMinterDialog")
+					.addItem("🪜 步驟鑄造器⭐", "showStepsMinterDialog")
+					.addSeparator()
+					.addItem("📋 議程/目錄鑄造器⭐", "showAgendaMinterDialog")
+					.addItem("🎯 重點摘要鑄造器⭐", "showTakeawaysMinterDialog")
+					.addItem("🖼 圖片陣列鑄造器⭐", "showGalleryMinterDialog")
+					.addItem("😀 Icon 鑄造器⭐", "showIconMinterDialog"),
+			)
+			.addSeparator()
 			// Shapes & decorations
 			.addItem("↙ 加上一個大箭頭", "drawArrowOnCurrentSlide")
 			.addItem("🔢 加上數字遞增圓圈", "addNextNumberCircle")
 			.addItem("🔰 將文字轉換成 badge", "convertToBadges")
 			.addItem("❄ 為元素加上 45 度影子", "createOffsetBlueShape")
 			.addSeparator()
-			// Tables
-			.addItem("🔲 表格鑄造器⭐", "showTableMinterDialog")
-			.addItem("🔳 網格鑄造器⭐", "showGridMinterDialog")
-			.addItem("📌 Callout 鑄造器⭐", "showCalloutMinterDialog")
+			// Tables & images
 			.addItem("🍽 快速美化表格", "fastStyleSelectedTable")
-			.addSeparator()
-			// Images
 			.addItem("🌆 原地貼上", "duplicateImageInPlace")
 			.addItem("🏙 覆蓋半透明方塊", "coverImageWithWhite")
 			.addItem("🏞 半透明遮罩⭐", "maskImage")
@@ -515,4 +530,63 @@ function showCalloutMinterDialog() {
 			"Error: Could not open the Callout Minter dialog: " + e.message,
 		);
 	}
+}
+
+/**
+ * Opens a minter dialog by factory + title, with shared error handling.
+ * @param {function(): HtmlOutput} factory
+ * @param {string} title
+ */
+function showMinterDialog_(factory, title) {
+	try {
+		SlidesApp.getUi().showModalDialog(factory(), title);
+	} catch (e) {
+		console.error("Error showing " + title + ": " + e.message);
+		SlidesApp.getUi().alert("Error: Could not open " + title + ": " + e.message);
+	}
+}
+
+/** Shows the KPI / Big Number Minter dialog. */
+function showKpiMinterDialog() {
+	showMinterDialog_(createKpiMinterDialog, "📊 KPI 大數字鑄造器 KPI Minter");
+}
+
+/** Shows the Timeline / Roadmap Minter dialog. */
+function showTimelineMinterDialog() {
+	showMinterDialog_(createTimelineMinterDialog, "⏱ 時間軸鑄造器 Timeline Minter");
+}
+
+/** Shows the Comparison Minter dialog. */
+function showCompareMinterDialog() {
+	showMinterDialog_(createCompareMinterDialog, "⚖ 對照鑄造器 Compare Minter");
+}
+
+/** Shows the Steps Minter dialog. */
+function showStepsMinterDialog() {
+	showMinterDialog_(createStepsMinterDialog, "🪜 步驟鑄造器 Steps Minter");
+}
+
+/** Shows the Image Gallery Minter dialog. */
+function showGalleryMinterDialog() {
+	showMinterDialog_(createGalleryMinterDialog, "🖼 圖片陣列鑄造器 Gallery Minter");
+}
+
+/** Shows the Agenda / TOC Minter dialog. */
+function showAgendaMinterDialog() {
+	showMinterDialog_(createAgendaMinterDialog, "📋 議程/目錄鑄造器 Agenda Minter");
+}
+
+/** Shows the Takeaways Minter dialog. */
+function showTakeawaysMinterDialog() {
+	showMinterDialog_(createTakeawaysMinterDialog, "🎯 重點摘要鑄造器 Takeaways Minter");
+}
+
+/** Shows the Icon Minter dialog. */
+function showIconMinterDialog() {
+	showMinterDialog_(createIconMinterDialog, "😀 Icon 鑄造器 Icon Minter");
+}
+
+/** Shows the Bar Chart Minter dialog. */
+function showBarChartMinterDialog() {
+	showMinterDialog_(createBarChartMinterDialog, "📈 長條圖鑄造器 Bar Chart Minter");
 }

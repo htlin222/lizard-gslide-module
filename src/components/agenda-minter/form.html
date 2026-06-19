@@ -1,0 +1,38 @@
+<div class="dialog-root">
+  <div class="am-body">
+    <p class="am-hint">
+      自動偵測投影片的章節標題（SECTION_HEADER），預填到下方欄位 — 可自由編輯。選範本 → 調整項目 → Insert，目錄會插入目前投影片。
+    </p>
+
+    <label class="am-label">範本 Template</label>
+    <div class="template-chips" id="templateChips">
+      <span class="placeholder">Loading templates…</span>
+    </div>
+
+    <label class="am-label" for="itemsInput">項目 Items（一行一個）</label>
+    <textarea
+      id="itemsInput"
+      class="am-textarea"
+      placeholder="偵測中…&#10;每行一個目錄項目。"
+    ></textarea>
+
+    <label class="am-label">預覽 Preview</label>
+    <div class="agenda-preview" id="agendaPreview">
+      <span class="placeholder">預覽會顯示在這裡…</span>
+    </div>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button" onclick="clearForm()">Clear</button>
+    <button
+      type="button"
+      class="primary-button"
+      id="insertButton"
+      onclick="insertAgenda()"
+    >
+      📑 Insert Agenda
+    </button>
+  </div>
+</div>

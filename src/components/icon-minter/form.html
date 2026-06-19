@@ -1,0 +1,51 @@
+<div class="dialog-root">
+  <div class="cm-body">
+    <p class="cm-hint">
+      選一個 emoji/符號當圖示 → 設定大小與顏色。選了 shape → 插在它旁邊；沒選 → 插在投影片中央。
+    </p>
+
+    <label class="cm-label">圖示 Icon（點選一個）</label>
+    <div class="cat-tabs" id="catTabs"></div>
+    <div class="glyph-grid" id="glyphGrid">
+      <span class="placeholder">Loading icons…</span>
+    </div>
+
+    <div class="cm-row">
+      <div class="cm-col">
+        <label class="cm-label" for="sizeInput">大小 Size (pt)</label>
+        <input
+          type="number"
+          id="sizeInput"
+          class="cm-input"
+          value="48"
+          min="6"
+          max="400"
+          step="1"
+        />
+      </div>
+      <div class="cm-col">
+        <label class="cm-label" for="colorInput">顏色 Color</label>
+        <input type="color" id="colorInput" class="cm-color" value="#3D6869" />
+      </div>
+    </div>
+
+    <label class="cm-label">預覽 Preview</label>
+    <div class="icon-preview" id="iconPreview">
+      <span class="placeholder">預覽會顯示在這裡…</span>
+    </div>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button" onclick="clearForm()">Clear</button>
+    <button
+      type="button"
+      class="primary-button"
+      id="insertButton"
+      onclick="insertIcon()"
+    >
+      🎯 Insert Icon
+    </button>
+  </div>
+</div>

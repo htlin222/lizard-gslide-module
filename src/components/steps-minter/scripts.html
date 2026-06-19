@@ -1,0 +1,247 @@
+<script>
+  /** Templates fetched from the server (with resolved colors). */
+  var TEMPLATES = [];
+  /** Currently selected template id. */
+  var selectedId = null;
+  /** Current orientation: 'horizontal' | 'vertical'. */
+  var orientation = "horizontal";
+
+  /**
+   * Shows a status message in the dialog.
+   * @param {string} message
+   * @param {string} type - 'success' | 'error' | 'info'
+   */
+  function showStatus(message, type = "info") {
+    const el = document.getElementById("statusMessage");
+    el.textContent = message;
+    el.className = `status-message status-${type}`;
+    el.style.display = "block";
+    if (type === "success" || type === "info") {
+      setTimeout(() => {
+        el.style.display = "none";
+      }, 5000);
+    }
+  }
+
+  /** @param {string} s @return {string} */
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  /** @return {Object|null} the selected template */
+  function currentTemplate() {
+    for (const t of TEMPLATES) if (t.id === selectedId) return t;
+    return null;
+  }
+
+  /**
+   * Parses the steps textarea (one step per line, `title | desc`) into an array
+   * of {title, desc}. Mirrors parseStepsInput_() on the server.
+   * @return {Array<{title:string, desc:string}>}
+   */
+  function parseSteps() {
+    const text = document.getElementById("stepsInput").value;
+    const steps = [];
+    text.split(/\r?\n/).forEach((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      const parts = trimmed.split("|");
+      const title = (parts[0] || "").trim();
+      const desc = parts.slice(1).join("|").trim();
+      if (title || desc) steps.push({ title: title, desc: desc });
+    });
+    return steps;
+  }
+
+  /** Renders the clickable template chips. */
+  function renderChips() {
+    const wrap = document.getElementById("templateChips");
+    wrap.innerHTML = "";
+    TEMPLATES.forEach((t) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tpl-chip" + (t.id === selectedId ? " active" : "");
+      chip.innerHTML =
+        '<span class="swatch" style="background:' +
+        t.fill +
+        '"></span>' +
+        escapeHtml(t.name);
+      chip.onclick = () => selectTemplate(t.id);
+      wrap.appendChild(chip);
+    });
+  }
+
+  /**
+   * Selects a template and refreshes chips + preview.
+   * @param {string} id
+   */
+  function selectTemplate(id) {
+    selectedId = id;
+    renderChips();
+    updatePreview();
+  }
+
+  /** Selects an orientation and refreshes the toggle + preview. */
+  function selectOrientation(value) {
+    orientation = value;
+    document.querySelectorAll(".orient-btn").forEach((b) => {
+      b.classList.toggle("active", b.getAttribute("data-orient") === value);
+    });
+    updatePreview();
+  }
+
+  /** Re-renders the live HTML preview of the steps diagram. */
+  function updatePreview() {
+    const preview = document.getElementById("stepsPreview");
+    const t = currentTemplate();
+    const steps = parseSteps();
+    if (!t || !steps.length) {
+      preview.innerHTML =
+        '<span class="placeholder">預覽會顯示在這裡…</span>';
+      return;
+    }
+
+    let html;
+    if (orientation === "vertical") {
+      const parts = [];
+      steps.forEach((s, i) => {
+        parts.push(
+          '<div class="sp-step-v">' +
+            '<span class="sp-circle" style="background:' +
+            t.fill +
+            ";color:" +
+            t.numberText +
+            '">' +
+            (i + 1) +
+            "</span>" +
+            '<div class="sp-text-v">' +
+            '<div class="sp-title">' +
+            escapeHtml(s.title) +
+            "</div>" +
+            (s.desc
+              ? '<div class="sp-desc">' + escapeHtml(s.desc) + "</div>"
+              : "") +
+            "</div>" +
+            "</div>",
+        );
+        if (i < steps.length - 1) {
+          parts.push(
+            '<div class="sp-arrow-v" style="color:' +
+              t.connector +
+              '">↓</div>',
+          );
+        }
+      });
+      html = '<div class="sp-col">' + parts.join("") + "</div>";
+    } else {
+      const parts = [];
+      steps.forEach((s, i) => {
+        parts.push(
+          '<div class="sp-step-h">' +
+            '<span class="sp-circle" style="background:' +
+            t.fill +
+            ";color:" +
+            t.numberText +
+            '">' +
+            (i + 1) +
+            "</span>" +
+            '<div class="sp-text-h">' +
+            '<div class="sp-title">' +
+            escapeHtml(s.title) +
+            "</div>" +
+            (s.desc
+              ? '<div class="sp-desc">' + escapeHtml(s.desc) + "</div>"
+              : "") +
+            "</div>" +
+            "</div>",
+        );
+        if (i < steps.length - 1) {
+          parts.push(
+            '<div class="sp-arrow-h" style="color:' +
+              t.connector +
+              '">→</div>',
+          );
+        }
+      });
+      html = '<div class="sp-row">' + parts.join("") + "</div>";
+    }
+    preview.innerHTML = html;
+  }
+
+  /** Clears the steps text (keeps template + orientation). */
+  function clearForm() {
+    document.getElementById("stepsInput").value = "";
+    document.getElementById("statusMessage").style.display = "none";
+    updatePreview();
+  }
+
+  /** Inserts the steps diagram via the server. */
+  function insertSteps() {
+    const t = currentTemplate();
+    if (!t) {
+      showStatus("Pick a template first.", "error");
+      return;
+    }
+    const steps = parseSteps();
+    if (!steps.length) {
+      showStatus("請至少輸入一個步驟。", "error");
+      return;
+    }
+    const btn = document.getElementById("insertButton");
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Working…";
+    showStatus("📌 Inserting steps…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = label;
+        if (res && res.success) {
+          google.script.host.close();
+        } else {
+          showStatus("❌ " + ((res && res.error) || "Insert failed."), "error");
+        }
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = label;
+        showStatus("❌ " + (err.message || "Insert error"), "error");
+      })
+      .insertStepsIntoSlide({
+        steps: steps,
+        templateId: selectedId,
+        orientation: orientation,
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document
+      .getElementById("stepsInput")
+      .addEventListener("input", updatePreview);
+
+    document.querySelectorAll(".orient-btn").forEach((b) => {
+      b.addEventListener("click", function () {
+        selectOrientation(this.getAttribute("data-orient"));
+      });
+    });
+
+    google.script.run
+      .withSuccessHandler(function (templates) {
+        TEMPLATES = templates || [];
+        if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
+      })
+      .withFailureHandler(function (err) {
+        showStatus(
+          "❌ Could not load templates: " + (err.message || ""),
+          "error",
+        );
+      })
+      .getStepsTemplates();
+
+    showStatus("💡 每行一個步驟（標題 | 說明）→ 選方向/範本 → Insert。", "info");
+  });
+</script>

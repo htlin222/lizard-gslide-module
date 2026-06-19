@@ -1,0 +1,43 @@
+<div class="dialog-root">
+  <div class="cm-body">
+    <p class="cm-hint">
+      用一行只有 <code>---</code> 來分隔欄位。每欄第一行 <code>#
+      標題</code> 是欄標題，其餘每一行都是一個重點。支援 2 欄（典型）或更多欄（依數量自動分配寬度）。
+    </p>
+
+    <label class="cm-label">範本 Template</label>
+    <div class="template-chips" id="templateChips">
+      <span class="placeholder">Loading templates…</span>
+    </div>
+
+    <label class="cm-label" for="markdownInput"
+      >內容 Content（--- 分欄）</label
+    >
+    <textarea
+      id="markdownInput"
+      class="cm-textarea"
+      placeholder="# 方案 A&#10;成本低&#10;導入快&#10;---&#10;# 方案 B&#10;效能高&#10;可擴充"
+    ></textarea>
+
+    <label class="cm-label">預覽 Preview</label>
+    <div class="compare-preview" id="comparePreview">
+      <span class="placeholder">預覽會顯示在這裡…</span>
+    </div>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button" onclick="clearForm()">
+      Clear
+    </button>
+    <button
+      type="button"
+      class="primary-button"
+      id="insertButton"
+      onclick="insertCompare()"
+    >
+      📌 Insert Comparison
+    </button>
+  </div>
+</div>

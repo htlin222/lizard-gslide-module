@@ -1,0 +1,50 @@
+<div class="dialog-root">
+  <div class="cm-body">
+    <p class="cm-hint">
+      每行一個里程碑，格式：<code>date | label</code>。例如
+      <code>2024 Q1 | 收案開始</code> 或 <code>2025 | 主要分析</code>。
+      會在目前投影片畫出時間軸並群組。
+    </p>
+
+    <label class="cm-label" for="milestonesInput">里程碑 Milestones</label>
+    <textarea
+      id="milestonesInput"
+      class="cm-textarea"
+      placeholder="2024 Q1 | 收案開始&#10;2024 Q3 | 期中分析&#10;2025 | 主要分析&#10;2025 Q4 | 結案報告"
+    ></textarea>
+
+    <label class="cm-label">方向 Orientation</label>
+    <div class="orient-toggle" id="orientToggle">
+      <button type="button" class="orient-btn active" data-orient="horizontal">
+        ↔ 水平 Horizontal
+      </button>
+      <button type="button" class="orient-btn" data-orient="vertical">
+        ↕ 垂直 Vertical
+      </button>
+    </div>
+
+    <label class="cm-label">範本 Template</label>
+    <div class="template-chips" id="templateChips">
+      <span class="placeholder">Loading templates…</span>
+    </div>
+
+    <label class="cm-label">預覽 Preview</label>
+    <div class="timeline-preview" id="timelinePreview">
+      <span class="placeholder">預覽會顯示在這裡…</span>
+    </div>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button" onclick="clearForm()">Clear</button>
+    <button
+      type="button"
+      class="primary-button"
+      id="insertButton"
+      onclick="insertTimeline()"
+    >
+      📌 Insert Timeline
+    </button>
+  </div>
+</div>

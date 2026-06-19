@@ -1,0 +1,48 @@
+<div class="dialog-root">
+  <div class="cm-body">
+    <p class="cm-hint">
+      每行一個步驟，格式：<strong>標題 | 說明</strong>（說明可省略）。會在目前投影片畫出帶編號圓圈的流程圖並群組。
+    </p>
+
+    <label class="cm-label" for="stepsInput">步驟 Steps（一行一個）</label>
+    <textarea
+      id="stepsInput"
+      class="cm-textarea"
+      placeholder="收案 | 篩選符合條件者&#10;分析&#10;產出報告 | 整理結果"
+    ></textarea>
+
+    <label class="cm-label">方向 Orientation</label>
+    <div class="orient-toggle" id="orientToggle">
+      <button type="button" class="orient-btn active" data-orient="horizontal">
+        ↔ 橫向 Horizontal
+      </button>
+      <button type="button" class="orient-btn" data-orient="vertical">
+        ↕ 直向 Vertical
+      </button>
+    </div>
+
+    <label class="cm-label">範本 Template</label>
+    <div class="template-chips" id="templateChips">
+      <span class="placeholder">Loading templates…</span>
+    </div>
+
+    <label class="cm-label">預覽 Preview</label>
+    <div class="steps-preview" id="stepsPreview">
+      <span class="placeholder">預覽會顯示在這裡…</span>
+    </div>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button" onclick="clearForm()">Clear</button>
+    <button
+      type="button"
+      class="primary-button"
+      id="insertButton"
+      onclick="insertSteps()"
+    >
+      📌 Insert Steps
+    </button>
+  </div>
+</div>

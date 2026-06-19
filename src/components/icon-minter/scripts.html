@@ -1,0 +1,192 @@
+<script>
+  /**
+   * Curated emoji/glyph set, defined client-side (GAS cannot load an SVG icon
+   * library). Each category is a label + list of unicode glyphs.
+   */
+  var CATEGORIES = [
+    {
+      id: "medical",
+      name: "醫療 Medical",
+      glyphs: ["🩺", "💊", "🧬", "🦠", "❤️", "🧪", "🔬", "💉", "🩻"],
+    },
+    {
+      id: "status",
+      name: "狀態 Status",
+      glyphs: ["✅", "❌", "⚠️", "ℹ️", "⭐", "🔔", "📌", "🎯"],
+    },
+    {
+      id: "arrows",
+      name: "箭頭 Arrows",
+      glyphs: ["➡️", "⬅️", "⬆️", "⬇️", "↗️", "🔁", "🔄"],
+    },
+    {
+      id: "general",
+      name: "一般 General",
+      glyphs: ["💡", "📈", "📉", "📊", "🗂️", "📅", "🔑", "🚀"],
+    },
+  ];
+
+  /** Currently active category id. */
+  var activeCat = CATEGORIES[0].id;
+  /** Currently selected glyph. */
+  var selectedGlyph = null;
+
+  /**
+   * Shows a status message in the dialog.
+   * @param {string} message
+   * @param {string} type - 'success' | 'error' | 'info'
+   */
+  function showStatus(message, type = "info") {
+    const el = document.getElementById("statusMessage");
+    el.textContent = message;
+    el.className = `status-message status-${type}`;
+    el.style.display = "block";
+    if (type === "success" || type === "info") {
+      setTimeout(() => {
+        el.style.display = "none";
+      }, 5000);
+    }
+  }
+
+  /** @return {Object|null} the active category */
+  function currentCategory() {
+    for (const c of CATEGORIES) if (c.id === activeCat) return c;
+    return null;
+  }
+
+  /** Renders the category tab buttons. */
+  function renderTabs() {
+    const wrap = document.getElementById("catTabs");
+    wrap.innerHTML = "";
+    CATEGORIES.forEach((c) => {
+      const tab = document.createElement("button");
+      tab.type = "button";
+      tab.className = "cat-tab" + (c.id === activeCat ? " active" : "");
+      tab.textContent = c.name;
+      tab.onclick = () => selectCategory(c.id);
+      wrap.appendChild(tab);
+    });
+  }
+
+  /** Renders the glyph grid for the active category. */
+  function renderGlyphs() {
+    const grid = document.getElementById("glyphGrid");
+    grid.innerHTML = "";
+    const cat = currentCategory();
+    if (!cat) {
+      grid.innerHTML = '<span class="placeholder">No icons.</span>';
+      return;
+    }
+    cat.glyphs.forEach((g) => {
+      const cell = document.createElement("button");
+      cell.type = "button";
+      cell.className = "glyph-cell" + (g === selectedGlyph ? " active" : "");
+      cell.textContent = g;
+      cell.title = g;
+      cell.onclick = () => selectGlyph(g);
+      grid.appendChild(cell);
+    });
+  }
+
+  /**
+   * Activates a category and re-renders tabs + grid.
+   * @param {string} id
+   */
+  function selectCategory(id) {
+    activeCat = id;
+    renderTabs();
+    renderGlyphs();
+  }
+
+  /**
+   * Selects a glyph and refreshes the grid + preview.
+   * @param {string} glyph
+   */
+  function selectGlyph(glyph) {
+    selectedGlyph = glyph;
+    renderGlyphs();
+    updatePreview();
+  }
+
+  /** Re-renders the live preview of the selected glyph at chosen size/color. */
+  function updatePreview() {
+    const preview = document.getElementById("iconPreview");
+    if (!selectedGlyph) {
+      preview.innerHTML = '<span class="placeholder">預覽會顯示在這裡…</span>';
+      return;
+    }
+    let size = parseFloat(document.getElementById("sizeInput").value);
+    if (!isFinite(size) || size <= 0) size = 48;
+    const color = document.getElementById("colorInput").value || "#3D6869";
+    const span = document.createElement("span");
+    span.className = "ip-glyph";
+    span.textContent = selectedGlyph;
+    span.style.fontSize = size + "px";
+    span.style.color = color;
+    preview.innerHTML = "";
+    preview.appendChild(span);
+  }
+
+  /** Clears the selected glyph (keeps size/color defaults). */
+  function clearForm() {
+    selectedGlyph = null;
+    document.getElementById("sizeInput").value = "48";
+    document.getElementById("colorInput").value = "#3D6869";
+    document.getElementById("statusMessage").style.display = "none";
+    renderGlyphs();
+    updatePreview();
+  }
+
+  /** Inserts the selected icon via the server. */
+  function insertIcon() {
+    if (!selectedGlyph) {
+      showStatus("Pick an icon first.", "error");
+      return;
+    }
+    let size = parseFloat(document.getElementById("sizeInput").value);
+    if (!isFinite(size) || size <= 0) size = 48;
+    const color = document.getElementById("colorInput").value || "#3D6869";
+
+    const btn = document.getElementById("insertButton");
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Working…";
+    showStatus("🎯 Inserting icon…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = label;
+        if (res && res.success) {
+          google.script.host.close();
+        } else {
+          showStatus("❌ " + ((res && res.error) || "Insert failed."), "error");
+        }
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = label;
+        showStatus("❌ " + (err.message || "Insert error"), "error");
+      })
+      .insertIconIntoSlide({
+        glyph: selectedGlyph,
+        size: size,
+        color: color,
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("sizeInput").addEventListener("input", updatePreview);
+    document
+      .getElementById("colorInput")
+      .addEventListener("input", updatePreview);
+
+    renderTabs();
+    renderGlyphs();
+    // Pre-select the first glyph for convenience.
+    const first = currentCategory();
+    if (first && first.glyphs.length) selectGlyph(first.glyphs[0]);
+
+    showStatus("💡 點一個圖示 → 設定大小/顏色 → Insert。", "info");
+  });
+</script>

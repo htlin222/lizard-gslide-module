@@ -1,0 +1,265 @@
+<script>
+  /** Templates fetched from the server (with resolved colors). */
+  var TEMPLATES = [];
+  /** Currently selected template id. */
+  var selectedId = null;
+
+  /**
+   * Shows a status message in the dialog.
+   * @param {string} message
+   * @param {string} type - 'success' | 'error' | 'info'
+   */
+  function showStatus(message, type) {
+    type = type || "info";
+    var el = document.getElementById("statusMessage");
+    el.textContent = message;
+    el.className = "status-message status-" + type;
+    el.style.display = "block";
+    if (type === "success" || type === "info") {
+      setTimeout(function () {
+        el.style.display = "none";
+      }, 5000);
+    }
+  }
+
+  /** @param {string} s @return {string} */
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  /** @return {Object|null} the selected template */
+  function currentTemplate() {
+    for (var i = 0; i < TEMPLATES.length; i++) {
+      if (TEMPLATES[i].id === selectedId) return TEMPLATES[i];
+    }
+    return null;
+  }
+
+  /** @return {string} the chosen orientation */
+  function currentOrientation() {
+    var nodes = document.getElementsByName("orientation");
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].checked) return nodes[i].value;
+    }
+    return "vertical";
+  }
+
+  /** @return {boolean} */
+  function showValuesOn() {
+    return document.getElementById("showValues").checked;
+  }
+
+  /**
+   * Parses the textarea `label | value` lines. Non-numeric values become 0.
+   * @return {Array<{label:string, value:number}>}
+   */
+  function parseData() {
+    var text = document.getElementById("dataInput").value || "";
+    var lines = text.replace(/\r\n/g, "\n").split("\n");
+    var out = [];
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line) continue;
+      var parts = line.split("|");
+      var label = (parts[0] || "").trim();
+      var value = 0;
+      if (parts.length > 1) {
+        var raw = (parts[1] || "").trim().replace(/[, ]+/g, "");
+        var n = parseFloat(raw);
+        value = isFinite(n) ? n : 0;
+      }
+      out.push({ label: label, value: value });
+    }
+    return out;
+  }
+
+  /** @param {Object} t @param {number} i @return {string} bar color */
+  function colorFor(t, i) {
+    if (t && t.mode === "multi" && t.palette && t.palette.length) {
+      return t.palette[i % t.palette.length];
+    }
+    return (t && t.fill) || "#3D6869";
+  }
+
+  /** @param {number} v @return {string} */
+  function formatVal(v) {
+    var n = Number(v);
+    if (!isFinite(n)) return "0";
+    if (Math.round(n) === n) return String(n);
+    return String(Math.round(n * 10) / 10);
+  }
+
+  /** Renders the clickable template chips. */
+  function renderChips() {
+    var wrap = document.getElementById("templateChips");
+    wrap.innerHTML = "";
+    TEMPLATES.forEach(function (t) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tpl-chip" + (t.id === selectedId ? " active" : "");
+      var swatch = t.mode === "multi" && t.palette ? t.palette[0] : t.fill;
+      chip.innerHTML =
+        '<span class="swatch" style="background:' +
+        swatch +
+        '"></span>' +
+        escapeHtml(t.name);
+      chip.onclick = function () {
+        selectTemplate(t.id);
+      };
+      wrap.appendChild(chip);
+    });
+  }
+
+  /** @param {string} id */
+  function selectTemplate(id) {
+    selectedId = id;
+    renderChips();
+    updatePreview();
+  }
+
+  /** Re-renders the live HTML preview of the bar chart. */
+  function updatePreview() {
+    var preview = document.getElementById("barPreview");
+    var t = currentTemplate();
+    var bars = parseData();
+    if (!t || !bars.length) {
+      preview.innerHTML =
+        '<span class="placeholder">預覽會顯示在這裡…</span>';
+      return;
+    }
+
+    var maxVal = 0;
+    for (var i = 0; i < bars.length; i++) {
+      if (bars[i].value > maxVal) maxVal = bars[i].value;
+    }
+    if (maxVal <= 0) maxVal = 1;
+
+    var orientation = currentOrientation();
+    var showVals = showValuesOn();
+    var html;
+
+    if (orientation === "vertical") {
+      html = '<div class="bp-vert">';
+      for (var j = 0; j < bars.length; j++) {
+        var pct = Math.max(0, (bars[j].value / maxVal) * 100);
+        html +=
+          '<div class="bp-vcol">' +
+          (showVals
+            ? '<div class="bp-vval">' + formatVal(bars[j].value) + "</div>"
+            : "") +
+          '<div class="bp-vbar" style="height:' +
+          pct +
+          "%;background:" +
+          colorFor(t, j) +
+          '"></div>' +
+          '<div class="bp-vlabel">' +
+          escapeHtml(bars[j].label) +
+          "</div>" +
+          "</div>";
+      }
+      html += "</div>";
+    } else {
+      html = '<div class="bp-horiz">';
+      for (var k = 0; k < bars.length; k++) {
+        var wpct = Math.max(0, (bars[k].value / maxVal) * 100);
+        html +=
+          '<div class="bp-hrow">' +
+          '<div class="bp-hlabel">' +
+          escapeHtml(bars[k].label) +
+          "</div>" +
+          '<div class="bp-htrack">' +
+          '<div class="bp-hbar" style="width:' +
+          wpct +
+          "%;background:" +
+          colorFor(t, k) +
+          '"></div>' +
+          (showVals
+            ? '<div class="bp-hval">' + formatVal(bars[k].value) + "</div>"
+            : "") +
+          "</div>" +
+          "</div>";
+      }
+      html += "</div>";
+    }
+    preview.innerHTML = html;
+  }
+
+  /** Clears the data input (keeps the selected template). */
+  function clearForm() {
+    document.getElementById("dataInput").value = "";
+    document.getElementById("statusMessage").style.display = "none";
+    updatePreview();
+  }
+
+  /** Inserts the bar chart via the server. */
+  function insertBarChart() {
+    var t = currentTemplate();
+    if (!t) {
+      showStatus("Pick a template first.", "error");
+      return;
+    }
+    var bars = parseData();
+    if (!bars.length) {
+      showStatus("請輸入至少一行 `label | value`。", "error");
+      return;
+    }
+    var btn = document.getElementById("insertButton");
+    var label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Working…";
+    showStatus("📊 Inserting bar chart…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = label;
+        if (res && res.success) {
+          google.script.host.close();
+        } else {
+          showStatus("❌ " + ((res && res.error) || "Insert failed."), "error");
+        }
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = label;
+        showStatus("❌ " + (err.message || "Insert error"), "error");
+      })
+      .insertBarChartIntoSlide({
+        data: bars,
+        templateId: selectedId,
+        orientation: currentOrientation(),
+        showValues: showValuesOn(),
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document
+      .getElementById("dataInput")
+      .addEventListener("input", updatePreview);
+    document
+      .getElementById("showValues")
+      .addEventListener("change", updatePreview);
+    var radios = document.getElementsByName("orientation");
+    for (var i = 0; i < radios.length; i++) {
+      radios[i].addEventListener("change", updatePreview);
+    }
+
+    google.script.run
+      .withSuccessHandler(function (templates) {
+        TEMPLATES = templates || [];
+        if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
+      })
+      .withFailureHandler(function (err) {
+        showStatus(
+          "❌ Could not load templates: " + (err.message || ""),
+          "error",
+        );
+      })
+      .getBarChartTemplates();
+
+    showStatus("💡 輸入資料 → 選方向/配色 → Insert。", "info");
+  });
+</script>

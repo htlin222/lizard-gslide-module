@@ -1,0 +1,40 @@
+<div class="dialog-root">
+  <div class="cm-body">
+    <p class="cm-hint">
+      每行一個數字卡：<code>value | label | trend</code>，trend
+      可省略，可填 up/down/flat 或 ↑/↓/→。例如：<br />
+      <code>87% | 疾病控制率 | up</code>
+    </p>
+
+    <label class="cm-label">範本 Template</label>
+    <div class="template-chips" id="templateChips">
+      <span class="placeholder">Loading templates…</span>
+    </div>
+
+    <label class="cm-label" for="linesInput">數字卡 KPI（每行一個）</label>
+    <textarea
+      id="linesInput"
+      class="cm-textarea"
+      placeholder="87% | 疾病控制率 | up&#10;HR 0.62 | 主要終點 | down&#10;n = 1,204 | 收案人數"
+    ></textarea>
+
+    <label class="cm-label">預覽 Preview</label>
+    <div class="kpi-preview" id="kpiPreview">
+      <span class="placeholder">預覽會顯示在這裡…</span>
+    </div>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button" onclick="clearForm()">Clear</button>
+    <button
+      type="button"
+      class="primary-button"
+      id="insertButton"
+      onclick="insertKpi()"
+    >
+      📊 Insert KPI
+    </button>
+  </div>
+</div>

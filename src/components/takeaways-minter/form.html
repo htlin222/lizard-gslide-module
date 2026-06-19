@@ -1,0 +1,49 @@
+<div class="dialog-root">
+  <div class="cm-body">
+    <p class="cm-hint">
+      填標題與重點（每行一條，格式 <code>標題 | 說明</code>，說明可省略）→ 選範本 →
+      Insert，會在目前投影片插入「重點摘要」區塊。
+    </p>
+
+    <label class="cm-label" for="headingInput">標題 Heading</label>
+    <input
+      type="text"
+      id="headingInput"
+      class="cm-input"
+      placeholder="Key Takeaways / 重點摘要"
+    />
+
+    <label class="cm-label" for="pointsInput"
+      >重點 Points（每行一條：標題 | 說明）</label
+    >
+    <textarea
+      id="pointsInput"
+      class="cm-textarea"
+      placeholder="第一個重點 | 簡短說明&#10;第二個重點&#10;第三個重點 | 另一段說明"
+    ></textarea>
+
+    <label class="cm-label">範本 Template</label>
+    <div class="template-chips" id="templateChips">
+      <span class="placeholder">Loading templates…</span>
+    </div>
+
+    <label class="cm-label">預覽 Preview</label>
+    <div class="takeaways-preview" id="takeawaysPreview">
+      <span class="placeholder">預覽會顯示在這裡…</span>
+    </div>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button" onclick="clearForm()">Clear</button>
+    <button
+      type="button"
+      class="primary-button"
+      id="insertButton"
+      onclick="insertTakeaways()"
+    >
+      📌 Insert
+    </button>
+  </div>
+</div>

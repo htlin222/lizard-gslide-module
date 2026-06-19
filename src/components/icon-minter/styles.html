@@ -1,0 +1,251 @@
+<style>
+  /* Icon minter dialog styles */
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family:
+      "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .dialog-root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .cm-body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 14px 14px 4px;
+    box-sizing: border-box;
+  }
+
+  .cm-hint {
+    margin: 0 0 12px;
+    padding: 8px 10px;
+    background: #f1f3f4;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.4;
+  }
+
+  .cm-label {
+    display: block;
+    margin: 12px 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .cm-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .cm-col {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cm-input {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 13px;
+    box-sizing: border-box;
+  }
+
+  .cm-input:focus {
+    border-color: #4285f4;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+  }
+
+  .cm-color {
+    width: 100%;
+    height: 36px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 2px;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+
+  /* Category tabs */
+  .cat-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .cat-tab {
+    padding: 5px 10px;
+    border: 1px solid #dadce0;
+    border-radius: 14px;
+    background: #fff;
+    font-size: 12px;
+    color: #3c4043;
+    cursor: pointer;
+    transition:
+      border-color 0.12s ease,
+      box-shadow 0.12s ease;
+  }
+
+  .cat-tab:hover {
+    border-color: #c6c9cc;
+  }
+
+  .cat-tab.active {
+    border-color: #4285f4;
+    box-shadow: 0 0 0 1px #4285f4 inset;
+    font-weight: 600;
+  }
+
+  /* Glyph grid */
+  .glyph-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 44px;
+  }
+
+  .glyph-grid .placeholder {
+    color: #999;
+    font-style: italic;
+    font-size: 12px;
+  }
+
+  .glyph-cell {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    line-height: 1;
+    border: 1px solid #e3e3e3;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    transition:
+      border-color 0.12s ease,
+      box-shadow 0.12s ease;
+  }
+
+  .glyph-cell:hover {
+    border-color: #c6c9cc;
+  }
+
+  .glyph-cell.active {
+    border-color: #4285f4;
+    box-shadow: 0 0 0 1px #4285f4 inset;
+  }
+
+  /* Icon preview */
+  .icon-preview {
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    padding: 14px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .icon-preview .placeholder {
+    color: #999;
+    font-style: italic;
+    font-size: 12px;
+  }
+
+  .icon-preview .ip-glyph {
+    line-height: 1;
+  }
+
+  /* Status + buttons */
+  .status-message {
+    margin: 0 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: none;
+    flex-shrink: 0;
+  }
+
+  .status-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .status-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .status-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+  }
+
+  .button-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    background: white;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
+  }
+
+  .button-row button {
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1;
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease;
+  }
+
+  .clear-button {
+    background-color: #fff;
+    color: #3c4043;
+    border: 1px solid #dadce0;
+  }
+
+  .clear-button:hover {
+    background-color: #f1f3f4;
+    border-color: #c6c9cc;
+  }
+
+  .primary-button {
+    flex: 1;
+    background-color: #3d6869;
+    color: #fff;
+  }
+
+  .primary-button:hover {
+    background-color: #335a5b;
+  }
+
+  .primary-button:disabled {
+    background-color: #b9c7c7;
+    cursor: default;
+  }
+</style>

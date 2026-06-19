@@ -1,0 +1,60 @@
+<div class="dialog-root">
+  <div class="cm-body">
+    <p class="cm-hint">
+      每行一張圖片，格式：<code>圖片網址 | 說明文字</code>（說明可省略）。<br />
+      ⚠️ 網址必須是<strong>公開可存取</strong>的（Google Slides 會自己去抓圖），否則該張會被略過。
+    </p>
+
+    <label class="cm-label" for="itemsInput">圖片清單 Images（一行一張）</label>
+    <textarea
+      id="itemsInput"
+      class="cm-textarea"
+      placeholder="https://example.com/cat.png | 一隻貓&#10;https://example.com/dog.jpg | 一隻狗&#10;https://example.com/bird.png"
+    ></textarea>
+
+    <div class="cm-row">
+      <div class="cm-col">
+        <label class="cm-label" for="colsInput">欄數 Columns（留空＝自動）</label>
+        <input
+          type="number"
+          id="colsInput"
+          class="cm-input"
+          min="1"
+          max="6"
+          placeholder="auto"
+        />
+      </div>
+      <div class="cm-col cm-col-toggle">
+        <label class="cm-label">說明 Captions</label>
+        <label class="cm-switch">
+          <input type="checkbox" id="captionsToggle" checked />
+          <span>顯示說明文字</span>
+        </label>
+      </div>
+    </div>
+
+    <label class="cm-label">範本 Template</label>
+    <div class="template-chips" id="templateChips">
+      <span class="placeholder">Loading templates…</span>
+    </div>
+
+    <label class="cm-label">預覽 Preview</label>
+    <div class="gallery-preview" id="galleryPreview">
+      <span class="placeholder">預覽會顯示在這裡…</span>
+    </div>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button" onclick="clearForm()">Clear</button>
+    <button
+      type="button"
+      class="primary-button"
+      id="insertButton"
+      onclick="insertGallery()"
+    >
+      🖼 Insert Gallery
+    </button>
+  </div>
+</div>

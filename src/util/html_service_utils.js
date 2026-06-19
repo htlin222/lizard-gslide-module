@@ -87,6 +87,63 @@ function createCalloutMinterDialog() {
 }
 
 /**
+ * Factory for a minter dialog: builds + evaluates a modular template at the
+ * given path and sizes it. Shared by all the small minter dialogs.
+ * @param {string} path - component index path (without extension)
+ * @param {number} width
+ * @param {number} height
+ * @return {HtmlOutput}
+ */
+function createMinterDialog_(path, width, height) {
+	return createModularHtmlTemplate(path).evaluate().setWidth(width).setHeight(height);
+}
+
+/** @return {HtmlOutput} KPI / Big Number minter dialog */
+function createKpiMinterDialog() {
+	return createMinterDialog_("src/components/kpi-minter/index", 640, 560);
+}
+
+/** @return {HtmlOutput} Timeline / Roadmap minter dialog */
+function createTimelineMinterDialog() {
+	return createMinterDialog_("src/components/timeline-minter/index", 640, 560);
+}
+
+/** @return {HtmlOutput} Comparison minter dialog */
+function createCompareMinterDialog() {
+	return createMinterDialog_("src/components/compare-minter/index", 680, 560);
+}
+
+/** @return {HtmlOutput} Steps minter dialog */
+function createStepsMinterDialog() {
+	return createMinterDialog_("src/components/steps-minter/index", 640, 560);
+}
+
+/** @return {HtmlOutput} Image Gallery minter dialog */
+function createGalleryMinterDialog() {
+	return createMinterDialog_("src/components/gallery-minter/index", 680, 560);
+}
+
+/** @return {HtmlOutput} Agenda / TOC minter dialog */
+function createAgendaMinterDialog() {
+	return createMinterDialog_("src/components/agenda-minter/index", 600, 560);
+}
+
+/** @return {HtmlOutput} Takeaways minter dialog */
+function createTakeawaysMinterDialog() {
+	return createMinterDialog_("src/components/takeaways-minter/index", 640, 560);
+}
+
+/** @return {HtmlOutput} Icon minter dialog */
+function createIconMinterDialog() {
+	return createMinterDialog_("src/components/icon-minter/index", 460, 560);
+}
+
+/** @return {HtmlOutput} Bar Chart minter dialog */
+function createBarChartMinterDialog() {
+	return createMinterDialog_("src/components/barchart-minter/index", 640, 560);
+}
+
+/**
  * Creates and returns the Flowchart sidebar UI with all components loaded.
  *
  * @return {HtmlOutput} The HTML output for the flowchart sidebar

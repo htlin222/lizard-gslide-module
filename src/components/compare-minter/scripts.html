@@ -1,0 +1,241 @@
+<script>
+  /** Templates fetched from the server (with resolved colors). */
+  var TEMPLATES = [];
+  /** Currently selected template id. */
+  var selectedId = null;
+
+  /** Default example used to seed the textarea. */
+  var EXAMPLE_MD =
+    "# 方案 A\n成本低\n導入快\n---\n# 方案 B\n效能高\n可擴充";
+
+  /**
+   * Shows a status message in the dialog.
+   * @param {string} message
+   * @param {string} type - 'success' | 'error' | 'info'
+   */
+  function showStatus(message, type) {
+    type = type || "info";
+    const el = document.getElementById("statusMessage");
+    el.textContent = message;
+    el.className = "status-message status-" + type;
+    el.style.display = "block";
+    if (type === "success" || type === "info") {
+      setTimeout(function () {
+        el.style.display = "none";
+      }, 5000);
+    }
+  }
+
+  /** @param {string} s @return {string} */
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  /** @return {Object|null} the selected template */
+  function currentTemplate() {
+    for (var i = 0; i < TEMPLATES.length; i++) {
+      if (TEMPLATES[i].id === selectedId) return TEMPLATES[i];
+    }
+    return null;
+  }
+
+  /**
+   * Resolves the per-column style for column index `i`, cycling the template's
+   * column-style list (mirrors compareColumnStyle_ on the server).
+   * @param {Object} tpl
+   * @param {number} i
+   * @return {Object}
+   */
+  function columnStyle(tpl, i) {
+    var cols = (tpl && tpl.columns) || [];
+    if (!cols.length) {
+      return {
+        headerFill: "#3D6869",
+        headerText: "#FFFFFF",
+        bodyFill: "#FFFFFF",
+        bodyBorder: "#3D6869",
+        bodyText: "#000000",
+      };
+    }
+    return cols[i % cols.length];
+  }
+
+  /**
+   * Parses the textarea into [{title, points}], splitting columns on a line of
+   * only dashes (mirrors parseCompareColumns_ on the server).
+   * @return {Array<{title:string, points:string[]}>}
+   */
+  function parseColumns() {
+    var text = (document.getElementById("markdownInput").value || "")
+      .replace(/\r\n/g, "\n")
+      .trim();
+    if (!text) return [];
+    var blocks = text.split(/\n\s*-{3,}\s*\n/);
+    var columns = [];
+    for (var b = 0; b < blocks.length; b++) {
+      var block = blocks[b].trim();
+      if (!block) continue;
+      var lines = block.split("\n");
+      var title = "";
+      var points = [];
+      for (var l = 0; l < lines.length; l++) {
+        var line = lines[l].trim();
+        if (!line) continue;
+        var m = line.match(/^#\s+(.+)$/);
+        if (m) {
+          if (!title) title = m[1].trim();
+        } else {
+          points.push(line.replace(/^[•\-*]\s+/, ""));
+        }
+      }
+      if (title || points.length) {
+        columns.push({ title: title, points: points });
+      }
+    }
+    return columns;
+  }
+
+  /** Renders the clickable template chips. */
+  function renderChips() {
+    var wrap = document.getElementById("templateChips");
+    wrap.innerHTML = "";
+    TEMPLATES.forEach(function (t) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tpl-chip" + (t.id === selectedId ? " active" : "");
+      var swatch = columnStyle(t, 0).headerFill;
+      chip.innerHTML =
+        '<span class="swatch" style="background:' +
+        swatch +
+        '"></span>' +
+        escapeHtml(t.name);
+      chip.onclick = function () {
+        selectTemplate(t.id);
+      };
+      wrap.appendChild(chip);
+    });
+  }
+
+  /**
+   * Selects a template and refreshes chips + preview.
+   * @param {string} id
+   */
+  function selectTemplate(id) {
+    selectedId = id;
+    renderChips();
+    updatePreview();
+  }
+
+  /** Re-renders the live HTML preview of the comparison columns. */
+  function updatePreview() {
+    var preview = document.getElementById("comparePreview");
+    var t = currentTemplate();
+    var columns = parseColumns();
+    if (!t || !columns.length) {
+      preview.innerHTML =
+        '<span class="placeholder">預覽會顯示在這裡…</span>';
+      return;
+    }
+    var html = '<div class="cp-cols">';
+    for (var i = 0; i < columns.length; i++) {
+      var c = columns[i];
+      var s = columnStyle(t, i);
+      var items = "";
+      for (var j = 0; j < c.points.length; j++) {
+        items += "<li>• " + escapeHtml(c.points[j]) + "</li>";
+      }
+      html +=
+        '<div class="cp-col" style="border-color:' +
+        s.bodyBorder +
+        '">' +
+        '<div class="cp-head" style="background:' +
+        s.headerFill +
+        ";color:" +
+        s.headerText +
+        '">' +
+        escapeHtml(c.title || "(無標題)") +
+        "</div>" +
+        '<div class="cp-body" style="background:' +
+        s.bodyFill +
+        ";color:" +
+        s.bodyText +
+        '"><ul>' +
+        items +
+        "</ul></div>" +
+        "</div>";
+    }
+    html += "</div>";
+    preview.innerHTML = html;
+  }
+
+  /** Clears the textarea (keeps the selected template). */
+  function clearForm() {
+    document.getElementById("markdownInput").value = "";
+    document.getElementById("statusMessage").style.display = "none";
+    updatePreview();
+  }
+
+  /** Inserts the comparison columns via the server. */
+  function insertCompare() {
+    var t = currentTemplate();
+    if (!t) {
+      showStatus("Pick a template first.", "error");
+      return;
+    }
+    var columns = parseColumns();
+    if (!columns.length) {
+      showStatus("請輸入至少一欄內容。", "error");
+      return;
+    }
+    var btn = document.getElementById("insertButton");
+    var label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Working…";
+    showStatus("📌 Inserting comparison…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = label;
+        if (res && res.success) {
+          google.script.host.close();
+        } else {
+          showStatus("❌ " + ((res && res.error) || "Insert failed."), "error");
+        }
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = label;
+        showStatus("❌ " + (err.message || "Insert error"), "error");
+      })
+      .insertCompareIntoSlide({
+        templateId: selectedId,
+        columns: columns,
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var ta = document.getElementById("markdownInput");
+    if (!ta.value.trim()) ta.value = EXAMPLE_MD;
+    ta.addEventListener("input", updatePreview);
+
+    google.script.run
+      .withSuccessHandler(function (templates) {
+        TEMPLATES = templates || [];
+        if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
+        updatePreview();
+      })
+      .withFailureHandler(function (err) {
+        showStatus(
+          "❌ Could not load templates: " + (err.message || ""),
+          "error",
+        );
+      })
+      .getCompareTemplates();
+
+    showStatus("💡 用 --- 分欄 → 選範本 → Insert。", "info");
+  });
+</script>

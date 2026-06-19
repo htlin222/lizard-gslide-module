@@ -1,0 +1,224 @@
+<script>
+  /** Templates fetched from the server (with resolved colors). */
+  var TEMPLATES = [];
+  /** Currently selected template id. */
+  var selectedId = null;
+
+  /**
+   * Shows a status message in the dialog.
+   * @param {string} message
+   * @param {string} type - 'success' | 'error' | 'info'
+   */
+  function showStatus(message, type = "info") {
+    const el = document.getElementById("statusMessage");
+    el.textContent = message;
+    el.className = `status-message status-${type}`;
+    el.style.display = "block";
+    if (type === "success" || type === "info") {
+      setTimeout(() => {
+        el.style.display = "none";
+      }, 5000);
+    }
+  }
+
+  /** @param {string} s @return {string} */
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  /** @return {Object|null} the selected template */
+  function currentTemplate() {
+    for (const t of TEMPLATES) if (t.id === selectedId) return t;
+    return null;
+  }
+
+  /**
+   * Normalizes a trend keyword/symbol to 'up' | 'down' | 'flat' | ''.
+   * @param {string} trend
+   * @return {string}
+   */
+  function normalizeTrend(trend) {
+    const t = String(trend == null ? "" : trend)
+      .trim()
+      .toLowerCase();
+    if (!t) return "";
+    if (t === "up" || t === "↑" || t === "u") return "up";
+    if (t === "down" || t === "↓" || t === "d") return "down";
+    if (t === "flat" || t === "→" || t === "f" || t === "-") return "flat";
+    return "";
+  }
+
+  /** @param {string} trend @return {string} arrow glyph or '' */
+  function trendArrow(trend) {
+    const t = normalizeTrend(trend);
+    if (t === "up") return "↑";
+    if (t === "down") return "↓";
+    if (t === "flat") return "→";
+    return "";
+  }
+
+  /** @param {string} trend @return {string} color hex or '' */
+  function trendColor(trend) {
+    const t = normalizeTrend(trend);
+    if (t === "up") return "#2E7D32";
+    if (t === "down") return "#C0392B";
+    if (t === "flat") return "#7F8C8D";
+    return "";
+  }
+
+  /**
+   * Parses the textarea into [{value, label, trend}].
+   * @return {Array<Object>}
+   */
+  function parseLines() {
+    const raw = document.getElementById("linesInput").value || "";
+    const items = [];
+    raw.split(/\r?\n/).forEach(function (line) {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+      const parts = trimmed.split(/\s*[|｜]\s*/);
+      const value = (parts[0] || "").trim();
+      const label = (parts[1] || "").trim();
+      const trend = normalizeTrend(parts[2] || "");
+      if (value || label) items.push({ value: value, label: label, trend: trend });
+    });
+    return items;
+  }
+
+  /** Renders the clickable template chips. */
+  function renderChips() {
+    const wrap = document.getElementById("templateChips");
+    wrap.innerHTML = "";
+    TEMPLATES.forEach((t) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "tpl-chip" + (t.id === selectedId ? " active" : "");
+      chip.innerHTML =
+        '<span class="swatch" style="background:' +
+        t.valueColor +
+        '"></span>' +
+        escapeHtml(t.name);
+      chip.onclick = () => selectTemplate(t.id);
+      wrap.appendChild(chip);
+    });
+  }
+
+  /**
+   * Selects a template and refreshes chips + preview.
+   * @param {string} id
+   */
+  function selectTemplate(id) {
+    selectedId = id;
+    renderChips();
+    updatePreview();
+  }
+
+  /** Re-renders the live HTML preview of the KPI cards row. */
+  function updatePreview() {
+    const preview = document.getElementById("kpiPreview");
+    const t = currentTemplate();
+    const items = parseLines();
+    if (!t || !items.length) {
+      preview.innerHTML = '<span class="placeholder">預覽會顯示在這裡…</span>';
+      return;
+    }
+    let html = "";
+    items.forEach(function (item) {
+      const arrow = trendArrow(item.trend);
+      const aColor = trendColor(item.trend);
+      const arrowHtml = arrow
+        ? ' <span class="kpi-arrow" style="color:' +
+          aColor +
+          '">' +
+          arrow +
+          "</span>"
+        : "";
+      html +=
+        '<div class="kpi-card" style="background:' +
+        t.cardFill +
+        ";border-color:" +
+        t.cardBorder +
+        '">' +
+        '<div class="kpi-value" style="color:' +
+        t.valueColor +
+        '">' +
+        escapeHtml(item.value || "—") +
+        arrowHtml +
+        "</div>" +
+        '<div class="kpi-label" style="color:' +
+        t.labelColor +
+        '">' +
+        escapeHtml(item.label || "") +
+        "</div>" +
+        "</div>";
+    });
+    preview.innerHTML = html;
+  }
+
+  /** Clears the textarea (keeps the selected template). */
+  function clearForm() {
+    document.getElementById("linesInput").value = "";
+    document.getElementById("statusMessage").style.display = "none";
+    updatePreview();
+  }
+
+  /** Inserts the KPI cards via the server. */
+  function insertKpi() {
+    const t = currentTemplate();
+    if (!t) {
+      showStatus("Pick a template first.", "error");
+      return;
+    }
+    const items = parseLines();
+    if (!items.length) {
+      showStatus("請至少輸入一行數字卡。", "error");
+      return;
+    }
+    const btn = document.getElementById("insertButton");
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Working…";
+    showStatus("📊 Inserting KPI…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = label;
+        if (res && res.success) {
+          google.script.host.close();
+        } else {
+          showStatus("❌ " + ((res && res.error) || "Insert failed."), "error");
+        }
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = label;
+        showStatus("❌ " + (err.message || "Insert error"), "error");
+      })
+      .insertKpiIntoSlide({
+        templateId: selectedId,
+        items: items,
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    document
+      .getElementById("linesInput")
+      .addEventListener("input", updatePreview);
+
+    google.script.run
+      .withSuccessHandler(function (templates) {
+        TEMPLATES = templates || [];
+        if (TEMPLATES.length) selectTemplate(TEMPLATES[0].id);
+      })
+      .withFailureHandler(function (err) {
+        showStatus("❌ Could not load templates: " + (err.message || ""), "error");
+      })
+      .getKpiTemplates();
+
+    showStatus("💡 選範本 → 每行打 value | label | trend → Insert。", "info");
+  });
+</script>
