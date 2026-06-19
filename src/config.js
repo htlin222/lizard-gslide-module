@@ -65,80 +65,95 @@ function createCustomMenu() {
 		// Try to get the UI - this might fail in some contexts
 		const ui = SlidesApp.getUi();
 
-		// Create the batch processing menu as a top-level menu
-		ui.createMenu("📦 批次處理")
+		// ── Menu 1: global / whole-deck operations (settings + batch updates) ──
+		ui.createMenu("⚙ 設定與批次")
+			// One-click: run every batch processor at once
 			.addItem("🛠 同時執行所有功能", "confirmRunAll")
 			.addSeparator()
+			// Setup & configuration
 			.addItem("🎨 套用蜥蜴主題", "applyThemeToCurrentPresentation")
 			.addItem("⚙ 打開設定面板", "showConfigSidebar")
+			.addItem("🔑 設定 AI 金鑰 (Groq)", "showAiKeySetup")
+			.addItem("🔁 重新整理選單", "showMenuManually")
+			.addSeparator()
+			// Batch updates applied across all slides
 			.addItem("🔄 更新進度條", "runUpdateProgressBars")
 			.addItem("📑 更新標籤頁", "runProcessTabs")
 			.addItem("📚 更新 SECTION Header", "runProcessSectionBoxes")
 			.addItem("🦶 更新 Footer", "runUpdateTitleFootnotes")
 			.addItem("📅 更新日期 yyyy-mm-dd", "updateDateInFirstSlide")
 			.addItem("💧 浮水印開/關", "runToggleWaterMark")
-			.addItem("🔁 更新選單項目", "showMenuManually")
 			.addToUi();
 
-		// Create the beautify menu as a top-level menu
+		// ── Menu 2: add new elements to the current slide ──
 		ui.createMenu("✨ 加入元素")
-			.addItem("📏 開/關網格", "toggleGrids")
-			.addItem("❄ 為元素加上45度影子", "createOffsetBlueShape")
-			.addItem("↙ 加上一個大箭頭 ", "drawArrowOnCurrentSlide")
-			.addItem("🔰 將文字轉換成badge", "convertToBadges")
+			// Shapes & decorations
+			.addItem("↙ 加上一個大箭頭", "drawArrowOnCurrentSlide")
+			.addItem("🔢 加上數字遞增圓圈", "addNextNumberCircle")
+			.addItem("🔰 將文字轉換成 badge", "convertToBadges")
+			.addItem("❄ 為元素加上 45 度影子", "createOffsetBlueShape")
 			.addSeparator()
+			// Tables
+			.addItem("🔲 表格鑄造器⭐", "showTableMinterDialog")
+			.addItem("🔳 網格鑄造器⭐", "showGridMinterDialog")
+			.addItem("🍽 快速美化表格", "fastStyleSelectedTable")
+			.addSeparator()
+			// Images
 			.addItem("🌆 原地貼上", "duplicateImageInPlace")
 			.addItem("🏙 覆蓋半透明方塊", "coverImageWithWhite")
 			.addItem("🏞 半透明遮罩⭐", "maskImage")
 			.addSeparator()
-			.addItem("🔢 加上數字遞增圓圈", "addNextNumberCircle")
-			.addSeparator()
-			.addItem("🍽 快速美化表格", "fastStyleSelectedTable")
-			.addItem("🔲 表格鑄造器⭐", "showTableMinterDialog")
-			.addItem("🔳 網格鑄造器⭐", "showGridMinterDialog")
-			.addItem("📊 平均間距置中", "runAveragePadding")
-			.addSeparator()
+			// Helpers
+			.addItem("📏 開/關網格", "toggleGrids")
 			.addItem("🔍 檢視物件屬性", "showSelectedObjectPropertiesDialog")
 			.addToUi();
 
-		// Create the graph menu as a top-level menu
-		ui.createMenu("🎨 繪圖")
+		// ── Menu 3: manipulate / lay out existing shapes ──
+		ui.createMenu("🔷 形狀排版")
+			// Split shapes
 			.addItem("📐 分割成網格⭐", "showSplitShapeDialog")
 			.addItem("📄 分割成多欄", "showMultipleColumnsDialog")
 			.addSeparator()
+			// Child shapes & flowchart
 			.addItem("🏗 建立子形狀", "showCreateChildShapesDialog")
 			.addItem("🔤 自動語法解析", "autoCreateChildShapesFromLines")
+			.addItem("🔗 流程圖工具⭐", "showFlowchartSidebar")
 			.addSeparator()
+			// Spacing & alignment
 			.addItem("📏 調整間距", "showSetGapDialog")
 			.addItem("🧙 智能間距重設", "showSmartGapResetDialog")
+			.addItem("📊 平均間距置中", "runAveragePadding")
 			.addSeparator()
+			// Connectors between shapes
 			.addItem("⇣ 兩者間加上垂直線", "insertVerticalDashedLineBetween")
 			.addItem("⇢ 兩者間加上水平線⭐", "insertHorizontalDashedLineBetween")
 			.addSeparator()
+			// Restyle a shape
 			.addItem("🎹 轉換成標注框⭐", "convertShapeToCallout")
 			.addItem("**B** 套用粗體樣式", "applyBoldStyleToSelectedShape")
-			.addSeparator()
-			.addItem("🔗 流程圖工具⭐", "showFlowchartSidebar")
 			.addToUi();
 
-		// Create the add new content menu as a top-level menu
-		ui.createMenu("🖖 跨頁功能")
+		// ── Menu 4: cross-slide workflow + import / export ──
+		ui.createMenu("🔁 跨頁與匯出")
+			// Title / slide navigation
 			.addItem("👆 在上面加入前一頁的標題", "copyPreviousTitleText")
 			.addItem("👇 新增一頁並加入當前標題", "createNextSlideWithCurrentTitle")
 			.addSeparator()
+			// Markdown import
 			.addItem("📝 Markdown 轉換成投影片", "showMarkdownToSlidesDialog")
 			.addItem("📋 Markdown 側邊欄⭐", "showMarkdownSidebar")
+			.addItem("**B** Markdown 粗體格式", "runApplyMarkdownBoldFormatting")
+			.addSeparator()
+			// Markdown export
 			.addItem("📤 匯出成 Markdown⭐", "showExportMarkdownDialog")
-			.addItem(
-				"📤 匯出 Markdown (含圖片)",
-				"showExportMarkdownWithImagesDialog",
-			)
-			.addItem("🔑 設定 AI 金鑰 (Groq)", "showAiKeySetup")
+			.addItem("📤 匯出 Markdown (含圖片)", "showExportMarkdownWithImagesDialog")
+			.addSeparator()
+			// Speaker notes (AI)
 			.addItem("🎤 AI 演講者備註", "showSpeakerNoteSidebar")
 			.addItem("📥 批次下載演講者備註 (JSON)", "showExportSpeakerNotesDialog")
 			.addSeparator()
+			// Color
 			.addItem("🎨 配色方案生成器", "openColorPaletteSidebar")
-			.addItem("**B** Markdown 粗體格式", "runApplyMarkdownBoldFormatting")
 			.addToUi();
 
 		return true; // Menu created successfully
