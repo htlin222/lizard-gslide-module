@@ -198,11 +198,17 @@ function buildCompareColumnRequests_(requests, pageId, pos, column, style) {
 				shapeBackgroundFill: {
 					solidFill: { color: { rgbColor: hexToRgbColor_(style.headerFill) } },
 				},
-				outline: { propertyState: "NOT_RENDERED" },
+				outline: {
+					outlineFill: {
+						solidFill: { color: { rgbColor: hexToRgbColor_(style.headerFill) } },
+					},
+					weight: { magnitude: 1, unit: "PT" },
+					dashStyle: "SOLID",
+				},
 				contentAlignment: "MIDDLE",
 			},
 			fields:
-				"shapeBackgroundFill.solidFill.color,outline.propertyState,contentAlignment",
+				"shapeBackgroundFill.solidFill.color,outline.outlineFill.solidFill.color,outline.weight,outline.dashStyle,contentAlignment",
 		},
 	});
 	const titleText = column.title || "";
