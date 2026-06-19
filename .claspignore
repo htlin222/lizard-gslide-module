@@ -67,6 +67,14 @@ Thumbs.db
 .classpath
 
 # Testing files (not supported in Google Apps Script)
+# NOTE: a bare "test/" does NOT exclude the dir's contents in clasp's globbing,
+# and "*.test.js" only matches a single path segment (no slash) — so a file like
+# test/minters.smoke.test.js slips through and gets pushed, throwing
+# "ReferenceError: require is not defined" in Apps Script. Use /** patterns.
+test/**
+tests/**
+spec/**
+__tests__/**
 test/
 tests/
 spec/
@@ -75,6 +83,8 @@ __tests__/
 *.test.gs
 *.spec.js
 *.spec.gs
+**/*.test.js
+**/*.spec.js
 jest.config.*
 karma.conf.*
 cypress.json
