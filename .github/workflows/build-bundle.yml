@@ -22,6 +22,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      # Fail fast if any top-level function name collides (Apps Script flattens
+      # all .js into one global namespace, so duplicates silently shadow).
+      - name: Check duplicate global function names
+        run: node scripts/check-dup-functions.mjs
       # appsscript.json is gitignored; the real manifest source is the example.
       - name: Materialize manifest
         run: cp appsscript.example.json appsscript.json

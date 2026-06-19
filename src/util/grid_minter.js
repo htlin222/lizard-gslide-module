@@ -344,50 +344,26 @@ function buildUnitCardRequests_(requests, pageId, pos, unit, style) {
 	const sizes = fitFontSizes_(unit, pos.w, pos.h);
 
 	// 1) The card shape itself (text box so it can hold the unit's text).
-	requests.push({
-		createShape: {
-			objectId: shapeId,
-			shapeType: "TEXT_BOX",
-			elementProperties: {
-				pageObjectId: pageId,
-				size: {
-					width: { magnitude: pos.w, unit: "PT" },
-					height: { magnitude: pos.h, unit: "PT" },
-				},
-				transform: {
-					scaleX: 1,
-					scaleY: 1,
-					translateX: pos.x,
-					translateY: pos.y,
-					unit: "PT",
-				},
-			},
-		},
-	});
+	requests.push(
+		createTextBoxRequest_({
+			pageId: pageId,
+			id: shapeId,
+			x: pos.x,
+			y: pos.y,
+			w: pos.w,
+			h: pos.h,
+		}),
+	);
 
 	// 2) Card fill + outline from the chosen default style.
-	requests.push({
-		updateShapeProperties: {
-			objectId: shapeId,
-			shapeProperties: {
-				shapeBackgroundFill: {
-					solidFill: { color: { rgbColor: hexToRgbColor_(style.fillColor) } },
-				},
-				outline: {
-					outlineFill: {
-						solidFill: {
-							color: { rgbColor: hexToRgbColor_(style.borderColor) },
-						},
-					},
-					weight: { magnitude: style.borderWidth || 1, unit: "PT" },
-					dashStyle: "SOLID",
-				},
-				contentAlignment: "TOP",
-			},
-			fields:
-				"shapeBackgroundFill.solidFill.color,outline.outlineFill.solidFill.color,outline.weight,outline.dashStyle,contentAlignment",
-		},
-	});
+	requests.push(
+		fillOutlineRequest_(shapeId, {
+			fillColor: style.fillColor,
+			borderColor: style.borderColor,
+			borderWidth: style.borderWidth,
+			contentAlignment: "TOP",
+		}),
+	);
 
 	// 3) Assemble the text and remember each segment's char range for styling.
 	// Always emit three rows (title / subtitle / body) in order. The subtitle row
@@ -414,13 +390,7 @@ function buildUnitCardRequests_(requests, pageId, pos, unit, style) {
 
 	if (!combined.replace(/\n/g, "").length) return; // nothing real to insert
 
-	requests.push({
-		insertText: {
-			objectId: shapeId,
-			insertionIndex: 0,
-			text: combined,
-		},
-	});
+	requests.push(insertTextRequest_(shapeId, combined, 0));
 
 	// 4) Per-segment text styling. Title & subtitle: bold, no italic, style text
 	// color. Body: regular weight, black. Blank reserved lines are skipped.
@@ -434,55 +404,37 @@ function buildUnitCardRequests_(requests, pageId, pos, unit, style) {
 			: isSub
 				? sizes.subtitle
 				: sizes.body;
-		requests.push({
-			updateTextStyle: {
-				objectId: shapeId,
-				textRange: {
-					type: "FIXED_RANGE",
-					startIndex: seg.start,
-					endIndex: seg.end,
-				},
-				style: {
-					foregroundColor: {
-						opaqueColor: {
-							rgbColor: hexToRgbColor_(isBody ? "#000000" : style.textColor),
-						},
-					},
+		requests.push(
+			textStyleRequest_(
+				shapeId,
+				{ start: seg.start, end: seg.end },
+				{
+					color: isBody ? "#000000" : style.textColor,
 					bold: isTitle || isSub,
 					italic: false,
 					fontFamily: main_font_family,
-					fontSize: { magnitude: fontSize, unit: "PT" },
+					fontSize: fontSize,
 				},
-				fields: "foregroundColor,bold,italic,fontFamily,fontSize",
-			},
-		});
+			),
+		);
 
 		// Give the title and subtitle a 1.5× line height (lineSpacing is a %).
 		if (isTitle || isSub) {
-			requests.push({
-				updateParagraphStyle: {
-					objectId: shapeId,
-					textRange: {
-						type: "FIXED_RANGE",
-						startIndex: seg.start,
-						endIndex: seg.end,
-					},
-					style: { lineSpacing: 150 },
-					fields: "lineSpacing",
-				},
-			});
+			requests.push(
+				paragraphStyleRequest_(
+					shapeId,
+					{ start: seg.start, end: seg.end },
+					{ lineSpacing: 150 },
+					"lineSpacing",
+				),
+			);
 		}
 	}
 
 	// 5) Left-align the whole card.
-	requests.push({
-		updateParagraphStyle: {
-			objectId: shapeId,
-			textRange: { type: "ALL" },
-			style: { alignment: "START" },
-			fields: "alignment",
-		},
-	});
+	requests.push(
+		paragraphStyleRequest_(shapeId, "ALL", { alignment: "START" }, "alignment"),
+	);
 }
 
 /**

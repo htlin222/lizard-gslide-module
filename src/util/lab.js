@@ -118,39 +118,11 @@ function createGradientSquare() {
   return shape;
 }
 
-function createAlphaWhiteSquare() {
-  // Get the current presentation
-  const presentation = SlidesApp.getActivePresentation();
-  
-  // Get the current slide (or first slide if none selected)
-  const currentSlide = presentation.getSelection().getCurrentPage() || presentation.getSlides()[0];
-  
-  // Define square dimensions (100x100 points)
-  const size = 100;
-  
-  // Get slide dimensions to center the square
-  const pageWidth = 720; // Standard slide width
-  const pageHeight = 540; // Standard slide height
-  
-  // Calculate position to center the square
-  const left = (pageWidth - size) / 2;
-  const top = (pageHeight - size) / 2;
-  
-  // Create a rectangle shape (square)
-  const shape = currentSlide.insertShape(SlidesApp.ShapeType.RECTANGLE, left, top, size, size);
-  
-  // Set the fill to white with 50% transparency
-  const fill = shape.getFill();
-  fill.setSolidFill('#FFFFFF', 0.5); // White color with alpha 0.5
-  
-  // Optional: Remove border/stroke
-  const line = shape.getBorder();
-  line.setTransparent();
-  
-  console.log('White square with 50% transparency created successfully!');
-  
-  return shape;
-}
+// NOTE: a second, duplicate createAlphaWhiteSquare() definition lived here and
+// was removed — it collided with the one defined earlier in this file (the last
+// declaration silently won under Apps Script's flat global namespace). lab.js is
+// an experimental scratch file with no menu/external references.
+// TODO(shared-migration): evaluate deleting lab.js entirely.
 
 // Create radial gradient square
 function createRadialGradientSquare() {
