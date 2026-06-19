@@ -61,6 +61,19 @@ function createTableMinterDialog() {
 }
 
 /**
+ * Creates and returns the Grid Minter dialog UI.
+ * Turns content into a grid of styled "unit" cards inserted onto the slide.
+ *
+ * @return {HtmlOutput} The HTML output for the grid minter dialog
+ */
+function createGridMinterDialog() {
+	const template = createModularHtmlTemplate(
+		"src/components/grid-minter/index",
+	);
+	return template.evaluate().setWidth(680).setHeight(560);
+}
+
+/**
  * Creates and returns the Flowchart sidebar UI with all components loaded.
  *
  * @return {HtmlOutput} The HTML output for the flowchart sidebar

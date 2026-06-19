@@ -1,0 +1,421 @@
+<script>
+  /** Resolved colors for the 6 card styles, fetched from the server on load. */
+  var STYLE_COLORS = {};
+  /** True once the user manually edits rows/cols, so we stop auto-suggesting. */
+  var layoutTouched = false;
+
+  /**
+   * Shows a status message in the dialog.
+   * @param {string} message
+   * @param {string} type - 'success' | 'error' | 'info'
+   */
+  function showStatus(message, type = "info") {
+    const el = document.getElementById("statusMessage");
+    el.textContent = message;
+    el.className = `status-message status-${type}`;
+    el.style.display = "block";
+    if (type === "success" || type === "info") {
+      setTimeout(() => {
+        el.style.display = "none";
+      }, 5000);
+    }
+  }
+
+  /**
+   * Escapes HTML-special characters so unit text renders literally.
+   * @param {string} s
+   * @return {string}
+   */
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  /**
+   * Strips code-fence markers and leading prose so the unit parser sees clean
+   * markdown even when an LLM wraps it.
+   * @param {string} text
+   * @return {string}
+   */
+  function cleanUnitMarkdown(text) {
+    return (text || "")
+      .split(/\r?\n/)
+      .filter((l) => !/^```/.test(l.trim()))
+      .join("\n")
+      .trim();
+  }
+
+  /**
+   * Parses unit markdown into [{title, subtitle, body}]. Mirrors the server-side
+   * parseGridUnits_(): units split on a line of only dashes; first '# ' is the
+   * title, first '## ' the subtitle, the rest is the body paragraph.
+   * @param {string} md
+   * @return {Array<{title: string, subtitle: string, body: string}>}
+   */
+  function parseUnits(md) {
+    const text = cleanUnitMarkdown(md);
+    if (!text) return [];
+    const blocks = text
+      .split(/\n\s*-{3,}\s*\n/)
+      .map((b) => b.trim())
+      .filter((b) => b.length);
+
+    const units = [];
+    for (const block of blocks) {
+      let title = "";
+      let subtitle = "";
+      const bodyLines = [];
+      for (const raw of block.split("\n")) {
+        const line = raw.trim();
+        if (!line) continue;
+        const h2 = line.match(/^##\s+(.+)$/);
+        const h1 = line.match(/^#\s+(.+)$/);
+        if (h2) {
+          if (!subtitle) subtitle = h2[1].trim();
+        } else if (h1) {
+          if (!title) title = h1[1].trim();
+        } else {
+          bodyLines.push(line);
+        }
+      }
+      const body = bodyLines.join(" ").trim();
+      if (title || subtitle || body) {
+        units.push({ title, subtitle, body });
+      }
+    }
+    return units;
+  }
+
+  /**
+   * Suggests a grid layout for n units. Mirrors server-side suggestGridLayout_().
+   * @param {number} n
+   * @return {{rows: number, cols: number}}
+   */
+  function suggestLayout(n) {
+    const table = {
+      1: { rows: 1, cols: 1 },
+      2: { rows: 1, cols: 2 },
+      3: { rows: 1, cols: 3 },
+      4: { rows: 2, cols: 2 },
+      5: { rows: 2, cols: 3 },
+      6: { rows: 2, cols: 3 },
+      7: { rows: 3, cols: 3 },
+      8: { rows: 3, cols: 3 },
+      9: { rows: 3, cols: 3 },
+    };
+    if (n <= 0) return { rows: 1, cols: 1 };
+    if (table[n]) return table[n];
+    return { rows: Math.ceil(n / 3), cols: 3 };
+  }
+
+  /** @return {number} the selected style number (1–6). */
+  function getStyleNumber() {
+    const v = parseInt(document.getElementById("styleNumber").value, 10);
+    return isNaN(v) || v < 1 ? 1 : v;
+  }
+
+  /** @return {number} rows (default 1). */
+  function getRows() {
+    const v = parseInt(document.getElementById("gridRows").value, 10);
+    return isNaN(v) || v < 1 ? 1 : v;
+  }
+
+  /** @return {number} cols (default 1). */
+  function getCols() {
+    const v = parseInt(document.getElementById("gridCols").value, 10);
+    return isNaN(v) || v < 1 ? 1 : v;
+  }
+
+  /** @return {number} insert left position in pt (default 25). */
+  function getLeft() {
+    const v = parseFloat(document.getElementById("posLeft").value);
+    return isNaN(v) ? 25 : v;
+  }
+
+  /** @return {number} insert top position in pt (default 100). */
+  function getTop() {
+    const v = parseFloat(document.getElementById("posTop").value);
+    return isNaN(v) ? 100 : v;
+  }
+
+  /** @return {string} the currently active tab name */
+  function activeTab() {
+    return document.querySelector(".dialog-root").getAttribute("data-tab");
+  }
+
+  /** @return {HTMLTextAreaElement} the textarea for the active tab */
+  function activeTextarea() {
+    return activeTab() === "context"
+      ? document.getElementById("contextInput")
+      : document.getElementById("gridInput");
+  }
+
+  /**
+   * Switches between the Context, Markdown and Preview tabs.
+   * @param {string} name - 'context' | 'markdown' | 'preview'
+   */
+  function switchTab(name) {
+    document.querySelector(".dialog-root").setAttribute("data-tab", name);
+    ["context", "markdown", "preview"].forEach((n) => {
+      document.getElementById("tab-" + n).classList.toggle("active", n === name);
+      document
+        .getElementById("panel-" + n)
+        .classList.toggle("active", n === name);
+    });
+    if (name === "preview") {
+      updatePreview();
+    } else {
+      activeTextarea().focus();
+    }
+  }
+
+  /**
+   * Recounts units, auto-suggests a layout (until the user overrides it), and
+   * refreshes the unit-count hint.
+   */
+  function updateUnitInfo() {
+    const units = parseUnits(document.getElementById("gridInput").value);
+    const n = units.length;
+    // Rows/cols are derived from the unit count (the number of '#' titles) until
+    // the user overrides them; with no content the fields stay blank ("auto").
+    if (!layoutTouched) {
+      if (n > 0) {
+        const sug = suggestLayout(n);
+        document.getElementById("gridRows").value = sug.rows;
+        document.getElementById("gridCols").value = sug.cols;
+      } else {
+        document.getElementById("gridRows").value = "";
+        document.getElementById("gridCols").value = "";
+      }
+    }
+    const cap = getRows() * getCols();
+    const info = document.getElementById("unitCount");
+    if (n === 0) {
+      info.textContent = "";
+    } else {
+      const overflow = n > cap ? " · " + (n - cap) + " spill to new slide(s)" : "";
+      info.textContent = n + " unit" + (n === 1 ? "" : "s") + overflow;
+    }
+  }
+
+  /**
+   * Re-renders the live preview as a CSS grid of styled cards matching the
+   * chosen rows/cols and card style colors.
+   */
+  function updatePreview() {
+    updateUnitInfo();
+    const preview = document.getElementById("gridPreview");
+    const units = parseUnits(document.getElementById("gridInput").value);
+    if (!units.length) {
+      preview.style.gridTemplateColumns = "";
+      preview.innerHTML =
+        '<span class="placeholder">Your grid of cards will appear here…</span>';
+      return;
+    }
+    const cols = getCols();
+    const colors = STYLE_COLORS[getStyleNumber()] || {
+      fillColor: "#ffffff",
+      borderColor: "#3d6869",
+      textColor: "#3d6869",
+    };
+    preview.style.gridTemplateColumns = "repeat(" + cols + ", 1fr)";
+
+    let html = "";
+    for (const u of units) {
+      const cardStyle =
+        "background:" +
+        colors.fillColor +
+        ";border:1px solid " +
+        colors.borderColor +
+        ";color:" +
+        colors.textColor +
+        ";";
+      html += '<div class="grid-card" style="' + cardStyle + '">';
+      // Always render all three rows; a missing subtitle stays as a blank line so
+      // cards line up. Body text is black to match the inserted card.
+      html += '<p class="card-title">' + escapeHtml(u.title || "") + "</p>";
+      html +=
+        '<p class="card-subtitle">' +
+        (u.subtitle ? escapeHtml(u.subtitle) : "&nbsp;") +
+        "</p>";
+      html +=
+        '<p class="card-body" style="color:#000;">' +
+        escapeHtml(u.body || "") +
+        "</p>";
+      html += "</div>";
+    }
+    preview.innerHTML = html;
+  }
+
+  /** Clears the active tab's textarea. */
+  function clearActive() {
+    const t = activeTextarea();
+    t.value = "";
+    if (t.id === "gridInput") {
+      layoutTouched = false;
+      updatePreview();
+    }
+    document.getElementById("statusMessage").style.display = "none";
+    t.focus();
+  }
+
+  /** Pastes clipboard text into the active tab's textarea. */
+  function pasteToActive() {
+    const t = activeTextarea();
+    if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard
+        .readText()
+        .then((text) => {
+          t.value = text;
+          if (t.id === "gridInput") {
+            layoutTouched = false;
+            updatePreview();
+          }
+          t.focus();
+          showStatus("📋 Pasted from clipboard!", "success");
+        })
+        .catch(() => {
+          showStatus(
+            "❌ Could not read clipboard. Paste manually (Cmd/Ctrl+V).",
+            "error",
+          );
+          t.focus();
+        });
+    } else {
+      showStatus("💡 Paste manually using Cmd/Ctrl+V.", "info");
+      t.focus();
+    }
+  }
+
+  /**
+   * Sends the Context tab text to Groq, then drops the resulting unit markdown
+   * into the Markdown tab.
+   */
+  function generateFromContext() {
+    const ctx = document.getElementById("contextInput").value.trim();
+    if (!ctx) {
+      showStatus("Paste some content in the Context tab first.", "error");
+      return;
+    }
+    const hasSubtitle = document.getElementById("hasSubtitle").checked;
+    const btn = document.getElementById("generateButton");
+    btn.disabled = true;
+    btn.textContent = "Generating…";
+    showStatus("🤖 Generating grid units with AI…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        if (res && res.needKey) {
+          showStatus(res.error, "error");
+          return;
+        }
+        if (!res || !res.success) {
+          showStatus(
+            "❌ " + ((res && res.error) || "AI generation failed."),
+            "error",
+          );
+          return;
+        }
+        const md = cleanUnitMarkdown(res.generatedText || "");
+        if (!parseUnits(md).length) {
+          showStatus("❌ AI returned no units. Try rephrasing the context.", "error");
+          return;
+        }
+        document.getElementById("gridInput").value = md;
+        layoutTouched = false;
+        switchTab("markdown");
+        updatePreview();
+        showStatus(
+          "✅ Units generated — review them, then open Preview to insert.",
+          "success",
+        );
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = "✨ Generate with AI";
+        showStatus("❌ " + (err.message || "AI error"), "error");
+      })
+      .generateGridMarkdownFromContext(ctx, hasSubtitle);
+  }
+
+  /**
+   * Inserts the grid of cards onto the current slide via the Slides API
+   * (server-side). Overflow units spill onto newly appended slides.
+   */
+  function insertGrid() {
+    const units = parseUnits(document.getElementById("gridInput").value);
+    if (!units.length) {
+      showStatus("No units to insert — add some unit markdown first.", "error");
+      return;
+    }
+    const btn = document.getElementById("insertButton");
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Inserting…";
+    showStatus("📐 Inserting grid into the slide…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        btn.textContent = label;
+        if (res && res.success) {
+          if (res.warnings && res.warnings.length) {
+            showStatus("✅ Inserted · " + res.warnings.join(" "), "success");
+          } else {
+            google.script.host.close();
+          }
+        } else {
+          showStatus("❌ " + ((res && res.error) || "Insert failed."), "error");
+        }
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = label;
+        showStatus("❌ " + (err.message || "Insert error"), "error");
+      })
+      .insertGridIntoSlide({
+        units: units,
+        rows: getRows(),
+        cols: getCols(),
+        styleNumber: getStyleNumber(),
+        left: getLeft(),
+        top: getTop(),
+      });
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("gridInput");
+    input.focus();
+    input.addEventListener("input", function () {
+      layoutTouched = false; // text changed → re-suggest layout
+      updatePreview();
+    });
+
+    document.getElementById("styleNumber").addEventListener("change", updatePreview);
+    document.getElementById("gridRows").addEventListener("input", function () {
+      layoutTouched = true;
+      updatePreview();
+    });
+    document.getElementById("gridCols").addEventListener("input", function () {
+      layoutTouched = true;
+      updatePreview();
+    });
+
+    // Pull the resolved style colors so the preview matches the real cards.
+    google.script.run
+      .withSuccessHandler(function (styles) {
+        if (styles) STYLE_COLORS = styles;
+        updatePreview();
+      })
+      .withFailureHandler(function () {
+        updatePreview();
+      })
+      .getStyleDefinitions();
+
+    showStatus("💡 Context → ✨ AI → Markdown → Preview → Insert.", "info");
+  });
+</script>

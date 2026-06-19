@@ -1,0 +1,302 @@
+<style>
+  /* Grid minter dialog styles */
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family:
+      "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .dialog-root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Tabs */
+  .tab-bar {
+    display: flex;
+    flex-shrink: 0;
+    border-bottom: 1px solid #ddd;
+    background: #f8f9fa;
+  }
+
+  .tab {
+    flex: 0 0 auto;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 20px;
+    font-size: 14px;
+    color: #666;
+    cursor: pointer;
+  }
+
+  .tab:hover {
+    color: #333;
+    background: #eef0f2;
+  }
+
+  .tab.active {
+    color: #1a73e8;
+    border-bottom-color: #1a73e8;
+    font-weight: 600;
+  }
+
+  .tab-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tab-panel {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    padding: 12px;
+    box-sizing: border-box;
+  }
+
+  .tab-panel.active {
+    display: flex;
+  }
+
+  /* Markdown tab */
+  .minter-input {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    font-family: "Monaco", "Courier New", monospace;
+    font-size: 13px;
+    resize: none;
+    box-sizing: border-box;
+  }
+
+  .minter-input:focus {
+    border-color: #4285f4;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+  }
+
+  .ctx-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #333;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .ctx-option input {
+    cursor: pointer;
+  }
+
+  .controls-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #333;
+    flex-shrink: 0;
+  }
+
+  .controls-row .width-label {
+    margin-left: 20px;
+  }
+
+  /* Persistent settings bar, shared across all tabs */
+  .controls-bar {
+    margin-top: 0;
+    padding: 10px 12px;
+    border-top: 1px solid #eee;
+    background: #fafafa;
+    flex-shrink: 0;
+  }
+
+  .controls-row .width-input {
+    width: 60px;
+    height: 26px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    font-size: 13px;
+  }
+
+  .controls-row .select-input {
+    height: 28px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0 6px;
+    box-sizing: border-box;
+    font-size: 13px;
+    background: #fff;
+  }
+
+  .unit-count {
+    margin-left: auto;
+    color: #888;
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  /* Preview tab: CSS grid of cards */
+  .grid-preview {
+    flex: 1;
+    min-height: 0;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    padding: 14px;
+    background: #fff;
+    overflow: auto;
+    display: grid;
+    gap: 10px;
+    align-content: start;
+  }
+
+  .grid-preview .placeholder {
+    color: #999;
+    font-style: italic;
+  }
+
+  .grid-card {
+    border-radius: 4px;
+    padding: 8px 10px;
+    box-sizing: border-box;
+    overflow: hidden;
+    min-height: 60px;
+  }
+
+  .grid-card .card-title {
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 2px;
+  }
+
+  .grid-card .card-subtitle {
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1.5;
+    margin: 0 0 4px;
+    min-height: 1em;
+  }
+
+  .grid-card .card-body {
+    font-size: 11px;
+    line-height: 1.3;
+    margin: 0;
+  }
+
+  /* Status + buttons */
+  .status-message {
+    margin: 0 12px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: none;
+    flex-shrink: 0;
+  }
+
+  .status-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .status-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .status-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+  }
+
+  .button-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: white;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
+  }
+
+  /* Shared button base for a cohesive look */
+  .button-row button {
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1;
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease;
+  }
+
+  /* Show actions relevant to the active tab only.
+     edit-only  = Clear / Paste  (Context + Markdown)
+     ctx-only   = Generate with AI (Context)
+     preview-only = Insert grid (Preview) */
+  .dialog-root[data-tab="context"] .preview-only {
+    display: none;
+  }
+
+  .dialog-root[data-tab="markdown"] .ctx-only,
+  .dialog-root[data-tab="markdown"] .preview-only {
+    display: none;
+  }
+
+  .dialog-root[data-tab="preview"] .edit-only,
+  .dialog-root[data-tab="preview"] .ctx-only {
+    display: none;
+  }
+
+  /* Secondary actions: subtle, neutral */
+  .clear-button,
+  .paste-button {
+    background-color: #fff;
+    color: #3c4043;
+    border: 1px solid #dadce0;
+  }
+
+  .clear-button:hover,
+  .paste-button:hover {
+    background-color: #f1f3f4;
+    border-color: #c6c9cc;
+  }
+
+  /* Primary action: on-brand, fills remaining width */
+  .copy-button {
+    flex: 1;
+    background-color: #3d6869;
+    color: #fff;
+  }
+
+  .copy-button:hover {
+    background-color: #335a5b;
+  }
+
+  .copy-button:disabled {
+    background-color: #b9c7c7;
+    cursor: default;
+  }
+</style>

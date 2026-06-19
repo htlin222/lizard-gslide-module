@@ -129,6 +129,11 @@ log/
 .hg/
 .svn/
 
+# Claude Code session files and git worktrees.
+# These hold duplicate copies of the source tree; without this clasp scans them
+# and fails with "A file with this name already exists" (e.g. two appsscript).
+.claude/**
+
 # Dependency directories
 bower_components/
 jspm_packages/

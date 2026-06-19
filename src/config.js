@@ -95,6 +95,7 @@ function createCustomMenu() {
 			.addSeparator()
 			.addItem("🍽 快速美化表格", "fastStyleSelectedTable")
 			.addItem("🔲 表格鑄造器⭐", "showTableMinterDialog")
+			.addItem("🔳 網格鑄造器⭐", "showGridMinterDialog")
 			.addItem("📊 平均間距置中", "runAveragePadding")
 			.addSeparator()
 			.addItem("🔍 檢視物件屬性", "showSelectedObjectPropertiesDialog")
@@ -463,6 +464,23 @@ function showTableMinterDialog() {
 		console.error("Error showing Table Minter dialog: " + e.message);
 		SlidesApp.getUi().alert(
 			"Error: Could not open the Table Minter dialog: " + e.message,
+		);
+	}
+}
+
+/**
+ * Shows the Grid Minter dialog.
+ * Turns content (pasted or AI-generated) into a grid of styled "unit" cards
+ * laid out on the current slide, spilling overflow onto new slides.
+ */
+function showGridMinterDialog() {
+	try {
+		const dialog = createGridMinterDialog();
+		SlidesApp.getUi().showModalDialog(dialog, "🔳 網格鑄造器 Grid Minter");
+	} catch (e) {
+		console.error("Error showing Grid Minter dialog: " + e.message);
+		SlidesApp.getUi().alert(
+			"Error: Could not open the Grid Minter dialog: " + e.message,
 		);
 	}
 }

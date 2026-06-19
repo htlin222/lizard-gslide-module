@@ -1,0 +1,113 @@
+<div class="dialog-root" data-tab="markdown">
+  <div class="tab-bar">
+    <button type="button" class="tab" id="tab-context" onclick="switchTab('context')">
+      Context
+    </button>
+    <button type="button" class="tab active" id="tab-markdown" onclick="switchTab('markdown')">
+      Markdown
+    </button>
+    <button type="button" class="tab" id="tab-preview" onclick="switchTab('preview')">
+      Preview
+    </button>
+  </div>
+
+  <div class="tab-content">
+    <!-- Context tab: paste anything, AI turns it into grid units -->
+    <div class="tab-panel" id="panel-context">
+      <textarea
+        id="contextInput"
+        class="minter-input"
+        placeholder="Paste anything — notes, an outline, a paragraph, bullet points…
+
+Then hit ✨ Generate with AI to turn it into grid units.
+The result lands in the Markdown tab for review."
+      ></textarea>
+      <label class="ctx-option">
+        <input type="checkbox" id="hasSubtitle" checked />
+        Include subtitle (##) for each unit
+      </label>
+    </div>
+
+    <!-- Markdown tab: the unit source -->
+    <div class="tab-panel active" id="panel-markdown">
+      <textarea
+        id="gridInput"
+        class="minter-input"
+        placeholder="Paste or type grid units. One unit per block, separated by --- on its own line:
+
+# Speed
+## Faster delivery
+Ships features in days, not weeks, thanks to automation.
+---
+# Quality
+## Fewer defects
+Automated checks catch regressions before they reach users.
+---
+# Scale
+## Grows with you
+Handles 10× the load without a rewrite."
+      ></textarea>
+    </div>
+
+    <!-- Preview tab: rendered grid of cards -->
+    <div class="tab-panel" id="panel-preview">
+      <div class="grid-preview" id="gridPreview">
+        <span class="placeholder">Your grid of cards will appear here…</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Persistent layout/style controls, shared across all tabs -->
+  <div class="controls-row controls-bar">
+    <label for="styleNumber">Card style</label>
+    <select id="styleNumber" class="select-input">
+      <option value="1">1 · White / brand border</option>
+      <option value="2">2 · Brand fill / white text</option>
+      <option value="3">3 · Light gray fill</option>
+      <option value="4">4 · White / accent border</option>
+      <option value="5">5 · Accent fill / white text</option>
+      <option value="6" selected>6 · White / no border</option>
+    </select>
+
+    <label for="gridRows" class="width-label">Rows</label>
+    <input type="number" id="gridRows" class="width-input" min="1" step="1" placeholder="auto" />
+
+    <label for="gridCols" class="width-label">Cols</label>
+    <input type="number" id="gridCols" class="width-input" min="1" step="1" placeholder="auto" />
+
+    <label for="posLeft" class="width-label">Left</label>
+    <input type="number" id="posLeft" class="width-input" step="1" value="25" />
+
+    <label for="posTop" class="width-label">Top</label>
+    <input type="number" id="posTop" class="width-input" step="1" value="100" />
+
+    <span id="unitCount" class="unit-count"></span>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button type="button" class="clear-button edit-only" onclick="clearActive()">
+      Clear
+    </button>
+    <button type="button" class="paste-button edit-only" onclick="pasteToActive()">
+      Paste
+    </button>
+    <button
+      type="button"
+      class="copy-button ctx-only"
+      id="generateButton"
+      onclick="generateFromContext()"
+    >
+      ✨ Generate with AI
+    </button>
+    <button
+      type="button"
+      class="copy-button preview-only"
+      id="insertButton"
+      onclick="insertGrid()"
+    >
+      📐 Insert grid
+    </button>
+  </div>
+</div>
