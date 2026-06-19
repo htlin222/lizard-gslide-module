@@ -1,12 +1,26 @@
 {
   "timeZone": "Asia/Taipei",
   "dependencies": {
-    "enabledAdvancedServices": [{
-      "userSymbol": "Slides",
-      "serviceId": "slides",
-      "version": "v1"
-    }]
+    "enabledAdvancedServices": [
+      {
+        "userSymbol": "Slides",
+        "serviceId": "slides",
+        "version": "v1"
+      },
+      {
+        "userSymbol": "Drive",
+        "serviceId": "drive",
+        "version": "v2"
+      }
+    ]
   },
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/presentations",
+    "https://www.googleapis.com/auth/drive",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/script.projects",
+    "https://www.googleapis.com/auth/script.scriptapp"
+  ],
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8"
 }

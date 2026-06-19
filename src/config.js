@@ -76,6 +76,11 @@ function createCustomMenu() {
 			.addItem("🔑 設定 AI 金鑰 (Groq)", "showAiKeySetup")
 			.addItem("🔁 重新整理選單", "showMenuManually")
 			.addSeparator()
+			// Self-update: pull the latest script from GitHub into this clone
+			.addItem("🔄 更新腳本", "fetchLatestScript")
+			.addItem("🔍 檢查更新", "menuCheckForUpdate")
+			.addItem("⏰ 啟用開啟時檢查更新", "enableUpdateOnOpenTrigger")
+			.addSeparator()
 			// Batch updates applied across all slides
 			.addItem("🔄 更新進度條", "runUpdateProgressBars")
 			.addItem("📑 更新標籤頁", "runProcessTabs")

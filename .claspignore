@@ -144,6 +144,13 @@ log/
 # and fails with "A file with this name already exists" (e.g. two appsscript).
 .claude/**
 
+# Build output + build scripts — never push these into the Apps Script project.
+# dist/ holds the self-update bundle (would mirror infinitely); scripts/ is Node.
+dist/
+dist/**
+scripts/
+scripts/**
+
 # Dependency directories
 bower_components/
 jspm_packages/
