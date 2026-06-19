@@ -21,6 +21,18 @@
     }
   }
 
+  /**
+   * Toggles between the structured-syntax input and the AI Context input.
+   * @param {string} name - 'syntax' | 'context'
+   */
+  function switchInputTab(name) {
+    document.querySelectorAll('.input-tab').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-tab') === name);
+    });
+    document.getElementById('panel-syntax').hidden = name !== 'syntax';
+    document.getElementById('panel-context').hidden = name !== 'context';
+  }
+
   /** @param {string} s @return {string} */
   function escapeHtml(s) {
     return String(s)
@@ -230,6 +242,7 @@
         }
         document.getElementById("linesInput").value = out;
         updatePreview();
+        switchInputTab("syntax");
         showStatus("✅ KPI 行已產生 — 檢查後即可 Insert。", "success");
       })
       .withFailureHandler(function (err) {

@@ -26,6 +26,19 @@
     }
   }
 
+  /**
+   * Toggles between the structured "syntax" panel and the AI "context" panel.
+   * @param {string} name - 'syntax' | 'context'
+   */
+  function switchInputTab(name) {
+    var tabs = document.querySelectorAll(".input-tab");
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].classList.toggle("active", tabs[i].getAttribute("data-tab") === name);
+    }
+    document.getElementById("panel-syntax").hidden = name !== "syntax";
+    document.getElementById("panel-context").hidden = name !== "context";
+  }
+
   /** @param {string} s @return {string} */
   function escapeHtml(s) {
     return String(s)
@@ -220,6 +233,7 @@
         var md = cleanCompareMarkdown(res.generatedText || "");
         document.getElementById("markdownInput").value = md;
         updatePreview();
+        switchInputTab("syntax");
         if (!parseColumns().length) {
           showStatus(
             "❌ AI returned no columns. Try rephrasing the context.",

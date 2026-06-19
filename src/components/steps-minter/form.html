@@ -1,30 +1,39 @@
 <div class="dialog-root">
   <div class="cm-body">
-    <label class="cm-label" for="contextInput">貼上內容 → AI 轉成步驟（選填）</label>
-    <textarea
-      id="contextInput"
-      class="cm-textarea"
-      placeholder="貼上一段流程描述…"
-    ></textarea>
-    <button
-      type="button"
-      class="ai-button"
-      id="generateButton"
-      onclick="generateFromContext()"
-    >
-      ✨ Generate with AI
-    </button>
+    <div class="input-tabs">
+      <button type="button" class="input-tab active" data-tab="syntax" onclick="switchInputTab('syntax')">內容</button>
+      <button type="button" class="input-tab" data-tab="context" onclick="switchInputTab('context')">✨ Context</button>
+    </div>
 
-    <p class="cm-hint">
-      每行一個步驟，格式：<strong>標題 | 說明</strong>（說明可省略）。會在目前投影片畫出帶編號圓圈的流程圖並群組。
-    </p>
+    <div class="input-panel" id="panel-syntax">
+      <p class="cm-hint">
+        每行一個步驟，格式：<strong>標題 | 說明</strong>（說明可省略）。會在目前投影片畫出帶編號圓圈的流程圖並群組。
+      </p>
 
-    <label class="cm-label" for="stepsInput">步驟 Steps（一行一個）</label>
-    <textarea
-      id="stepsInput"
-      class="cm-textarea"
-      placeholder="收案 | 篩選符合條件者&#10;分析&#10;產出報告 | 整理結果"
-    ></textarea>
+      <label class="cm-label" for="stepsInput">步驟 Steps（一行一個）</label>
+      <textarea
+        id="stepsInput"
+        class="cm-textarea"
+        placeholder="收案 | 篩選符合條件者&#10;分析&#10;產出報告 | 整理結果"
+      ></textarea>
+    </div>
+
+    <div class="input-panel" id="panel-context" hidden>
+      <label class="cm-label" for="contextInput">貼上內容 → AI 轉成步驟（選填）</label>
+      <textarea
+        id="contextInput"
+        class="cm-textarea"
+        placeholder="貼上一段流程描述…"
+      ></textarea>
+      <button
+        type="button"
+        class="ai-button"
+        id="generateButton"
+        onclick="generateFromContext()"
+      >
+        ✨ Generate with AI
+      </button>
+    </div>
 
     <label class="cm-label">方向 Orientation</label>
     <div class="orient-toggle" id="orientToggle">

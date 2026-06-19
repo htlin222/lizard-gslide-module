@@ -1,27 +1,36 @@
 <div class="dialog-root">
   <div class="cm-body">
-    <label class="cm-label" for="contextInput">貼上內容 → AI 轉成長條圖（選填）</label>
-    <textarea
-      id="contextInput"
-      class="cm-textarea"
-      placeholder="貼上一段含數據的文字…"
-    ></textarea>
-    <button type="button" class="ai-button" id="generateButton" onclick="generateFromContext()">
-      ✨ Generate with AI
-    </button>
+    <div class="input-tabs">
+      <button type="button" class="input-tab active" data-tab="syntax" onclick="switchInputTab('syntax')">內容</button>
+      <button type="button" class="input-tab" data-tab="context" onclick="switchInputTab('context')">✨ Context</button>
+    </div>
 
-    <p class="cm-hint">
-      每行一個長條：<code>label | value</code>。例：<code>2022 | 12</code>。非數字的值會被當成 0。
-    </p>
+    <div class="input-panel" id="panel-syntax">
+      <p class="cm-hint">
+        每行一個長條：<code>label | value</code>。例：<code>2022 | 12</code>。非數字的值會被當成 0。
+      </p>
 
-    <label class="cm-label" for="dataInput">資料 Data（label | value）</label>
-    <textarea
-      id="dataInput"
-      class="cm-textarea"
-      placeholder="2022 | 12&#10;2023 | 18&#10;2024 | 27"
-    >2022 | 12
+      <label class="cm-label" for="dataInput">資料 Data（label | value）</label>
+      <textarea
+        id="dataInput"
+        class="cm-textarea"
+        placeholder="2022 | 12&#10;2023 | 18&#10;2024 | 27"
+      >2022 | 12
 2023 | 18
 2024 | 27</textarea>
+    </div>
+
+    <div class="input-panel" id="panel-context" hidden>
+      <label class="cm-label" for="contextInput">貼上內容 → AI 轉成長條圖（選填）</label>
+      <textarea
+        id="contextInput"
+        class="cm-textarea"
+        placeholder="貼上一段含數據的文字…"
+      ></textarea>
+      <button type="button" class="ai-button" id="generateButton" onclick="generateFromContext()">
+        ✨ Generate with AI
+      </button>
+    </div>
 
     <label class="cm-label">方向 Orientation</label>
     <div class="cm-toggle-row">

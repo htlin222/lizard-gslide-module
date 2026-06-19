@@ -31,6 +31,19 @@
       .replace(/>/g, "&gt;");
   }
 
+  /**
+   * Toggles the input tabs between the structured "syntax" panel and the AI
+   * "context" panel.
+   * @param {string} name - 'syntax' | 'context'
+   */
+  function switchInputTab(name) {
+    document.querySelectorAll(".input-tab").forEach(function (tab) {
+      tab.classList.toggle("active", tab.getAttribute("data-tab") === name);
+    });
+    document.getElementById("panel-syntax").hidden = name !== "syntax";
+    document.getElementById("panel-context").hidden = name !== "context";
+  }
+
   /** @return {Object|null} the selected template */
   function currentTemplate() {
     for (const t of TEMPLATES) if (t.id === selectedId) return t;
@@ -205,6 +218,7 @@
           document.getElementById("bodyInput").value = body;
         }
         updatePreview();
+        switchInputTab("syntax");
         showStatus("✅ 已產生標注 — 檢查後即可 Insert。", "success");
       })
       .withFailureHandler(function (err) {

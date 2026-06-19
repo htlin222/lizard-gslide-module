@@ -30,6 +30,23 @@
       .replace(/>/g, "&gt;");
   }
 
+  /**
+   * Toggles between the structured-input ("syntax") and AI Context tabs.
+   * @param {string} name - 'syntax' | 'context'
+   */
+  function switchInputTab(name) {
+    var tabs = document.querySelectorAll(".input-tab");
+    for (var i = 0; i < tabs.length; i++) {
+      if (tabs[i].getAttribute("data-tab") === name) {
+        tabs[i].classList.add("active");
+      } else {
+        tabs[i].classList.remove("active");
+      }
+    }
+    document.getElementById("panel-syntax").hidden = name !== "syntax";
+    document.getElementById("panel-context").hidden = name !== "context";
+  }
+
   /** @return {Object|null} the selected template */
   function currentTemplate() {
     for (var i = 0; i < TEMPLATES.length; i++) {
@@ -240,6 +257,7 @@
         }
         document.getElementById("dataInput").value = data;
         updatePreview();
+        switchInputTab("syntax");
         showStatus("✅ Data generated — review it, then Insert.", "success");
       })
       .withFailureHandler(function (err) {

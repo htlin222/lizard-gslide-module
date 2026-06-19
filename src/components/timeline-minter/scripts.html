@@ -24,6 +24,23 @@
     }
   }
 
+  /**
+   * Toggles between the structured-input ("syntax") and AI Context tabs.
+   * @param {string} name - 'syntax' | 'context'
+   */
+  function switchInputTab(name) {
+    var tabs = document.querySelectorAll(".input-tab");
+    for (var i = 0; i < tabs.length; i++) {
+      if (tabs[i].getAttribute("data-tab") === name) {
+        tabs[i].classList.add("active");
+      } else {
+        tabs[i].classList.remove("active");
+      }
+    }
+    document.getElementById("panel-syntax").hidden = name !== "syntax";
+    document.getElementById("panel-context").hidden = name !== "context";
+  }
+
   /** @param {string} s @return {string} */
   function escapeHtml(s) {
     return String(s)
@@ -257,6 +274,7 @@
         }
         document.getElementById("milestonesInput").value = md;
         updatePreview();
+        switchInputTab("syntax");
         showStatus(
           "✅ 時間軸已生成 — 檢查後即可 Insert。",
           "success",

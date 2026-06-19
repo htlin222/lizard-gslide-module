@@ -24,6 +24,11 @@
     box-sizing: border-box;
   }
 
+  .input-tabs { display: flex; gap: 4px; margin: 4px 0 8px; }
+  .input-tab { padding: 5px 12px; border: 1px solid #dadce0; border-radius: 6px 6px 0 0; background: #f8f9fa; font-family: inherit; font-size: 12px; color: #666; cursor: pointer; }
+  .input-tab.active { background: #fff; color: #1a73e8; border-bottom-color: #fff; font-weight: 600; }
+  .input-panel[hidden] { display: none; }
+
   .cm-hint {
     margin: 0 0 12px;
     padding: 8px 10px;

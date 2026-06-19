@@ -4,40 +4,49 @@
       選了一個 shape → 套用標注框樣式並群組；沒選 → 在投影片中央插入一個全新標注框。
     </p>
 
-    <label class="cm-label" for="contextInput">貼上內容 → AI 轉成標注（選填）</label>
-    <textarea
-      id="contextInput"
-      class="cm-textarea"
-      placeholder="貼上一段內容，AI 產生 Header + 內文…"
-    ></textarea>
-    <button
-      type="button"
-      class="ai-button"
-      id="generateButton"
-      onclick="generateFromContext()"
-    >
-      ✨ Generate with AI
-    </button>
-
     <label class="cm-label">範本 Template</label>
     <div class="template-chips" id="templateChips">
       <span class="placeholder">Loading templates…</span>
     </div>
 
-    <label class="cm-label" for="headerInput">標題 Header（QUOTE 範本可留空）</label>
-    <input
-      type="text"
-      id="headerInput"
-      class="cm-input"
-      placeholder="e.g. INFO / 注意 / 重點"
-    />
+    <div class="input-tabs">
+      <button type="button" class="input-tab active" data-tab="syntax" onclick="switchInputTab('syntax')">內容</button>
+      <button type="button" class="input-tab" data-tab="context" onclick="switchInputTab('context')">✨ Context</button>
+    </div>
 
-    <label class="cm-label" for="bodyInput">內文 Body</label>
-    <textarea
-      id="bodyInput"
-      class="cm-textarea"
-      placeholder="標注框的內文。轉換模式下若留空，會保留原本 shape 的文字。"
-    ></textarea>
+    <div class="input-panel" id="panel-syntax">
+      <label class="cm-label" for="headerInput">標題 Header（QUOTE 範本可留空）</label>
+      <input
+        type="text"
+        id="headerInput"
+        class="cm-input"
+        placeholder="e.g. INFO / 注意 / 重點"
+      />
+
+      <label class="cm-label" for="bodyInput">內文 Body</label>
+      <textarea
+        id="bodyInput"
+        class="cm-textarea"
+        placeholder="標注框的內文。轉換模式下若留空，會保留原本 shape 的文字。"
+      ></textarea>
+    </div>
+
+    <div class="input-panel" id="panel-context" hidden>
+      <label class="cm-label" for="contextInput">貼上內容 → AI 轉成標注（選填）</label>
+      <textarea
+        id="contextInput"
+        class="cm-textarea"
+        placeholder="貼上一段內容，AI 產生 Header + 內文…"
+      ></textarea>
+      <button
+        type="button"
+        class="ai-button"
+        id="generateButton"
+        onclick="generateFromContext()"
+      >
+        ✨ Generate with AI
+      </button>
+    </div>
 
     <label class="cm-label">預覽 Preview</label>
     <div class="callout-preview" id="calloutPreview">

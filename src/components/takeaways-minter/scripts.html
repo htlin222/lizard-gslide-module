@@ -24,6 +24,21 @@
     }
   }
 
+  /**
+   * Toggles between the structured-input panel and the Context (AI) panel.
+   * @param {string} name - 'syntax' | 'context'
+   */
+  function switchInputTab(name) {
+    var tabs = document.querySelectorAll(".input-tab");
+    for (var i = 0; i < tabs.length; i++) {
+      var t = tabs[i];
+      if (t.getAttribute("data-tab") === name) t.classList.add("active");
+      else t.classList.remove("active");
+    }
+    document.getElementById("panel-syntax").hidden = name !== "syntax";
+    document.getElementById("panel-context").hidden = name !== "context";
+  }
+
   /** @param {string} s @return {string} */
   function escapeHtml(s) {
     return String(s)
@@ -238,6 +253,7 @@
         }
         document.getElementById("pointsInput").value = text;
         updatePreview();
+        switchInputTab("syntax");
         showStatus("✅ 已產生重點 — 檢視後即可 Insert。", "success");
       })
       .withFailureHandler(function (err) {

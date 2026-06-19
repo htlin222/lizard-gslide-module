@@ -23,6 +23,18 @@
     }
   }
 
+  /**
+   * Toggles between the structured-input ("syntax") and AI-context tabs.
+   * @param {string} name - 'syntax' | 'context'
+   */
+  function switchInputTab(name) {
+    document.querySelectorAll(".input-tab").forEach((b) => {
+      b.classList.toggle("active", b.getAttribute("data-tab") === name);
+    });
+    document.getElementById("panel-syntax").hidden = name !== "syntax";
+    document.getElementById("panel-context").hidden = name !== "context";
+  }
+
   /** @param {string} s @return {string} */
   function escapeHtml(s) {
     return String(s)
@@ -225,6 +237,7 @@
         }
         document.getElementById("stepsInput").value = md;
         updatePreview();
+        switchInputTab("syntax");
         showStatus("✅ 步驟已生成 — 檢查後即可 Insert。", "success");
       })
       .withFailureHandler(function (err) {
