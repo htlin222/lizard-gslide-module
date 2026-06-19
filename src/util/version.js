@@ -2,4 +2,4 @@
  * Installed script version — STAMPED at build time by scripts/build-bundle.mjs.
  * Placeholder "dev" means built without stamping (always reports update available).
  */
-var SCRIPT_VERSION = "9baab70";
+var SCRIPT_VERSION = "92f6c55";

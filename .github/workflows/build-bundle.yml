@@ -22,6 +22,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      # appsscript.json is gitignored; the real manifest source is the example.
+      - name: Materialize manifest
+        run: cp appsscript.example.json appsscript.json
       - name: Build bundle
         run: node scripts/build-bundle.mjs
       - name: Commit dist + stamped version

@@ -19,7 +19,8 @@ pnpm-debug.log*
 # pnpm-lock.yaml
 
 # Build output
-dist/
+# NOTE: dist/ is intentionally TRACKED — it holds the self-update bundle
+# (dist/bundle.json + dist/version.json) that cloned decks fetch from GitHub raw.
 build/
 out/
 .cache/
