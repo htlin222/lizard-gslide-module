@@ -17,10 +17,11 @@ function generateSlideElementsUltra(slideId, slideData, slideIndex, slideCache, 
 	
 	// 2. Page number (1 consolidated request instead of 4)
 	addPageNumberUltra(slideId, slideIndex, slideCache, requests, cache);
-	
-	// 3. Title footnote (1 consolidated request instead of 7)
-	addTitleFootnoteUltra(slideId, slideCache, requests, cache);
-	
+
+	// 3. Title footnote — intentionally NOT part of the run-all batch. It is run
+	// standalone via the "🦶 更新 Footer" menu item (runUpdateTitleFootnotes).
+	// addTitleFootnoteUltra(slideId, slideCache, requests, cache);
+
 	// 4. Tab navigation (only for non-section slides)
 	if (slideData.layoutName !== "SECTION_HEADER" && sectionsCache.length > 0) {
 		addTabNavigationUltra(slideId, sectionsCache, currentSectionIdx, requests, cache);
@@ -103,7 +104,7 @@ function addPageNumberUltra(slideId, slideIndex, slideCache, requests, cache) {
 			updateTextStyle: {
 				objectId: pageId, textRange: { type: 'ALL' },
 				style: {
-					bold: true, fontFamily: main_font_family, fontSize: { magnitude: 12, unit: 'PT' },
+					bold: true, fontFamily: main_font_family, fontSize: { magnitude: 10, unit: 'PT' },
 					foregroundColor: { opaqueColor: { rgbColor: cache.colors.inactive } }
 				},
 				fields: 'bold,fontFamily,fontSize,foregroundColor'
@@ -234,18 +235,20 @@ function addTabNavigationUltra(slideId, sections, currentSection, requests, cach
 				updateShapeProperties: {
 					objectId: tabId,
 					shapeProperties: {
-						shapeBackgroundFill: { solidFill: { color: { rgbColor: isActive ? cache.colors.main : cache.colors.white } } },
+						// No button: transparent background for every tab.
+						shapeBackgroundFill: { propertyState: 'NOT_RENDERED' },
 						contentAlignment: 'MIDDLE'
 					},
-					fields: 'shapeBackgroundFill.solidFill.color,contentAlignment'
+					fields: 'shapeBackgroundFill,contentAlignment'
 				}
 			},
 			{
 				updateTextStyle: {
 					objectId: tabId, textRange: { type: 'ALL' },
 					style: {
-						bold: true, fontFamily: main_font_family, fontSize: { magnitude: 8, unit: 'PT' },
-						foregroundColor: { opaqueColor: { rgbColor: isActive ? cache.colors.white : cache.colors.inactive } },
+						// Active: main color + bold. Others: gray, not bold.
+						bold: isActive, fontFamily: main_font_family, fontSize: { magnitude: 8, unit: 'PT' },
+						foregroundColor: { opaqueColor: { rgbColor: isActive ? cache.colors.main : cache.colors.inactive } },
 						underline: false, link: { pageObjectId: sec.slideId }
 					},
 					fields: 'bold,fontFamily,fontSize,foregroundColor,underline,link'

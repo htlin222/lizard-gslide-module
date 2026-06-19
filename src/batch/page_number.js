@@ -49,7 +49,7 @@ function appendPageNumberToSlide({
 				style: {
 					bold: true,
 					fontFamily: config.mainFont,
-					fontSize: { magnitude: 12, unit: "PT" },
+					fontSize: { magnitude: 10, unit: "PT" },
 					foregroundColor: {
 						opaqueColor: { rgbColor: hexToRgb(config.inactiveTextColor) },
 					},

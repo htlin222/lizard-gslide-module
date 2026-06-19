@@ -8,7 +8,7 @@ var sub2_color = "#E7F9F5";
 var main_font_family = "Source Sans Pro";
 var water_mark_text = "ⓒ Hsieh-Ting Lin";
 var label_font_size = 14;
-var progressBarHeight = 5;
+var progressBarHeight = 2.5;
 const sourcePresentationId = "1qAZzq-uo5blLH1nqp9rbrGDlzz_Aj8eIp0XjDdmI220";
 
 // Properties service keys for storing configuration
