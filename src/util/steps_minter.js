@@ -39,7 +39,9 @@ function buildStepsTemplates_() {
 			numberText: "#FFFFFF",
 			titleColor: text,
 			descColor: sub,
-			connector: main,
+			// Connectors are a light gray regardless of theme (read by both the
+			// preview and the slide insert).
+			connector: "#CCCCCC",
 		},
 		{
 			id: "accent",
@@ -48,7 +50,7 @@ function buildStepsTemplates_() {
 			numberText: "#FFFFFF",
 			titleColor: text,
 			descColor: sub,
-			connector: accent,
+			connector: "#CCCCCC",
 		},
 	];
 }
@@ -167,7 +169,7 @@ function insertStepsIntoSlide(payload) {
 					const arrowGap = 6;
 					const ax = circleX + circle + arrowGap;
 					const aw = Math.max(nextCx - circle / 2 - arrowGap - ax, 4);
-					const ah = 12;
+					const ah = 7; // thin connector arrow
 					const ay = topY + (circle - ah) / 2;
 					_buildStepConnector_(slide, group, tpl, ax, ay, aw, ah, false);
 				}
@@ -215,7 +217,7 @@ function insertStepsIntoSlide(payload) {
 					const ay = circleY + circle + arrowGap;
 					const nextCircleY = startY + (i + 1) * slotH + (slotH - circle) / 2;
 					const ah = Math.max(nextCircleY - arrowGap - ay, 4);
-					const aw = 12;
+					const aw = 7; // thin connector arrow
 					const ax = startX + (circle - aw) / 2;
 					_buildStepConnector_(slide, group, tpl, ax, ay, aw, ah, true);
 				}
@@ -275,6 +277,8 @@ function _buildStepTextBox_(slide, group, tpl, font, step, x, y, w, h, align) {
 			.setBold(true)
 			.setFontSize(14)
 			.setFontFamily(font);
+		// 1.5x line height on the title paragraph.
+		t.getRange(0, titleEnd).getParagraphStyle().setLineSpacing(150);
 	}
 	if (desc) {
 		const descStart = titleEnd + 1;
