@@ -80,6 +80,20 @@ clasp open
   `cp appsscript.example.json appsscript.json` before pushing/building, since the
   real manifest is absent on the runner. So edit BOTH manifests together (scopes,
   advanced services) or CI silently ships the example's version.
+- **An explicit `oauthScopes` list DISABLES scope auto-detection.** With NO
+  `oauthScopes` field, Apps Script auto-detects scopes from the code at auth time
+  (so `Ui.showModalDialog`/`showSidebar` silently pull in `script.container.ui`).
+  The moment you list `oauthScopes` explicitly, ONLY those scopes are granted —
+  auto-detection is off. A missing scope then surfaces at RUNTIME as e.g.
+  `指定的權限不足，無法呼叫 Ui.showModalDialog. 必要權限: .../auth/script.container.ui`.
+  This is how clones broke while the main deck (which had no explicit list, so
+  auto-detect covered it) worked. Any deck opening a dialog/sidebar needs
+  `https://www.googleapis.com/auth/script.container.ui` in the list. Keep the
+  explicit list COMPLETE in both manifests.
+- **Changing scopes forces every user to re-consent.** After a scope edit ships
+  (clones self-update from `dist/bundle.json`), the next dialog/sidebar call
+  triggers Google's re-authorization prompt. This is unavoidable per Google's
+  OAuth rules — not a bug; it only happens once per account per scope change.
 
 ### Self-update for cloned decks
 
