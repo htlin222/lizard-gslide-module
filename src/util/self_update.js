@@ -181,9 +181,36 @@ function fetchLatestScript() {
 		}
 		var body = put.getContentText();
 		if (code === 403 && body.indexOf("Apps Script API") !== -1) {
+			// Surface Google's ACTUAL message + activation URL. The right place to
+			// enable differs per clone: a default Apps-Script-managed project points
+			// to script.google.com/home/usersettings, but a clone bound to a standard
+			// GCP project must enable the API in THAT project's Cloud Console (the URL
+			// carries the project number). Show whatever Google returns so the user is
+			// never sent to the wrong toggle.
+			var apiMsg = "";
+			var apiUrl = "";
+			try {
+				var err = JSON.parse(body).error;
+				apiMsg = err.message || "";
+				var details = err.details || [];
+				for (var d = 0; d < details.length; d++) {
+					var meta = details[d].metadata;
+					if (meta && meta.activationUrl) {
+						apiUrl = meta.activationUrl;
+						break;
+					}
+				}
+			} catch (e) {
+				// fall through with the raw body
+			}
 			ui.alert(
 				"需要啟用 Apps Script API",
-				"請到 script.google.com/home/usersettings 把「Google Apps Script API」開成 ON，然後再試一次。",
+				"Google 回報：\n" +
+					(apiMsg || body) +
+					"\n\n啟用連結（複製到瀏覽器打開，用同一個帳號按 Enable）：\n" +
+					(apiUrl ||
+						"https://script.google.com/home/usersettings") +
+					"\n\n啟用後等 1–2 分鐘，重新整理此頁面再跑一次更新。",
 				ui.ButtonSet.OK,
 			);
 			return;
