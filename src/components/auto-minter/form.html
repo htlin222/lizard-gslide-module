@@ -1,0 +1,60 @@
+<div class="dialog-root">
+  <div class="cm-body">
+    <label class="cm-label" for="contextInput"
+      >貼上內容，AI 會挑出最適合的版型並自動排好</label
+    >
+    <textarea
+      id="contextInput"
+      class="cm-textarea"
+      placeholder="貼上任何內容：數據、比較、流程、重點、大事記…&#10;⚡ 生成 → 點一個候選版型 → 預覽 → 插入"
+    ></textarea>
+    <div class="route-row">
+      <button
+        type="button"
+        class="ai-button route-button"
+        id="routeButton"
+        onclick="routeContext()"
+      >
+        ⚡ 推薦版型
+      </button>
+      <div class="candidate-chips" id="candidateChips"></div>
+    </div>
+
+    <div id="optionsSection" hidden>
+      <label class="cm-label" id="optionsLabel">選項 Options</label>
+      <div class="options-bar">
+        <div class="options-fields" id="optionsFields"></div>
+      </div>
+    </div>
+
+    <div id="previewSection" hidden>
+      <label class="cm-label" id="previewLabel">預覽 Preview</label>
+      <div class="am-preview" id="autoPreview">
+        <span class="placeholder">選一個候選版型後，預覽會顯示在這裡…</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <div class="button-row">
+    <button
+      type="button"
+      class="secondary-button"
+      id="generatePreviewButton"
+      onclick="generatePreview()"
+      disabled
+    >
+      ✨ 生成預覽
+    </button>
+    <button
+      type="button"
+      class="primary-button"
+      id="insertButton"
+      onclick="insertActive()"
+      disabled
+    >
+      ✅ 插入
+    </button>
+  </div>
+</div>

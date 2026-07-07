@@ -1,0 +1,69 @@
+<script>
+  /* Auto Minter preview renderer for the Compare minter: side-by-side columns
+     with a colored title bar and bullets. Template-aware: honors
+     payload.templateId via meta.templates — each template carries a cycled
+     `columns` array of {headerFill,headerText,bodyFill,bodyBorder,bodyText};
+     without templates it falls back to the theme-palette rotation. */
+  window.AUTO_PREVIEWS = window.AUTO_PREVIEWS || {};
+  window.AUTO_PREVIEWS["compare"] = function (payload, theme, meta) {
+    var columns = (payload && payload.columns) || [];
+    if (!columns.length) return "";
+    var palette = [
+      (theme && theme.main) || "#3D6869",
+      (theme && theme.accent) || "#f29424",
+      (theme && theme.sub1) || "#8FB8B9",
+    ];
+    var esc = function (s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    };
+
+    // Resolve the selected template (fallback: first template, then theme).
+    var templates = (meta && meta.templates) || [];
+    var tpl = templates[0] || null;
+    for (var i = 0; i < templates.length; i++) {
+      if (templates[i].id === (payload && payload.templateId)) tpl = templates[i];
+    }
+    var tplCols = (tpl && tpl.columns && tpl.columns.length && tpl.columns) || null;
+    var colStyle = function (i) {
+      if (tplCols) return tplCols[i % tplCols.length];
+      // No template info: keep the old theme-palette rotation.
+      return {
+        headerFill: palette[i % palette.length],
+        headerText: "#FFFFFF",
+        bodyFill: "#FFFFFF",
+        bodyBorder: "#DDDDDD",
+        bodyText: "#333333",
+      };
+    };
+
+    var html = '<div style="display:flex;gap:10px;align-items:stretch;">';
+    columns.forEach(function (col, i) {
+      var cs = colStyle(i);
+      var bullets = (col.points || [])
+        .map(function (p) {
+          return (
+            '<li style="margin-bottom:3px;line-height:1.4;">' + esc(p) + "</li>"
+          );
+        })
+        .join("");
+      html +=
+        '<div style="flex:1;border:1px solid ' +
+        (cs.bodyBorder || "#DDDDDD") +
+        ";border-radius:4px;overflow:hidden;background:" +
+        (cs.bodyFill || "#FFFFFF") + ';">' +
+        '<div style="background:' + (cs.headerFill || palette[0]) +
+        ";color:" + (cs.headerText || "#FFFFFF") +
+        ';font-size:13px;font-weight:700;padding:6px 10px;text-align:center;">' +
+        esc(col.title || "") +
+        "</div>" +
+        '<ul style="margin:8px 0;padding-left:22px;font-size:11px;color:' +
+        (cs.bodyText || "#333333") + ';">' +
+        bullets +
+        "</ul></div>";
+    });
+    return html + "</div>";
+  };
+</script>

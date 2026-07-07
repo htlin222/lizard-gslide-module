@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top" />
+    <!-- Load Auto Minter styles -->
+    <?!= include('src/components/auto-minter/styles'); ?>
+  </head>
+  <body>
+    <!-- Load Auto Minter form -->
+    <?!= include('src/components/auto-minter/form'); ?>
+
+    <script>window.__MINTER_PRELOAD__ = <?!= preloadJson ?>;</script>
+    <script>window.AUTO_PREVIEWS = {};</script>
+
+    <!--
+      Auto-include every registered minter's preview partial. New minters that
+      self-register with a previewPartial get a preview here with zero changes
+      to this file; a missing partial falls back to the generic renderer in
+      scripts.html (the try/catch keeps it from breaking the dialog).
+    -->
+    <? var reg = getAutoMinterRegistry_();
+       for (var i = 0; i < reg.length; i++) {
+         if (!reg[i].previewPartial) continue;
+         try { ?><?!= include(reg[i].previewPartial) ?><? } catch (e) {}
+       } ?>
+
+    <!-- Load scripts -->
+    <?!= include('src/components/auto-minter/scripts'); ?>
+  </body>
+</html>

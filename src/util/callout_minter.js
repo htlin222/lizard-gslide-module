@@ -31,39 +31,88 @@ function buildCalloutTemplates_() {
 	const red = "#C0392B";
 	return [
 		{
-			id: "info", name: "INFO", headerLabel: "INFO", style: "banner",
-			headerFill: "#E7EAE7", headerText: main, barColor: main,
-			bodyFill: "#FFFFFF", bodyBorder: main, bodyText: "#000000",
+			id: "info",
+			name: "INFO",
+			headerLabel: "INFO",
+			style: "banner",
+			headerFill: "#E7EAE7",
+			headerText: main,
+			barColor: main,
+			bodyFill: "#FFFFFF",
+			bodyBorder: main,
+			bodyText: "#000000",
 		},
 		{
-			id: "note", name: "NOTE", headerLabel: "NOTE", style: "banner",
-			headerFill: main, headerText: "#FFFFFF", barColor: main,
-			bodyFill: "#FFFFFF", bodyBorder: main, bodyText: "#000000",
+			id: "note",
+			name: "NOTE",
+			headerLabel: "NOTE",
+			style: "banner",
+			headerFill: main,
+			headerText: "#FFFFFF",
+			barColor: main,
+			bodyFill: "#FFFFFF",
+			bodyBorder: main,
+			bodyText: "#000000",
 		},
 		{
-			id: "tip", name: "TIP", headerLabel: "TIP", style: "banner",
-			headerFill: "#E7F4EC", headerText: green, barColor: green,
-			bodyFill: "#FFFFFF", bodyBorder: green, bodyText: "#000000",
+			id: "tip",
+			name: "TIP",
+			headerLabel: "TIP",
+			style: "banner",
+			headerFill: "#E7F4EC",
+			headerText: green,
+			barColor: green,
+			bodyFill: "#FFFFFF",
+			bodyBorder: green,
+			bodyText: "#000000",
 		},
 		{
-			id: "success", name: "SUCCESS", headerLabel: "SUCCESS", style: "banner",
-			headerFill: green, headerText: "#FFFFFF", barColor: green,
-			bodyFill: "#FFFFFF", bodyBorder: green, bodyText: "#000000",
+			id: "success",
+			name: "SUCCESS",
+			headerLabel: "SUCCESS",
+			style: "banner",
+			headerFill: green,
+			headerText: "#FFFFFF",
+			barColor: green,
+			bodyFill: "#FFFFFF",
+			bodyBorder: green,
+			bodyText: "#000000",
 		},
 		{
-			id: "warning", name: "WARNING", headerLabel: "WARNING", style: "banner",
-			headerFill: "#FCEAD2", headerText: "#B26A00", barColor: accent,
-			bodyFill: "#FFFFFF", bodyBorder: accent, bodyText: "#000000",
+			id: "warning",
+			name: "WARNING",
+			headerLabel: "WARNING",
+			style: "banner",
+			headerFill: "#FCEAD2",
+			headerText: "#B26A00",
+			barColor: accent,
+			bodyFill: "#FFFFFF",
+			bodyBorder: accent,
+			bodyText: "#000000",
 		},
 		{
-			id: "danger", name: "DANGER", headerLabel: "DANGER", style: "banner",
-			headerFill: red, headerText: "#FFFFFF", barColor: red,
-			bodyFill: "#FFFFFF", bodyBorder: red, bodyText: "#000000",
+			id: "danger",
+			name: "DANGER",
+			headerLabel: "DANGER",
+			style: "banner",
+			headerFill: red,
+			headerText: "#FFFFFF",
+			barColor: red,
+			bodyFill: "#FFFFFF",
+			bodyBorder: red,
+			bodyText: "#000000",
 		},
 		{
-			id: "quote", name: "QUOTE", headerLabel: "", style: "quote",
-			headerFill: "", headerText: "", barColor: "#999999",
-			bodyFill: "#F7F7F7", bodyBorder: "#F7F7F7", bodyText: "#333333",
+			id: "quote",
+			name: "QUOTE",
+			headerLabel: "",
+			style: "quote",
+			headerFill: "",
+			headerText: "",
+			barColor: "#999999",
+			bodyFill: "#F7F7F7",
+			bodyBorder: "#F7F7F7",
+			bodyText: "#333333",
 		},
 	];
 }
@@ -260,3 +309,97 @@ function insertCalloutIntoSlide(payload) {
 		return { success: false, error: e.message };
 	}
 }
+
+/**
+ * Auto Minter adapter: turns the two-line "HEADER: …" / "BODY: …" AI reply
+ * (see CALLOUT_AI_SYSTEM_PROMPT) into the payload insertCalloutIntoSlide()
+ * accepts. Parsing mirrors the dialog client
+ * (src/components/callout-minter/scripts.html): code fences are stripped,
+ * extra lines after a matched HEADER are appended to the body, and when the
+ * format isn't followed the first line becomes the header and the rest the
+ * body. When the AI gave no header, the template's headerLabel is used
+ * (matching the insert fn's own null fallback).
+ *
+ * @param {string} generatedText - raw LLM output from generateCalloutFromContext()
+ * @param {{templateId?: string}} [hints] - optional router hints
+ * @return {{templateId: string, header: string, body: string}|null}
+ *   null when the parsed body is empty
+ */
+function autoBuildCalloutPayload_(generatedText, hints) {
+	const h = hints || {};
+
+	// Strip code-fence lines, then split into non-empty lines.
+	const text = String(generatedText == null ? "" : generatedText)
+		.split(/\r?\n/)
+		.filter(function (l) {
+			return !/^```/.test(l.trim());
+		})
+		.join("\n")
+		.trim();
+	const lines = text.split(/\r?\n/).filter(function (l) {
+		return l.trim().length;
+	});
+
+	let header = "";
+	let body = "";
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+		const hm = line.match(/^\s*HEADER:\s*(.*)$/i);
+		const bm = line.match(/^\s*BODY:\s*(.*)$/i);
+		if (hm && !header) {
+			header = hm[1].trim();
+		} else if (bm && !body) {
+			body = bm[1].trim();
+		} else if (header && !bm && !hm) {
+			body = (body ? body + " " : "") + line.trim();
+		}
+	}
+	// Tolerant fallback: format not followed → first line = header, rest = body.
+	if (!header && !body) {
+		header = (lines[0] || "").trim();
+		body = lines.slice(1).join(" ").trim();
+	}
+	if (!body) return null;
+
+	const templates = buildCalloutTemplates_();
+	let tpl = templates[0];
+	for (let i = 0; i < templates.length; i++) {
+		if (templates[i].id === h.templateId) tpl = templates[i];
+	}
+
+	return {
+		templateId: tpl.id,
+		header: header || tpl.headerLabel,
+		body: body,
+	};
+}
+
+// ── Auto Minter registration ─────────────────────────────────────────────
+// Self-contained guarded push: GAS file load order is unspecified, so this
+// block must not call functions defined in other files at the top level.
+// The registry variable MUST be declared `var` + typeof guard (never
+// const/let — a const AUTO_MINTERS anywhere would break the whole project).
+var AUTO_MINTERS = typeof AUTO_MINTERS === "undefined" ? [] : AUTO_MINTERS;
+AUTO_MINTERS.push({
+	key: "callout",
+	label: "Callout 重點框",
+	emoji: "📌",
+	order: 30,
+	whenToUse:
+		"one single important message/warning/tip/quote to highlight; not for lists of items",
+	hintsSpec: '{"templateId":string}',
+	generate: "generateCalloutFromContext",
+	buildPayload: "autoBuildCalloutPayload_",
+	insert: "insertCalloutIntoSlide",
+	previewPartial: "src/components/callout-minter/preview",
+	previewKind: "callout",
+	precheck: "",
+	options: [
+		{
+			name: "templateId",
+			label: "範本",
+			type: "select",
+			choicesFrom: "getCalloutTemplates",
+		},
+	],
+});

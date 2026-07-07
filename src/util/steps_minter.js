@@ -28,8 +28,7 @@ function buildStepsTemplates_() {
 	const main = (typeof main_color !== "undefined" && main_color) || "#3D6869";
 	const accent =
 		(typeof accent_color !== "undefined" && accent_color) || "#f29424";
-	const text =
-		(typeof text_color !== "undefined" && text_color) || "#000000";
+	const text = (typeof text_color !== "undefined" && text_color) || "#000000";
 	// Description text must be a readable mid-gray (matches the dialog preview's
 	// #666). Do NOT use sub1_color — that's a near-white background tint
 	// (#E7EAE7) and renders almost invisible on a white slide.
@@ -201,7 +200,16 @@ function insertStepsIntoSlide(payload) {
 				const cx = slotX + slotW / 2;
 				const circleX = cx - circle / 2;
 
-				_buildStepNumberCircle_(slide, group, tpl, font, i + 1, circleX, topY, circle);
+				_buildStepNumberCircle_(
+					slide,
+					group,
+					tpl,
+					font,
+					i + 1,
+					circleX,
+					topY,
+					circle,
+				);
 
 				// Text block centered under the circle.
 				const tx = cx - textW / 2;
@@ -370,3 +378,70 @@ function _buildStepConnector_(slide, group, tpl, x, y, w, h, down) {
 	arrow.getBorder().getLineFill().setSolidFill(tpl.connector);
 	group.push(arrow);
 }
+
+/**
+ * Auto Minter adapter: turns AI-generated step lines (`title | desc`) into the
+ * payload insertStepsIntoSlide() accepts. Orientation defaults to "horizontal"
+ * (mirroring the insert fn, where anything but "vertical" renders horizontal).
+ *
+ * @param {string} generatedText - raw LLM output from generateStepsFromContext()
+ * @param {{templateId?: string, orientation?: string}} [hints] - optional router hints
+ * @return {{steps: Array<{title:string,desc:string}>, templateId: string,
+ *   orientation: string}|null} null when parsing yields zero usable steps
+ */
+function autoBuildStepsPayload_(generatedText, hints) {
+	const h = hints || {};
+	const steps = parseStepsInput_(generatedText);
+	if (!steps.length) return null;
+
+	const templates = buildStepsTemplates_();
+	let templateId = templates[0].id;
+	for (let i = 0; i < templates.length; i++) {
+		if (templates[i].id === h.templateId) templateId = templates[i].id;
+	}
+
+	return {
+		steps: steps,
+		templateId: templateId,
+		orientation: h.orientation === "vertical" ? "vertical" : "horizontal",
+	};
+}
+
+// ── Auto Minter registration ─────────────────────────────────────────────
+// Self-contained guarded push: GAS file load order is unspecified, so this
+// block must not call functions defined in other files at the top level.
+// The registry variable MUST be declared `var` + typeof guard (never
+// const/let — a const AUTO_MINTERS anywhere would break the whole project).
+var AUTO_MINTERS = typeof AUTO_MINTERS === "undefined" ? [] : AUTO_MINTERS;
+AUTO_MINTERS.push({
+	key: "steps",
+	label: "步驟圖",
+	emoji: "🪜",
+	order: 80,
+	whenToUse: "a sequential process/workflow of 3-6 undated steps in order",
+	hintsSpec: '{"orientation":"horizontal|vertical"}',
+	generate: "generateStepsFromContext",
+	buildPayload: "autoBuildStepsPayload_",
+	insert: "insertStepsIntoSlide",
+	previewPartial: "src/components/steps-minter/preview",
+	previewKind: "steps",
+	precheck: "",
+	options: [
+		{
+			name: "templateId",
+			label: "範本",
+			type: "select",
+			choicesFrom: "getStepsTemplates",
+		},
+		{
+			name: "orientation",
+			label: "方向",
+			type: "select",
+			default: "horizontal",
+			choices: [
+				{ value: "horizontal", label: "水平" },
+				{ value: "vertical", label: "垂直" },
+			],
+		},
+	],
+});

@@ -498,20 +498,29 @@ function insertGridIntoSlide(payload) {
 		positionOpts.rowHeight = contentRowH + 36;
 
 		// Chunk units into pages of `cap`. The first chunk uses the current slide;
-		// later chunks each get a freshly appended blank slide.
+		// later chunks each get a fresh BLANK slide created INSIDE the same batch
+		// (a createSlide request with a client-chosen objectId). Never mix
+		// SlidesApp.appendSlide() with the REST batchUpdate here: SlidesApp writes
+		// are buffered (and SlidesApp has no flush()), so batchUpdate would not
+		// find the new page ("The page ... could not be found").
 		const requests = [];
 		const warnings = [];
 		let extraSlides = 0;
 		for (let offset = 0; offset < units.length; offset += cap) {
 			const chunk = units.slice(offset, offset + cap);
-			let slide;
+			let pageId;
 			if (offset === 0) {
-				slide = firstSlide;
+				pageId = firstSlide.getObjectId();
 			} else {
-				slide = presentation.appendSlide(SlidesApp.PredefinedLayout.BLANK);
+				pageId = "gridminterpage" + Utilities.getUuid().replace(/-/g, "");
+				requests.push({
+					createSlide: {
+						objectId: pageId,
+						slideLayoutReference: { predefinedLayout: "BLANK" },
+					},
+				});
 				extraSlides++;
 			}
-			const pageId = slide.getObjectId();
 			const positions = computeGridPositions_(
 				rows,
 				cols,
@@ -547,3 +556,114 @@ function insertGridIntoSlide(payload) {
 		return { success: false, error: e.message };
 	}
 }
+
+/**
+ * Auto Minter generate wrapper: adapts the (context, hints) auto-minter call
+ * signature onto generateGridMarkdownFromContext(context, hasSubtitle).
+ *
+ * @param {string} context - Arbitrary text to summarize into grid units.
+ * @param {{hasSubtitle?: boolean}} [hints] - optional router hints
+ * @return {{success: boolean, generatedText?: string, error?: string, needKey?: boolean}}
+ */
+function autoGenerateGrid_(context, hints) {
+	return generateGridMarkdownFromContext(
+		context,
+		!!(hints && hints.hasSubtitle),
+	);
+}
+
+/**
+ * Auto Minter adapter: turns AI-generated grid-unit Markdown into the payload
+ * insertGridIntoSlide() accepts. Rows/cols come from the hints when both are
+ * valid positive integers, else from suggestGridLayout_().
+ *
+ * @param {string} generatedText - raw LLM output (unit markdown)
+ * @param {{rows?: number, cols?: number, styleNumber?: number}} [hints]
+ * @return {{units: Array<{title:string,subtitle:string,body:string}>, rows: number,
+ *   cols: number, styleNumber: number}|null} null when parsing yields zero usable units
+ */
+function autoBuildGridPayload_(generatedText, hints) {
+	const h = hints || {};
+	const units = parseGridUnits_(generatedText);
+	if (!units.length) return null;
+
+	const hintRows = parseInt(h.rows, 10);
+	const hintCols = parseInt(h.cols, 10);
+	let rows;
+	let cols;
+	if (hintRows > 0 && hintCols > 0) {
+		rows = hintRows;
+		cols = hintCols;
+	} else {
+		const sug = suggestGridLayout_(units.length);
+		rows = sug.rows;
+		cols = sug.cols;
+	}
+
+	const sn = parseInt(h.styleNumber, 10);
+	const styleNumber = sn >= 1 && sn <= 6 ? sn : 1;
+
+	return { units: units, rows: rows, cols: cols, styleNumber: styleNumber };
+}
+
+// ── Auto Minter registration ─────────────────────────────────────────────
+// Self-contained guarded push: GAS file load order is unspecified, so this
+// block must not call functions defined in other files at the top level.
+// The registry variable MUST be declared `var` + typeof guard (never
+// const/let — a const AUTO_MINTERS anywhere would break the whole project).
+var AUTO_MINTERS = typeof AUTO_MINTERS === "undefined" ? [] : AUTO_MINTERS;
+AUTO_MINTERS.push({
+	key: "grid",
+	label: "網格卡片",
+	emoji: "🔳",
+	order: 20,
+	whenToUse:
+		"3-9 parallel concepts/categories each with a title and short description; general-purpose card grid",
+	hintsSpec:
+		'{"rows":number,"cols":number,"hasSubtitle":boolean,"styleNumber":1-6}',
+	generate: "autoGenerateGrid_",
+	buildPayload: "autoBuildGridPayload_",
+	insert: "insertGridIntoSlide",
+	previewPartial: "src/components/grid-minter/preview",
+	previewKind: "cards",
+	precheck: "",
+	options: [
+		{
+			name: "rows",
+			label: "列 Rows",
+			type: "number",
+			min: 1,
+			max: 9,
+			placeholder: "auto",
+		},
+		{
+			name: "cols",
+			label: "欄 Cols",
+			type: "number",
+			min: 1,
+			max: 9,
+			placeholder: "auto",
+		},
+		{
+			name: "styleNumber",
+			label: "卡片樣式",
+			type: "select",
+			default: 1,
+			choices: [
+				{ value: 1, label: "1 · 白底品牌框" },
+				{ value: 2, label: "2 · 品牌色底白字" },
+				{ value: 3, label: "3 · 淺灰底" },
+				{ value: 4, label: "4 · 白底強調框" },
+				{ value: 5, label: "5 · 強調色底白字" },
+				{ value: 6, label: "6 · 白底無框" },
+			],
+		},
+		{
+			name: "hasSubtitle",
+			label: "含副標 (##)",
+			type: "checkbox",
+			default: true,
+			regenerate: true,
+		},
+	],
+});

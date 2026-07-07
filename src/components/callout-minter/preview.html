@@ -1,0 +1,54 @@
+<script>
+  /* Auto Minter preview renderer for the Callout minter: header banner +
+     left accent bar box. Template-aware: honors payload.templateId via
+     meta.templates (headerFill/headerText/barColor/bodyFill/bodyText and the
+     'quote' style, which drops the header banner). */
+  window.AUTO_PREVIEWS = window.AUTO_PREVIEWS || {};
+  window.AUTO_PREVIEWS["callout"] = function (payload, theme, meta) {
+    var body = (payload && payload.body) || "";
+    if (!body) return "";
+    var main = (theme && theme.main) || "#3D6869";
+    var esc = function (s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    };
+
+    // Resolve the selected template (fallback: first template, then theme).
+    var templates = (meta && meta.templates) || [];
+    var tpl = templates[0] || null;
+    for (var i = 0; i < templates.length; i++) {
+      if (templates[i].id === (payload && payload.templateId)) tpl = templates[i];
+    }
+    var barColor = (tpl && tpl.barColor) || main;
+    var headerFill = (tpl && tpl.headerFill) || main;
+    var headerText = (tpl && tpl.headerText) || "#FFFFFF";
+    var bodyFill = (tpl && tpl.bodyFill) || "#FFFFFF";
+    var bodyText = (tpl && tpl.bodyText) || "#333333";
+    var quote = tpl && tpl.style === "quote";
+    var header =
+      (payload && payload.header) || (tpl && tpl.headerLabel) || "";
+
+    var banner = "";
+    if (!quote && header) {
+      banner =
+        '<div style="background:' + headerFill + ";color:" + headerText +
+        ';font-size:12px;font-weight:700;padding:6px 12px;' +
+        'border-radius:0 4px 0 0;">' +
+        esc(header) +
+        "</div>";
+    }
+    return (
+      '<div style="max-width:520px;margin:0 auto;border-left:4px solid ' +
+      barColor +
+      ';border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.15);background:' +
+      bodyFill + ';">' +
+      banner +
+      '<div style="padding:12px 14px;font-size:13px;color:' + bodyText +
+      ';line-height:1.5;">' +
+      esc(body) +
+      "</div></div>"
+    );
+  };
+</script>

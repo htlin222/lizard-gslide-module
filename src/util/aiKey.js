@@ -112,9 +112,8 @@ function showApiKeyDialog(continueFnName) {
  * @return {string}
  */
 function getUserApiKeyOrThrow_() {
-	const key = PropertiesService.getUserProperties().getProperty(
-		AI_KEY_PROPERTY,
-	);
+	const key =
+		PropertiesService.getUserProperties().getProperty(AI_KEY_PROPERTY);
 	if (!key) {
 		throw new Error(
 			"No API key set. Open the 🔑 API Key panel and paste your Groq key " +
@@ -147,6 +146,11 @@ function callGroq_(systemMessage, userMessage, opts) {
 			max_tokens: options.maxTokens || 1000,
 			temperature: options.temperature != null ? options.temperature : 0.7,
 		};
+
+		// OpenAI-style JSON mode passthrough, e.g. { type: "json_object" }.
+		if (options.responseFormat) {
+			body.response_format = options.responseFormat;
+		}
 
 		const response = UrlFetchApp.fetch(GROQ_API_URL, {
 			method: "POST",

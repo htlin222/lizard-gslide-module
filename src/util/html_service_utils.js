@@ -70,6 +70,21 @@ function createMinterDialog_(path, preload) {
 		.setHeight(MINTER_DIALOG_HEIGHT_);
 }
 
+/**
+ * @return {HtmlOutput} Auto Minter dialog. Preloads the theme palette (for the
+ * client-side previews) and the public registry list; the per-minter preview
+ * partials are auto-included by the index template from the registry.
+ */
+function createAutoMinterDialog() {
+	return createMinterDialog_("src/components/auto-minter/index", {
+		theme: getThemeColors(),
+		font:
+			(typeof main_font_family !== "undefined" && main_font_family) ||
+			"Source Sans Pro",
+		minters: getAutoMinterPublicList_(),
+	});
+}
+
 /** @return {HtmlOutput} Table Minter dialog (no on-load fetch). */
 function createTableMinterDialog() {
 	return createMinterDialog_("src/components/table-minter/index", {});

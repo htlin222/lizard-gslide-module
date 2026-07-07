@@ -1,0 +1,53 @@
+<script>
+  /* Auto Minter preview renderer for the Table minter. Simplified themed table
+     (header row in the main color, zebra body rows). */
+  window.AUTO_PREVIEWS = window.AUTO_PREVIEWS || {};
+  window.AUTO_PREVIEWS["table"] = function (payload, theme) {
+    var header = (payload && payload.header) || [];
+    var body = (payload && payload.body) || [];
+    if (!header.length && !body.length) return "";
+    var main = (theme && theme.main) || "#3D6869";
+    var esc = function (s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    };
+    var html = "";
+    if (payload && payload.title) {
+      html +=
+        '<div style="font-size:14px;font-weight:700;color:#333;margin-bottom:6px;">' +
+        esc(payload.title) +
+        "</div>";
+    }
+    html +=
+      '<table style="border-collapse:collapse;width:100%;font-size:12px;">';
+    if (header.length) {
+      html += "<tr>";
+      header.forEach(function (h) {
+        html +=
+          '<th style="background:' + main + ";color:#fff;padding:6px 10px;" +
+          'text-align:left;border:1px solid ' + main + ';">' + esc(h) + "</th>";
+      });
+      html += "</tr>";
+    }
+    body.slice(0, 10).forEach(function (row, i) {
+      html += '<tr style="background:' + (i % 2 ? "#f6f8f8" : "#fff") + ';">';
+      (row || []).forEach(function (cell) {
+        html +=
+          '<td style="padding:5px 10px;border:1px solid #ddd;color:#333;">' +
+          esc(cell) +
+          "</td>";
+      });
+      html += "</tr>";
+    });
+    html += "</table>";
+    if (body.length > 10) {
+      html +=
+        '<div style="font-size:11px;color:#999;margin-top:4px;">… 共 ' +
+        body.length +
+        " 列</div>";
+    }
+    return html;
+  };
+</script>

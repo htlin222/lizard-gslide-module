@@ -1,0 +1,63 @@
+<script>
+  /* Auto Minter preview renderer for the Steps minter: numbered chevron-style
+     step cards with connectors. Template-aware: honors payload.templateId via
+     meta.templates (fill/numberText for the badge, titleColor/descColor for
+     the text, connector for the arrows). */
+  window.AUTO_PREVIEWS = window.AUTO_PREVIEWS || {};
+  window.AUTO_PREVIEWS["steps"] = function (payload, theme, meta) {
+    var steps = (payload && payload.steps) || [];
+    if (!steps.length) return "";
+    var main = (theme && theme.main) || "#3D6869";
+    var vertical = (payload && payload.orientation) === "vertical";
+    var esc = function (s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    };
+
+    // Resolve the selected template (fallback: first template, then theme).
+    var templates = (meta && meta.templates) || [];
+    var tpl = templates[0] || null;
+    for (var i = 0; i < templates.length; i++) {
+      if (templates[i].id === (payload && payload.templateId)) tpl = templates[i];
+    }
+    var badgeFill = (tpl && tpl.fill) || main;
+    var badgeText = (tpl && tpl.numberText) || "#FFFFFF";
+    var titleColor = (tpl && tpl.titleColor) || "#333333";
+    var descColor = (tpl && tpl.descColor) || "#666666";
+    var connector = (tpl && tpl.connector) || main;
+
+    var html =
+      '<div style="display:flex;' +
+      (vertical ? "flex-direction:column;" : "") +
+      'gap:6px;align-items:stretch;">';
+    steps.forEach(function (st, i) {
+      html +=
+        '<div style="flex:1;display:flex;' +
+        (vertical ? "" : "flex-direction:column;") +
+        'gap:8px;align-items:flex-start;border:1px solid #ddd;border-radius:4px;' +
+        'padding:10px;background:#fff;">' +
+        '<div style="width:22px;height:22px;border-radius:50%;background:' +
+        badgeFill + ";color:" + badgeText +
+        ';font-size:12px;font-weight:700;display:flex;align-items:center;' +
+        'justify-content:center;flex-shrink:0;">' + (i + 1) + "</div>" +
+        "<div>" +
+        '<div style="font-size:12px;font-weight:700;color:' + titleColor + ';">' +
+        esc(st.title || "") +
+        "</div>" +
+        (st.desc
+          ? '<div style="font-size:11px;color:' + descColor +
+            ';margin-top:2px;line-height:1.4;">' +
+            esc(st.desc) +
+            "</div>"
+          : "") +
+        "</div></div>" +
+        (i < steps.length - 1
+          ? '<div style="align-self:center;color:' + connector +
+            ';font-weight:700;flex-shrink:0;">' + (vertical ? "↓" : "→") + "</div>"
+          : "");
+    });
+    return html + "</div>";
+  };
+</script>

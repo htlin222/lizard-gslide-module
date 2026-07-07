@@ -183,7 +183,8 @@ function insertTimelineIntoSlide(payload) {
 		}
 
 		const tpl = resolveTimelineTemplate_(p.templateId);
-		const orientation = p.orientation === "vertical" ? "vertical" : "horizontal";
+		const orientation =
+			p.orientation === "vertical" ? "vertical" : "horizontal";
 		const font =
 			(typeof main_font_family !== "undefined" && main_font_family) ||
 			"Source Sans Pro";
@@ -396,7 +397,19 @@ function insertTimelineIntoSlide(payload) {
  * @param {ParagraphAlignment} alignment
  * @return {Shape}
  */
-function addTimelineText_(slide, text, x, y, w, h, color, bold, fontSize, font, alignment) {
+function addTimelineText_(
+	slide,
+	text,
+	x,
+	y,
+	w,
+	h,
+	color,
+	bold,
+	fontSize,
+	font,
+	alignment,
+) {
 	const box = slide.insertShape(
 		SlidesApp.ShapeType.TEXT_BOX,
 		Math.max(x, 0),
@@ -416,3 +429,102 @@ function addTimelineText_(slide, text, x, y, w, h, color, bold, fontSize, font, 
 	box.setContentAlignment(SlidesApp.ContentAlignment.MIDDLE);
 	return box;
 }
+
+/**
+ * Parses milestone text into an array of {date, label}. One milestone per
+ * line, "date | label"; lines with no separator become the label. Tolerant of
+ * the full-width "｜" and skips empty lines. Server-side mirror of the client
+ * parseMilestones (timeline-minter/scripts.html).
+ *
+ * @param {string} text
+ * @return {Array<{date: string, label: string}>}
+ */
+function parseTimelineLines_(text) {
+	const raw = String(text == null ? "" : text).replace(/\r\n/g, "\n");
+	const lines = raw.split("\n");
+	const items = [];
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i].replace(/｜/g, "|").trim();
+		if (!line) continue;
+		let date = "";
+		let label = "";
+		const idx = line.indexOf("|");
+		if (idx >= 0) {
+			date = line.slice(0, idx).trim();
+			label = line.slice(idx + 1).trim();
+		} else {
+			label = line;
+		}
+		if (date || label) items.push({ date: date, label: label });
+	}
+	return items;
+}
+
+/**
+ * Auto Minter adapter: turns generated "date | label" lines into an
+ * insertTimelineIntoSlide payload. Items are normalized the same way the
+ * insert fn does (normalizeTimelineItems_) so an all-empty result maps to
+ * null. Orientation defaults to 'horizontal' (the insert fn's default).
+ *
+ * @param {string} generatedText - Milestone lines from the AI step.
+ * @param {{orientation?: string, templateId?: string}} hints
+ * @return {Object|null} insert payload, or null when nothing parseable
+ */
+function autoBuildTimelinePayload_(generatedText, hints) {
+	var h = hints || {};
+	const items = normalizeTimelineItems_(parseTimelineLines_(generatedText));
+	if (!items.length) return null;
+
+	const templates = buildTimelineTemplates_();
+	let templateId = templates[0].id;
+	for (let i = 0; i < templates.length; i++) {
+		if (templates[i].id === h.templateId) templateId = h.templateId;
+	}
+
+	const orientation =
+		h.orientation === "vertical" || h.orientation === "horizontal"
+			? h.orientation
+			: "horizontal";
+
+	return { items: items, templateId: templateId, orientation: orientation };
+}
+
+// ── Auto Minter registration ─────────────────────────────────────────────
+// Self-contained guarded push: GAS file load order is unspecified, so this
+// block must not call functions defined in other files at the top level.
+// The registry variable MUST be declared `var` + typeof guard (never
+// const/let — a const AUTO_MINTERS anywhere would break the whole project).
+var AUTO_MINTERS = typeof AUTO_MINTERS === "undefined" ? [] : AUTO_MINTERS;
+AUTO_MINTERS.push({
+	key: "timeline",
+	label: "時間軸",
+	emoji: "⏱",
+	order: 70,
+	whenToUse:
+		"3-7 dated milestones/events in chronological order (has dates/years); use steps instead when undated",
+	hintsSpec: '{"orientation":"horizontal|vertical"}',
+	generate: "generateTimelineFromContext",
+	buildPayload: "autoBuildTimelinePayload_",
+	insert: "insertTimelineIntoSlide",
+	previewPartial: "src/components/timeline-minter/preview",
+	previewKind: "timeline",
+	precheck: "",
+	options: [
+		{
+			name: "templateId",
+			label: "範本",
+			type: "select",
+			choicesFrom: "getTimelineTemplates",
+		},
+		{
+			name: "orientation",
+			label: "方向",
+			type: "select",
+			default: "horizontal",
+			choices: [
+				{ value: "horizontal", label: "水平" },
+				{ value: "vertical", label: "垂直" },
+			],
+		},
+	],
+});

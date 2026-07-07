@@ -1,0 +1,328 @@
+<style>
+  /* Auto Minter dialog styles (mirrors the KPI minter's visual language). */
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family:
+      "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .dialog-root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .cm-body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 14px 14px 4px;
+    box-sizing: border-box;
+  }
+
+  .cm-label {
+    display: block;
+    margin: 12px 0 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .cm-textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 13px;
+    box-sizing: border-box;
+    min-height: 110px;
+    resize: vertical;
+  }
+
+  .cm-textarea:focus {
+    border-color: #4285f4;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+  }
+
+  .ai-button {
+    margin: 8px 0 4px;
+    padding: 8px 16px;
+    border: 1px solid #3d6869;
+    border-radius: 4px;
+    background-color: #3d6869;
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .ai-button:hover {
+    background-color: #335a5b;
+  }
+
+  .ai-button:disabled {
+    background-color: #b9c7c7;
+    border-color: #b9c7c7;
+    cursor: default;
+  }
+
+  /* Route button + candidate chips share one row */
+  .route-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px 0 4px;
+  }
+
+  .route-button {
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  /* Candidate chips (round-1 results) */
+  .candidate-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .cand-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid #dadce0;
+    border-radius: 16px;
+    background: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    color: #3c4043;
+    cursor: pointer;
+    transition:
+      border-color 0.12s ease,
+      box-shadow 0.12s ease;
+  }
+
+  .cand-chip:hover {
+    border-color: #c6c9cc;
+  }
+
+  .cand-chip.recommended {
+    border-color: #3d6869;
+  }
+
+  .cand-chip.active {
+    border-color: #3d6869;
+    box-shadow: 0 0 0 1px #3d6869 inset;
+    font-weight: 600;
+    background: #f0f5f5;
+  }
+
+  .cand-chip:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .cand-chip .cand-reason {
+    font-size: 11px;
+    color: #777;
+    font-weight: 400;
+  }
+
+  .cand-chip .cand-badge {
+    font-size: 10px;
+    color: #3d6869;
+    border: 1px solid #3d6869;
+    border-radius: 8px;
+    padding: 0 6px;
+  }
+
+  /* Options panel (per-minter declarative options) */
+  .options-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    border: 1px solid #e3e6e3;
+    border-radius: 4px;
+    background: #fafbfa;
+    padding: 8px 10px;
+  }
+
+  .options-fields {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    align-items: flex-end;
+  }
+
+  .opt-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 11px;
+    color: #555;
+  }
+
+  .opt-field.opt-checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    padding-bottom: 6px;
+  }
+
+  .opt-field input[type="number"],
+  .opt-field input[type="text"],
+  .opt-field select {
+    font-family: inherit;
+    font-size: 12px;
+    padding: 4px 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    box-sizing: border-box;
+  }
+
+  .opt-field input[type="number"] {
+    width: 64px;
+  }
+
+  .opt-field input[type="text"] {
+    width: 140px;
+  }
+
+  /* Preview panel */
+  .am-preview {
+    min-height: 140px;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    padding: 14px;
+    background: #fff;
+    overflow: auto;
+  }
+
+  .am-preview .placeholder {
+    color: #999;
+    font-style: italic;
+    font-size: 12px;
+  }
+
+  /* Generic fallback preview list */
+  .am-generic-list {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.6;
+  }
+
+  /* Status + buttons */
+  .status-message {
+    margin: 0 14px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: none;
+    flex-shrink: 0;
+  }
+
+  .status-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .status-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .status-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+  }
+
+  .button-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    background: white;
+    border-top: 1px solid #eee;
+    flex-shrink: 0;
+  }
+
+  .button-row button {
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1;
+    padding: 10px 18px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition:
+      background-color 0.12s ease,
+      border-color 0.12s ease;
+  }
+
+  .clear-button {
+    background-color: #fff;
+    color: #3c4043;
+    border: 1px solid #dadce0;
+  }
+
+  .clear-button:hover {
+    background-color: #f1f3f4;
+    border-color: #c6c9cc;
+  }
+
+  .clear-button:disabled {
+    color: #b0b3b6;
+    cursor: default;
+  }
+
+  /* Same width as the primary 插入 button (both flex: 1). */
+  .secondary-button {
+    flex: 1;
+    background-color: #fff;
+    color: #3d6869;
+    border: 1px solid #3d6869 !important;
+    font-weight: 600;
+  }
+
+  .secondary-button:hover {
+    background-color: #f0f5f5;
+  }
+
+  .secondary-button:disabled {
+    color: #b9c7c7;
+    border-color: #b9c7c7 !important;
+    cursor: default;
+    background-color: #fff;
+  }
+
+  .primary-button {
+    flex: 1;
+    background-color: #3d6869;
+    color: #fff;
+  }
+
+  .primary-button:hover {
+    background-color: #335a5b;
+  }
+
+  .primary-button:disabled {
+    background-color: #b9c7c7;
+    cursor: default;
+  }
+</style>

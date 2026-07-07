@@ -1,0 +1,19 @@
+<script>
+  /* Auto Minter preview renderer for the Icon minter: the glyph, big. */
+  window.AUTO_PREVIEWS = window.AUTO_PREVIEWS || {};
+  window.AUTO_PREVIEWS["icon"] = function (payload, theme) {
+    var glyph = (payload && payload.glyph) || "";
+    if (!glyph) return "";
+    var esc = function (s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    };
+    return (
+      '<div style="text-align:center;padding:14px 0;">' +
+      '<span style="font-size:72px;line-height:1;">' + esc(glyph) + "</span>" +
+      "</div>"
+    );
+  };
+</script>

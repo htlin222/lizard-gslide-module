@@ -329,3 +329,144 @@ function insertGalleryIntoSlide(payload) {
 		return { success: false, error: e.message };
 	}
 }
+
+/**
+ * Precheck for the Auto Minter: does the context contain at least one image
+ * URL? The gallery is only worth suggesting when there are real image links.
+ *
+ * @param {string} context
+ * @return {boolean}
+ */
+function galleryContextHasImages_(context) {
+	return /https?:\/\/\S+\.(?:png|jpe?g|gif|webp)(?:\?\S*)?/i.test(
+		String(context == null ? "" : context),
+	);
+}
+
+/**
+ * "Generates" gallery lines from free-form context — pure extraction, NO LLM
+ * call and NO API-key check. Pulls every image URL out of the context; each
+ * URL's caption is the nearest preceding non-empty non-URL line (or "" when
+ * none). Output format matches the gallery dialog: "url | caption" per line.
+ *
+ * @param {string} context - Arbitrary text the user pasted.
+ * @return {{success: boolean, generatedText?: string, error?: string}}
+ */
+function generateGalleryFromContext(context) {
+	const text = (context || "").trim();
+	if (!text) {
+		return { success: false, error: "No context provided." };
+	}
+
+	const urlRe = /https?:\/\/\S+\.(?:png|jpe?g|gif|webp)(?:\?\S*)?/gi;
+	const lines = text.replace(/\r\n/g, "\n").split("\n");
+	const out = [];
+	let caption = ""; // nearest preceding non-empty non-URL line
+
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i].trim();
+		if (!line) continue;
+		urlRe.lastIndex = 0;
+		const urls = line.match(urlRe);
+		if (urls) {
+			for (let j = 0; j < urls.length; j++) {
+				out.push(caption ? urls[j] + " | " + caption : urls[j]);
+			}
+		} else {
+			caption = line;
+		}
+	}
+
+	if (!out.length) {
+		return { success: false, error: "No image URLs found in the content." };
+	}
+	return { success: true, generatedText: out.join("\n") };
+}
+
+/**
+ * Auto Minter adapter: turns "url | caption" lines into an
+ * insertGalleryIntoSlide payload. Columns come from a valid hint or fall back
+ * to suggestGalleryCols_(); captions stay enabled (the insert fn's default).
+ *
+ * @param {string} generatedText - "url | caption" lines.
+ * @param {{cols?: number, templateId?: string}} hints
+ * @return {Object|null} insert payload, or null when nothing parseable
+ */
+function autoBuildGalleryPayload_(generatedText, hints) {
+	var h = hints || {};
+	const raw = String(generatedText == null ? "" : generatedText).replace(
+		/\r\n/g,
+		"\n",
+	);
+	const lines = raw.split("\n");
+	const items = [];
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i].replace(/｜/g, "|").trim();
+		if (!line) continue;
+		const idx = line.indexOf("|");
+		const url = (idx >= 0 ? line.slice(0, idx) : line).trim();
+		const caption = idx >= 0 ? line.slice(idx + 1).trim() : "";
+		if (url) items.push({ url: url, caption: caption });
+	}
+	if (!items.length) return null;
+
+	const templates = buildGalleryTemplates_();
+	let templateId = templates[0].id;
+	for (let i = 0; i < templates.length; i++) {
+		if (templates[i].id === h.templateId) templateId = h.templateId;
+	}
+
+	const cols =
+		h.cols > 0 ? Math.floor(h.cols) : suggestGalleryCols_(items.length);
+
+	return {
+		items: items,
+		cols: cols,
+		templateId: templateId,
+		captions: h.captions !== false,
+	};
+}
+
+// ── Auto Minter registration ─────────────────────────────────────────────
+// Self-contained guarded push: GAS file load order is unspecified, so this
+// block must not call functions defined in other files at the top level.
+// The registry variable MUST be declared `var` + typeof guard (never
+// const/let — a const AUTO_MINTERS anywhere would break the whole project).
+var AUTO_MINTERS = typeof AUTO_MINTERS === "undefined" ? [] : AUTO_MINTERS;
+AUTO_MINTERS.push({
+	key: "gallery",
+	label: "圖片陣列",
+	emoji: "🖼",
+	order: 110,
+	whenToUse:
+		"the content contains image URLs to lay out in a grid (only pick this when image URLs are present)",
+	hintsSpec: '{"cols":number}',
+	generate: "generateGalleryFromContext",
+	buildPayload: "autoBuildGalleryPayload_",
+	insert: "insertGalleryIntoSlide",
+	previewPartial: "src/components/gallery-minter/preview",
+	previewKind: "images",
+	precheck: "galleryContextHasImages_",
+	options: [
+		{
+			name: "cols",
+			label: "欄數",
+			type: "number",
+			min: 1,
+			max: 6,
+			placeholder: "auto",
+		},
+		{
+			name: "templateId",
+			label: "範本",
+			type: "select",
+			choicesFrom: "getGalleryTemplates",
+		},
+		{
+			name: "captions",
+			label: "顯示圖說",
+			type: "checkbox",
+			default: true,
+		},
+	],
+});

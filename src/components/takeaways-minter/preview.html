@@ -1,0 +1,66 @@
+<script>
+  /* Auto Minter preview renderer for the Takeaways minter. Template-aware:
+     honors payload.templateId for style (numbered cards vs checklist) and
+     colors, using the full template objects in meta.templates. */
+  window.AUTO_PREVIEWS = window.AUTO_PREVIEWS || {};
+  window.AUTO_PREVIEWS["takeaways"] = function (payload, theme, meta) {
+    var points = (payload && payload.points) || [];
+    if (!points.length) return "";
+    var main = (theme && theme.main) || "#3D6869";
+    var esc = function (s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    };
+
+    // Resolve the selected template (fallback: first template, then theme).
+    var templates = (meta && meta.templates) || [];
+    var tpl = templates[0] || null;
+    for (var i = 0; i < templates.length; i++) {
+      if (templates[i].id === (payload && payload.templateId)) tpl = templates[i];
+    }
+    var accent = (tpl && tpl.accent) || main;
+    var cardFill = (tpl && tpl.cardFill) || "#FFFFFF";
+    var cardBorder = (tpl && tpl.cardBorder) || main;
+    var badgeFill = (tpl && tpl.badgeFill) || main;
+    var badgeText = (tpl && tpl.badgeText) || "#FFFFFF";
+    var titleText = (tpl && tpl.titleText) || main;
+    var descText = (tpl && tpl.descText) || "#333333";
+    var checklist = tpl && tpl.style === "checklist";
+
+    var html =
+      '<div style="font-size:15px;font-weight:700;color:' + accent +
+      ';margin-bottom:10px;">' +
+      esc((payload && payload.heading) || "Key Takeaways") +
+      "</div>";
+
+    points.forEach(function (p, i) {
+      var badge = checklist
+        ? '<div style="color:' + accent + ';font-size:16px;font-weight:700;' +
+          'flex-shrink:0;line-height:1.2;">✓</div>'
+        : '<div style="width:20px;height:20px;border-radius:50%;background:' +
+          badgeFill + ";color:" + badgeText + ';font-size:11px;font-weight:700;' +
+          'display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+          (i + 1) +
+          "</div>";
+      var boxStyle = checklist
+        ? "padding:5px 2px;"
+        : "border:1px solid " + cardBorder + ";border-radius:4px;" +
+          "padding:8px 10px;margin-bottom:6px;background:" + cardFill + ";";
+      html +=
+        '<div style="display:flex;gap:10px;align-items:flex-start;' + boxStyle + '">' +
+        badge +
+        "<div>" +
+        '<div style="font-size:12px;font-weight:700;color:' + titleText + ';">' +
+        esc(p.title || "") +
+        "</div>" +
+        (p.desc
+          ? '<div style="font-size:11px;color:' + descText +
+            ';margin-top:2px;line-height:1.4;">' + esc(p.desc) + "</div>"
+          : "") +
+        "</div></div>";
+    });
+    return html;
+  };
+</script>

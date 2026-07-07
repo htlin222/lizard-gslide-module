@@ -95,6 +95,20 @@ clasp open
   triggers Google's re-authorization prompt. This is unavoidable per Google's
   OAuth rules — not a bug; it only happens once per account per scope change.
 
+### Apps Script Gotchas
+
+- **SlidesApp writes are buffered; the advanced `Slides` REST service is not.**
+  Mixing them in one function (e.g. `presentation.appendSlide(...)` then
+  `Slides.Presentations.batchUpdate(...)` referencing the new page's objectId)
+  fails with `The page (SLIDES_API…) could not be found`, because batchUpdate
+  reads the *saved* document and the appended slide hasn't been flushed yet.
+  **`SlidesApp.flush()` does NOT exist** (that's SpreadsheetApp) — don't try to
+  flush. Instead create the new page *inside the same batch* with a
+  `createSlide` request using a client-chosen `objectId`, then reference that
+  id from later requests in the same batchUpdate (see `insertGridIntoSlide`,
+  src/util/grid_minter.js). The bug can lie dormant: it only fires on the code
+  path that actually appends pages (grid overflow).
+
 ### Self-update for cloned decks
 
 Clones pull updates themselves — no central push needed. `src/util/self_update.js`

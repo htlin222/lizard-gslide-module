@@ -58,7 +58,14 @@ function buildTakeawaysTemplates_() {
 
 	return [
 		// Numbered cards — three color themes.
-		theme("numbered-main", "Numbered · Main", "numbered", main, "#FFFFFF", main),
+		theme(
+			"numbered-main",
+			"Numbered · Main",
+			"numbered",
+			main,
+			"#FFFFFF",
+			main,
+		),
 		theme(
 			"numbered-accent",
 			"Numbered · Accent",
@@ -113,14 +120,7 @@ function buildTakeawaysTemplates_() {
 			descText: "#333333",
 		},
 		// Checkmark list — three color themes.
-		theme(
-			"check-main",
-			"Checklist · Main",
-			"checklist",
-			main,
-			"#FFFFFF",
-			main,
-		),
+		theme("check-main", "Checklist · Main", "checklist", main, "#FFFFFF", main),
 		theme(
 			"check-accent",
 			"Checklist · Accent",
@@ -781,3 +781,66 @@ function insertTakeawaysIntoSlide(payload) {
 		return { success: false, error: e.message };
 	}
 }
+
+/**
+ * Auto Minter adapter: turns AI-generated takeaway lines (`title | desc`) into
+ * the payload insertTakeawaysIntoSlide() accepts. The heading defaults to
+ * "Key Takeaways", mirroring the insert fn's own fallback.
+ *
+ * @param {string} generatedText - raw LLM output from generateTakeawaysFromContext()
+ * @param {{templateId?: string, heading?: string}} [hints] - optional router hints
+ * @return {{heading: string, points: Array<{title:string,desc:string}>,
+ *   templateId: string}|null} null when parsing yields zero usable points
+ */
+function autoBuildTakeawaysPayload_(generatedText, hints) {
+	const h = hints || {};
+	const points = parseTakeawayPoints_(generatedText);
+	if (!points.length) return null;
+
+	const templates = buildTakeawaysTemplates_();
+	let templateId = templates[0].id;
+	for (let i = 0; i < templates.length; i++) {
+		if (templates[i].id === h.templateId) templateId = templates[i].id;
+	}
+
+	const heading =
+		(h.heading != null ? String(h.heading).trim() : "") || "Key Takeaways";
+
+	return { heading: heading, points: points, templateId: templateId };
+}
+
+// ── Auto Minter registration ─────────────────────────────────────────────
+// Self-contained guarded push: GAS file load order is unspecified, so this
+// block must not call functions defined in other files at the top level.
+// The registry variable MUST be declared `var` + typeof guard (never
+// const/let — a const AUTO_MINTERS anywhere would break the whole project).
+var AUTO_MINTERS = typeof AUTO_MINTERS === "undefined" ? [] : AUTO_MINTERS;
+AUTO_MINTERS.push({
+	key: "takeaways",
+	label: "重點摘要",
+	emoji: "🎯",
+	order: 100,
+	whenToUse:
+		"3-5 key conclusions or take-home messages summarizing the content",
+	hintsSpec: '{"heading":string}',
+	generate: "generateTakeawaysFromContext",
+	buildPayload: "autoBuildTakeawaysPayload_",
+	insert: "insertTakeawaysIntoSlide",
+	previewPartial: "src/components/takeaways-minter/preview",
+	previewKind: "list",
+	precheck: "",
+	options: [
+		{
+			name: "templateId",
+			label: "範本",
+			type: "select",
+			choicesFrom: "getTakeawaysTemplates",
+		},
+		{
+			name: "heading",
+			label: "標題",
+			type: "text",
+			placeholder: "Key Takeaways",
+		},
+	],
+});

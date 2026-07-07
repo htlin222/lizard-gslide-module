@@ -50,6 +50,17 @@ function load(rel) {
 		hexToRgbColor_: () => ({ red: 0, green: 0, blue: 0 }),
 		getStyleDefinitions: () => ({}),
 		getConfigValues: () => ({}),
+		getThemeColors: () => ({
+			main: "#3D6869",
+			accent: "#f29424",
+			base: "#FFFFFF",
+			text: "#333333",
+			sub1: "#E7EAE7",
+			sub2: "#E7F9F5",
+		}),
+		// AI plumbing — stubbed so generate*FromContext short-circuits
+		hasUserApiKey: () => false,
+		callGroq_: () => ({ success: false, error: "stub" }),
 		// GAS services — stubbed (insert* functions touch these but we don't call them)
 		SlidesApp: {},
 		Slides: {},
@@ -120,6 +131,326 @@ const callout = load("src/util/callout_minter.js");
 const ct = callout.getCalloutTemplates();
 ok("getCalloutTemplates has 7 templates", ct.length === 7);
 ok("callout templates carry an id + barColor", ct.every((t) => t.id && t.barColor));
+
+// ══ Auto Minter ═════════════════════════════════════════════════════════════
+
+const MINTER_FILES = [
+	"src/util/table_minter.js",
+	"src/util/grid_minter.js",
+	"src/util/callout_minter.js",
+	"src/util/kpi_minter.js",
+	"src/util/barchart_minter.js",
+	"src/util/compare_minter.js",
+	"src/util/timeline_minter.js",
+	"src/util/steps_minter.js",
+	"src/util/agenda_minter.js",
+	"src/util/takeaways_minter.js",
+	"src/util/gallery_minter.js",
+	"src/util/icon_minter.js",
+];
+const AUTO_KEYS = [
+	"table", "grid", "callout", "kpi", "barchart", "compare",
+	"timeline", "steps", "agenda", "takeaways", "gallery", "icon",
+];
+
+/**
+ * Loads several files into ONE shared sandbox (mirrors GAS, where every file
+ * shares the global scope and auto_minter.js resolves fn names via globalThis).
+ * @param {Array<string>} files - paths relative to repo root, loaded in order
+ * @return {Object} the shared sandbox
+ */
+function loadAll(files) {
+	const sandbox = {
+		main_color: "#3D6869",
+		accent_color: "#f29424",
+		base_color: "#FFFFFF",
+		text_color: "#333333",
+		sub1_color: "#E7EAE7",
+		sub2_color: "#E7F9F5",
+		main_font_family: "Source Sans Pro",
+		label_font_size: 14,
+		hexToRgbColor_: () => ({ red: 0, green: 0, blue: 0 }),
+		getStyleDefinitions: () => ({}),
+		getConfigValues: () => ({}),
+		getThemeColors: () => ({
+			main: "#3D6869",
+			accent: "#f29424",
+			base: "#FFFFFF",
+			text: "#333333",
+			sub1: "#E7EAE7",
+			sub2: "#E7F9F5",
+		}),
+		hasUserApiKey: () => false,
+		callGroq_: () => ({ success: false, error: "stub" }),
+		SlidesApp: {},
+		Slides: {},
+		Utilities: { getUuid: () => "uuid-stub" },
+		console,
+	};
+	vm.createContext(sandbox);
+	for (const rel of files) {
+		vm.runInContext(fs.readFileSync(path.join(ROOT, rel), "utf8"), sandbox, {
+			filename: rel,
+		});
+	}
+	return sandbox;
+}
+
+// ── Registry completeness (all minters + orchestrator in one context) ──
+const auto = loadAll(MINTER_FILES.concat(["src/util/auto_minter.js"]));
+
+const registry = auto.getAutoMinterRegistry_();
+ok("registry has 12 entries", registry.length === 12);
+ok(
+	"registry keys are unique + complete",
+	JSON.stringify(registry.map((d) => d.key).sort()) ===
+		JSON.stringify(AUTO_KEYS.slice().sort()),
+);
+ok(
+	"registry is sorted by order",
+	registry.every((d, i) => i === 0 || registry[i - 1].order <= d.order),
+);
+for (const d of registry) {
+	ok(
+		"registry[" + d.key + "] fn names resolve (generate/buildPayload/insert)",
+		typeof auto[d.generate] === "function" &&
+			typeof auto[d.buildPayload] === "function" &&
+			typeof auto[d.insert] === "function",
+	);
+	if (d.precheck) {
+		ok(
+			"registry[" + d.key + "] precheck resolves",
+			typeof auto[d.precheck] === "function",
+		);
+	}
+	ok(
+		"registry[" + d.key + "] has router metadata",
+		!!(d.label && d.emoji && d.whenToUse),
+	);
+}
+
+ok(
+	"getAutoMinterPublicList_ mirrors the registry",
+	auto.getAutoMinterPublicList_().length === 12 &&
+		auto.getAutoMinterPublicList_().every((m) => m.key && m.label),
+);
+
+// ── Router prompt mentions every registered key ──
+const prompt = auto.buildAutoRouterPrompt_(registry);
+ok(
+	"router prompt lists every key",
+	AUTO_KEYS.every((k) => prompt.indexOf("- " + k + ":") !== -1),
+);
+ok("router prompt demands JSON", prompt.indexOf('"candidates"') !== -1);
+
+// ── extractAutoJson_ robustness ──
+ok(
+	"extractAutoJson_ parses fenced JSON",
+	auto.extractAutoJson_('```json\n{"candidates":[]}\n```').candidates.length === 0,
+);
+ok(
+	"extractAutoJson_ parses prose-wrapped JSON",
+	auto.extractAutoJson_('Sure! Here you go: {"a":1} hope that helps').a === 1,
+);
+ok("extractAutoJson_ returns null on garbage", auto.extractAutoJson_("nope") === null);
+ok("extractAutoJson_ returns null on empty", auto.extractAutoJson_("") === null);
+
+// ── Orchestrator edges (no API key stubbed → needKey; unknown key → error) ──
+ok(
+	"autoMinterRoute without key → needKey",
+	auto.autoMinterRoute("some content").needKey === true,
+);
+ok(
+	"autoMinterGenerate unknown key → error",
+	auto.autoMinterGenerate("nope", "ctx", {}).success === false,
+);
+ok(
+	"autoMinterInsert unknown key → error",
+	auto.autoMinterInsert("nope", {}).success === false,
+);
+
+// ── Adapter payload shapes (canonical generatedText per minter) ──
+const kpiPayload = auto.autoBuildKpiPayload_("87% | 轉換率 | up\n3.2x | 成長", {});
+ok("kpi adapter → 2 items + templateId", kpiPayload.items.length === 2 && !!kpiPayload.templateId);
+
+const gridPayload = auto.autoBuildGridPayload_(
+	"# A\n## a\n\nbody1\n---\n# B\n## b\n\nbody2",
+	{},
+);
+ok(
+	"grid adapter → 2 units + layout",
+	gridPayload.units.length === 2 && gridPayload.rows >= 1 && gridPayload.cols >= 1,
+);
+ok(
+	"grid adapter honors rows/cols hints",
+	auto.autoBuildGridPayload_("# A\n\nx\n---\n# B\n\ny", { rows: 1, cols: 2 }).cols === 2,
+);
+
+const cmpPayload = auto.autoBuildComparePayload_(
+	"# Opt A\n- p1\n- p2\n---\n# Opt B\n- q1",
+	{},
+);
+ok("compare adapter → 2 columns", cmpPayload.columns.length === 2);
+
+const stepsPayload = auto.autoBuildStepsPayload_("開場 | 打招呼\n重點 | 說明", {});
+ok("steps adapter → 2 steps, horizontal default", stepsPayload.steps.length === 2 && stepsPayload.orientation === "horizontal");
+ok(
+	"steps adapter honors vertical hint",
+	auto.autoBuildStepsPayload_("a | b", { orientation: "vertical" }).orientation === "vertical",
+);
+
+const twPayload = auto.autoBuildTakeawaysPayload_("T1 | d1\nT2 | d2", {});
+ok("takeaways adapter → 2 points + default heading", twPayload.points.length === 2 && !!twPayload.heading);
+
+const barPayload = auto.autoBuildBarChartPayload_("A | 10\nB | 20", {});
+ok("barchart adapter → 2 data + showValues", barPayload.data.length === 2 && barPayload.showValues === true);
+
+const coPayload = auto.autoBuildCalloutPayload_("HEADER: Note\nBODY: Important thing", {});
+ok("callout adapter reads HEADER/BODY", !!coPayload && coPayload.body === "Important thing");
+
+const tbPayload = auto.autoBuildTablePayload_(
+	"| Drug | ORR |\n| --- | --- |\n| A | 45% |\n| B | 61% |",
+	{},
+);
+ok(
+	"table adapter → header + 2 body rows",
+	!!tbPayload && tbPayload.header.length === 2 && tbPayload.body.length === 2,
+);
+ok("parseTableMarkdown_ null on no table", auto.parseTableMarkdown_("just prose") === null);
+
+const tlPayload = auto.autoBuildTimelinePayload_("2024 | 起始\n2025 | 完成", {});
+ok("timeline adapter → 2 items, horizontal default", tlPayload.items.length === 2 && tlPayload.orientation === "horizontal");
+
+const agPayload = auto.autoBuildAgendaPayload_("one\ntwo\nthree", {});
+ok("agenda adapter → 3 items", agPayload.items.length === 3);
+
+const glPayload = auto.autoBuildGalleryPayload_(
+	"https://x.com/a.png | 圖說\nhttps://x.com/b.jpg",
+	{},
+);
+ok(
+	"gallery adapter → 2 items + cols",
+	glPayload.items.length === 2 && glPayload.cols >= 1 && glPayload.items[0].caption === "圖說",
+);
+
+const icPayload = auto.autoBuildIconPayload_("🚀", {});
+ok("icon adapter extracts glyph", !!icPayload && icPayload.glyph === "🚀");
+ok("icon adapter null on empty", auto.autoBuildIconPayload_("", {}) === null);
+
+// ── Gallery generate: pure extraction, no key needed (key stub returns false) ──
+const glGen = auto.generateGalleryFromContext(
+	"看這張圖\nhttps://x.com/pic.png\n以及 https://y.com/two.jpg",
+);
+ok("generateGalleryFromContext works without a key", glGen.success === true);
+ok(
+	"galleryContextHasImages_ true/false",
+	auto.galleryContextHasImages_("https://x.com/a.png") === true &&
+		auto.galleryContextHasImages_("no images here") === false,
+);
+
+// ── Adapters return null (not throw) on unparseable text ──
+for (const d of registry) {
+	let nullish;
+	try {
+		nullish = auto[d.buildPayload]("", {});
+	} catch (e) {
+		nullish = "threw: " + e.message;
+	}
+	ok("adapter[" + d.key + "] returns null on empty text", nullish === null);
+}
+
+// ── Declarative options: schema valid, selects resolve to concrete choices ──
+const OPTION_TYPES = ["number", "select", "checkbox", "text"];
+for (const d of registry) {
+	const opts = d.options || [];
+	ok(
+		"options[" + d.key + "] specs are well-formed",
+		opts.every(
+			(o) => o.name && o.label && OPTION_TYPES.indexOf(o.type) !== -1,
+		),
+	);
+	ok(
+		"options[" + d.key + "] selects have choices or a resolvable choicesFrom",
+		opts
+			.filter((o) => o.type === "select")
+			.every(
+				(o) =>
+					(Array.isArray(o.choices) && o.choices.length > 0) ||
+					typeof auto[o.choicesFrom] === "function",
+			),
+	);
+}
+const publicList = auto.getAutoMinterPublicList_();
+for (const m of publicList) {
+	ok(
+		"public list[" + m.key + "] resolves every select to concrete choices",
+		(m.options || [])
+			.filter((o) => o.type === "select")
+			.every((o) => Array.isArray(o.choices) && o.choices.length > 0),
+	);
+	// Template-aware previews: minters with a choicesFrom select must ship
+	// their full template objects in the preload.
+	const hasTplSelect = (registry.find((d) => d.key === m.key).options || [])
+		.some((o) => o.choicesFrom);
+	if (hasTplSelect) {
+		ok(
+			"public list[" + m.key + "] carries full templates for the preview",
+			Array.isArray(m.templates) && m.templates.length > 0 && !!m.templates[0].id,
+		);
+	}
+}
+
+// ── templateId survives the whole rebuild chain (the "styles look the same" bug) ──
+const twRebuild = auto.autoMinterRebuild("takeaways", "T1 | d1\nT2 | d2", {
+	templateId: "check-main",
+});
+ok(
+	"takeaways rebuild honors templateId=check-main",
+	twRebuild.success === true && twRebuild.payload.templateId === "check-main",
+);
+
+// ── autoMinterRebuild: re-layout without regenerating ──
+const gridText = "# A\n\nx\n---\n# B\n\ny\n---\n# C\n\nz\n---\n# D\n\nw";
+const rb = auto.autoMinterRebuild("grid", gridText, { rows: 4, cols: 1 });
+ok(
+	"autoMinterRebuild grid honors new rows/cols",
+	rb.success === true && rb.payload.rows === 4 && rb.payload.cols === 1,
+);
+ok(
+	"autoMinterRebuild unknown key → error",
+	auto.autoMinterRebuild("nope", "x", {}).success === false,
+);
+ok(
+	"autoMinterRebuild unparseable text → error",
+	auto.autoMinterRebuild("grid", "", {}).success === false,
+);
+
+// ── Adapters honor post-hoc option hints ──
+ok(
+	"barchart adapter honors showValues:false",
+	auto.autoBuildBarChartPayload_("A | 1", { showValues: false }).showValues === false,
+);
+ok(
+	"gallery adapter honors captions:false",
+	auto.autoBuildGalleryPayload_("https://x.com/a.png | c", { captions: false })
+		.captions === false,
+);
+ok(
+	"icon adapter honors size hint",
+	auto.autoBuildIconPayload_("🚀", { size: 48 }).size === 48,
+);
+ok(
+	"table adapter honors fontSize hint",
+	auto.autoBuildTablePayload_("| A | B |\n| - | - |\n| 1 | 2 |", { fontSize: 20 })
+		.fontSize === 20,
+);
+
+// ── Load-order robustness: orchestrator evaluated FIRST, registry still fills ──
+const early = loadAll(["src/util/auto_minter.js"].concat(MINTER_FILES));
+ok(
+	"registry complete when auto_minter.js loads first",
+	early.getAutoMinterRegistry_().length === 12,
+);
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

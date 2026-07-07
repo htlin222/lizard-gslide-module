@@ -1,0 +1,54 @@
+<script>
+  /* Auto Minter preview renderer for the KPI minter. Approximate look of the
+     inserted cards (value + trend arrow above label). Template-aware: honors
+     payload.templateId via meta.templates (valueColor/labelColor/cardFill/
+     cardBorder); trend-arrow colors stay independent, matching the server. */
+  window.AUTO_PREVIEWS = window.AUTO_PREVIEWS || {};
+  window.AUTO_PREVIEWS["kpi"] = function (payload, theme, meta) {
+    var items = (payload && payload.items) || [];
+    if (!items.length) return "";
+    var main = (theme && theme.main) || "#3D6869";
+    var esc = function (s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    };
+
+    // Resolve the selected template (fallback: first template, then theme).
+    var templates = (meta && meta.templates) || [];
+    var tpl = templates[0] || null;
+    for (var i = 0; i < templates.length; i++) {
+      if (templates[i].id === (payload && payload.templateId)) tpl = templates[i];
+    }
+    var valueColor = (tpl && tpl.valueColor) || main;
+    var labelColor = (tpl && tpl.labelColor) || "#333333";
+    var cardFill = (tpl && tpl.cardFill) || "#FFFFFF";
+    var cardBorder = (tpl && tpl.cardBorder) || main;
+
+    var arrowOf = { up: "↑", down: "↓", flat: "→" };
+    var colorOf = { up: "#2E7D32", down: "#C0392B", flat: "#7F8C8D" };
+    var html =
+      '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;">';
+    items.forEach(function (it) {
+      var arrow = arrowOf[it.trend] || "";
+      var aColor = colorOf[it.trend] || "";
+      html +=
+        '<div style="border:1px solid ' + cardBorder + ";border-radius:4px;" +
+        "padding:12px 18px;text-align:center;min-width:72px;background:" +
+        cardFill + ';">' +
+        '<div style="font-size:24px;font-weight:700;line-height:1.15;color:' +
+        valueColor + ';white-space:nowrap;">' +
+        esc(it.value || "—") +
+        (arrow
+          ? ' <span style="color:' + aColor + ';font-size:20px;">' + arrow + "</span>"
+          : "") +
+        "</div>" +
+        '<div style="margin-top:4px;font-size:11px;color:' + labelColor +
+        ';white-space:nowrap;">' +
+        esc(it.label || "") +
+        "</div></div>";
+    });
+    return html + "</div>";
+  };
+</script>

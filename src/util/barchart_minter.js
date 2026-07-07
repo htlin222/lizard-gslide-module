@@ -165,7 +165,10 @@ function insertBarChartIntoSlide(payload) {
 		const p = payload || {};
 		const bars = parseBarChartData_(p.data);
 		if (!bars.length) {
-			return { success: false, error: "No data. Use `label | value` per line." };
+			return {
+				success: false,
+				error: "No data. Use `label | value` per line.",
+			};
 		}
 
 		const templates = buildBarChartTemplates_();
@@ -179,7 +182,8 @@ function insertBarChartIntoSlide(payload) {
 				: [tpl.fill || "#3D6869"];
 		const colorFor = (i) => palette[i % palette.length];
 
-		const orientation = p.orientation === "horizontal" ? "horizontal" : "vertical";
+		const orientation =
+			p.orientation === "horizontal" ? "horizontal" : "vertical";
 		const showValues = p.showValues !== false;
 		const font =
 			(typeof main_font_family !== "undefined" && main_font_family) ||
@@ -413,3 +417,78 @@ function formatBarValue_(v) {
 	if (Math.round(n) === n) return String(n);
 	return String(Math.round(n * 10) / 10);
 }
+
+/**
+ * Auto Minter adapter: turns AI-generated data lines (`label | value`) into the
+ * payload insertBarChartIntoSlide() accepts. Orientation defaults to "vertical"
+ * (mirroring the insert fn, where anything but "horizontal" renders vertical).
+ *
+ * @param {string} generatedText - raw LLM output from generateBarChartFromContext()
+ * @param {{templateId?: string, orientation?: string}} [hints] - optional router hints
+ * @return {{data: Array<{label:string,value:number}>, templateId: string,
+ *   orientation: string, showValues: boolean}|null} null when parsing yields zero bars
+ */
+function autoBuildBarChartPayload_(generatedText, hints) {
+	const h = hints || {};
+	const data = parseBarChartData_(generatedText);
+	if (!data.length) return null;
+
+	const templates = buildBarChartTemplates_();
+	let templateId = templates[0].id;
+	for (let i = 0; i < templates.length; i++) {
+		if (templates[i].id === h.templateId) templateId = templates[i].id;
+	}
+
+	return {
+		data: data,
+		templateId: templateId,
+		orientation: h.orientation === "horizontal" ? "horizontal" : "vertical",
+		showValues: h.showValues !== false,
+	};
+}
+
+// ── Auto Minter registration ─────────────────────────────────────────────
+// Self-contained guarded push: GAS file load order is unspecified, so this
+// block must not call functions defined in other files at the top level.
+// The registry variable MUST be declared `var` + typeof guard (never
+// const/let — a const AUTO_MINTERS anywhere would break the whole project).
+var AUTO_MINTERS = typeof AUTO_MINTERS === "undefined" ? [] : AUTO_MINTERS;
+AUTO_MINTERS.push({
+	key: "barchart",
+	label: "長條圖",
+	emoji: "📈",
+	order: 50,
+	whenToUse:
+		"one numeric series across 3-8 categories worth comparing visually as bars",
+	hintsSpec: '{"orientation":"vertical|horizontal"}',
+	generate: "generateBarChartFromContext",
+	buildPayload: "autoBuildBarChartPayload_",
+	insert: "insertBarChartIntoSlide",
+	previewPartial: "src/components/barchart-minter/preview",
+	previewKind: "bars",
+	precheck: "",
+	options: [
+		{
+			name: "templateId",
+			label: "範本",
+			type: "select",
+			choicesFrom: "getBarChartTemplates",
+		},
+		{
+			name: "orientation",
+			label: "方向",
+			type: "select",
+			default: "vertical",
+			choices: [
+				{ value: "vertical", label: "垂直" },
+				{ value: "horizontal", label: "水平" },
+			],
+		},
+		{
+			name: "showValues",
+			label: "顯示數值",
+			type: "checkbox",
+			default: true,
+		},
+	],
+});

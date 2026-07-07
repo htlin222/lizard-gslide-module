@@ -1,0 +1,76 @@
+<script>
+  /* Auto Minter preview renderer for the Bar Chart minter. Renders vertical
+     columns or horizontal bars scaled to the max value. Template-aware:
+     honors payload.templateId via meta.templates — 'single' templates paint
+     every bar with tpl.fill, 'multi' cycles tpl.palette per bar. */
+  window.AUTO_PREVIEWS = window.AUTO_PREVIEWS || {};
+  window.AUTO_PREVIEWS["barchart"] = function (payload, theme, meta) {
+    var data = (payload && payload.data) || [];
+    if (!data.length) return "";
+    var main = (theme && theme.main) || "#3D6869";
+    var esc = function (s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    };
+
+    // Resolve the selected template (fallback: first template, then theme).
+    var templates = (meta && meta.templates) || [];
+    var tpl = templates[0] || null;
+    for (var i = 0; i < templates.length; i++) {
+      if (templates[i].id === (payload && payload.templateId)) tpl = templates[i];
+    }
+    var palette =
+      tpl && tpl.mode === "multi" && tpl.palette && tpl.palette.length
+        ? tpl.palette
+        : [(tpl && tpl.fill) || main];
+    var barColor = function (i) {
+      return palette[i % palette.length];
+    };
+
+    var max = 0;
+    data.forEach(function (d) {
+      var v = Number(d.value) || 0;
+      if (v > max) max = v;
+    });
+    if (max <= 0) max = 1;
+    var showValues = !payload || payload.showValues !== false;
+
+    if ((payload && payload.orientation) === "horizontal") {
+      var html = '<div style="display:flex;flex-direction:column;gap:6px;">';
+      data.forEach(function (d, di) {
+        var w = Math.max(((Number(d.value) || 0) / max) * 100, 2);
+        html +=
+          '<div style="display:flex;align-items:center;gap:8px;font-size:11px;">' +
+          '<div style="width:90px;text-align:right;color:#333;overflow:hidden;' +
+          'text-overflow:ellipsis;white-space:nowrap;">' + esc(d.label) + "</div>" +
+          '<div style="flex:1;"><div style="width:' + w + "%;background:" +
+          barColor(di) +
+          ';border-radius:2px;color:#fff;padding:3px 6px;box-sizing:border-box;' +
+          'white-space:nowrap;">' + (showValues ? esc(d.value) : "&nbsp;") +
+          "</div></div></div>";
+      });
+      return html + "</div>";
+    }
+
+    var html2 =
+      '<div style="display:flex;align-items:flex-end;justify-content:center;' +
+      'gap:14px;height:150px;">';
+    data.forEach(function (d, di) {
+      var h = Math.max(((Number(d.value) || 0) / max) * 110, 4);
+      html2 +=
+        '<div style="display:flex;flex-direction:column;align-items:center;' +
+        'gap:4px;font-size:11px;max-width:80px;">' +
+        (showValues
+          ? '<div style="color:#333;font-weight:600;">' + esc(d.value) + "</div>"
+          : "") +
+        '<div style="width:34px;height:' + h + "px;background:" + barColor(di) +
+        ';border-radius:2px 2px 0 0;"></div>' +
+        '<div style="color:#333;text-align:center;line-height:1.2;">' +
+        esc(d.label) +
+        "</div></div>";
+    });
+    return html2 + "</div>";
+  };
+</script>

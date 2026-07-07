@@ -266,7 +266,9 @@ function insertTableIntoSlide(payload) {
 			tableBorderRequest_(tableId, null, "INNER_HORIZONTAL", gray, 0.75, 1),
 		);
 		requests.push(tableBorderRequest_(tableId, null, "BOTTOM", gray, 0.75, 1));
-		requests.push(tableBorderRequest_(tableId, headerRange, "TOP", theme, 1.5, 1));
+		requests.push(
+			tableBorderRequest_(tableId, headerRange, "TOP", theme, 1.5, 1),
+		);
 
 		// Proportional column widths summing to the requested total width.
 		const weights = [];
@@ -307,3 +309,161 @@ function insertTableIntoSlide(payload) {
 		return { success: false, error: e.message };
 	}
 }
+
+/**
+ * Detects a Markdown table separator row, e.g. "| --- | :--: |".
+ * Server-side port of the client isSeparatorRow (table-minter/scripts.html).
+ *
+ * @param {string} line
+ * @return {boolean}
+ */
+function tableIsSeparatorRow_(line) {
+	const stripped = String(line == null ? "" : line).replace(/[\s|]/g, "");
+	return (
+		stripped.length > 0 &&
+		/^[:\-]+$/.test(stripped) &&
+		stripped.indexOf("-") !== -1
+	);
+}
+
+/**
+ * Robustly extracts just the Markdown table from a blob of text. LLMs often
+ * wrap the table in prose ("Here is your markdown:") or code fences — this
+ * keeps the largest contiguous run of pipe-bearing lines, preferring a run
+ * that contains a separator row. Server-side port of the client
+ * extractMarkdownTable (table-minter/scripts.html).
+ *
+ * @param {string} text
+ * @return {string}
+ */
+function extractTableMarkdown_(text) {
+	const lines = String(text == null ? "" : text).split(/\r?\n/);
+	const blocks = [];
+	let cur = [];
+	for (let i = 0; i < lines.length; i++) {
+		const t = lines[i].trim();
+		if (/^```/.test(t)) continue; // skip code-fence markers
+		if (t.indexOf("|") !== -1) {
+			cur.push(lines[i]);
+		} else if (cur.length) {
+			blocks.push(cur);
+			cur = [];
+		}
+	}
+	if (cur.length) blocks.push(cur);
+	if (!blocks.length) return String(text == null ? "" : text).trim();
+
+	const score = function (b) {
+		return (b.some(tableIsSeparatorRow_) ? 1000 : 0) + b.length;
+	};
+	blocks.sort(function (a, b) {
+		return score(b) - score(a);
+	});
+	return blocks[0].join("\n").trim();
+}
+
+/**
+ * Parses a GitHub-style Markdown table into header + body rows. Tolerates
+ * optional leading/trailing pipes, surrounding prose, and code fences.
+ * Server-side port of the client parseMarkdownTable (table-minter/scripts.html).
+ *
+ * @param {string} md
+ * @return {{header: string[], body: string[][]} | null} null when no table found
+ */
+function parseTableMarkdown_(md) {
+	const table = extractTableMarkdown_(md);
+	const lines = table
+		.split(/\r?\n/)
+		.map(function (l) {
+			return l.trim();
+		})
+		.filter(function (l) {
+			return l.length && l.indexOf("|") !== -1;
+		});
+
+	if (lines.length === 0) return null;
+
+	const splitCells = function (line) {
+		let t = line.trim();
+		if (t.charAt(0) === "|") t = t.slice(1);
+		if (t.charAt(t.length - 1) === "|") t = t.slice(0, -1);
+		return t.split("|").map(function (c) {
+			return c.trim();
+		});
+	};
+
+	const header = splitCells(lines[0]);
+	const body = [];
+	for (let i = 1; i < lines.length; i++) {
+		if (tableIsSeparatorRow_(lines[i])) continue; // skip the separator row
+		body.push(splitCells(lines[i]));
+	}
+	return { header: header, body: body };
+}
+
+/**
+ * Auto Minter adapter: turns generated Markdown into an insertTableIntoSlide
+ * payload. Defaults mirror what the dialog sends (fontSize 14, left 25,
+ * top 100, widthPx 0 = auto → 636 PT; theme omitted so the insert fn falls
+ * back to main_color).
+ *
+ * @param {string} generatedText - Markdown table text from the AI step.
+ * @param {{title?: string}} hints
+ * @return {Object|null} insert payload, or null when nothing parseable
+ */
+function autoBuildTablePayload_(generatedText, hints) {
+	var h = hints || {};
+	const data = parseTableMarkdown_(generatedText);
+	if (!data || !data.header || !data.header.length) return null;
+	const fontSize =
+		typeof h.fontSize === "number" && h.fontSize >= 8 && h.fontSize <= 32
+			? h.fontSize
+			: 14;
+	return {
+		header: data.header,
+		body: data.body,
+		fontSize: fontSize,
+		widthPx: 0,
+		left: 25,
+		top: 100,
+		title: h.title || "",
+	};
+}
+
+// ── Auto Minter registration ─────────────────────────────────────────────
+// Self-contained guarded push: GAS file load order is unspecified, so this
+// block must not call functions defined in other files at the top level.
+// The registry variable MUST be declared `var` + typeof guard (never
+// const/let — a const AUTO_MINTERS anywhere would break the whole project).
+var AUTO_MINTERS = typeof AUTO_MINTERS === "undefined" ? [] : AUTO_MINTERS;
+AUTO_MINTERS.push({
+	key: "table",
+	label: "表格",
+	emoji: "🔲",
+	order: 10,
+	whenToUse:
+		"dense row-and-column data, comparisons across multiple attributes, structured records",
+	hintsSpec: '{"title":string}',
+	generate: "generateTableMarkdownFromContext",
+	buildPayload: "autoBuildTablePayload_",
+	insert: "insertTableIntoSlide",
+	previewPartial: "src/components/table-minter/preview",
+	previewKind: "table",
+	precheck: "",
+	options: [
+		{
+			name: "title",
+			label: "表格標題",
+			type: "text",
+			placeholder: "（可留空）",
+		},
+		{
+			name: "fontSize",
+			label: "字級",
+			type: "number",
+			min: 8,
+			max: 32,
+			default: 14,
+		},
+	],
+});

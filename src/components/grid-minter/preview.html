@@ -1,0 +1,60 @@
+<script>
+  /* Auto Minter preview renderer for the Grid minter: rows×cols card grid.
+     Style-aware: grid uses payload.styleNumber (1-6, from STYLE_DEFINITIONS
+     in src/util/default_style.js) rather than templateId. The symbolic colors
+     (main_color / accent_color / sub1_color / base_color) are approximated
+     client-side from the theme argument. */
+  window.AUTO_PREVIEWS = window.AUTO_PREVIEWS || {};
+  window.AUTO_PREVIEWS["grid"] = function (payload, theme, meta) {
+    var units = (payload && payload.units) || [];
+    if (!units.length) return "";
+    var cols = (payload && payload.cols) || Math.min(units.length, 3);
+    var main = (theme && theme.main) || "#3D6869";
+    var accent = (theme && theme.accent) || "#f29424";
+    var sub1 = (theme && theme.sub1) || "#E7EAE7";
+    var base = "#FFFFFF";
+    var esc = function (s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    };
+
+    // Approximation of STYLE_DEFINITIONS 1-6 (default_style.js), with body
+    // text flipped light on the dark fills (styles 2 and 5).
+    var styles = {
+      1: { fill: base, border: main, text: main, body: "#333333", sub: "#666666" },
+      2: { fill: main, border: main, text: base, body: "#F2F2F2", sub: "#DDDDDD" },
+      3: { fill: sub1, border: main, text: main, body: "#333333", sub: "#666666" },
+      4: { fill: base, border: accent, text: accent, body: "#333333", sub: "#666666" },
+      5: { fill: accent, border: accent, text: base, body: "#F2F2F2", sub: "#DDDDDD" },
+      6: { fill: base, border: "#E0E0E0", text: main, body: "#333333", sub: "#666666" },
+    };
+    var st = styles[Number(payload && payload.styleNumber)] || styles[1];
+
+    var html =
+      '<div style="display:grid;grid-template-columns:repeat(' +
+      cols +
+      ',1fr);gap:10px;">';
+    units.forEach(function (u) {
+      html +=
+        '<div style="border:1px solid ' + st.border +
+        ";border-radius:4px;padding:10px;background:" + st.fill +
+        ';box-shadow:0 1px 2px rgba(0,0,0,0.08);">' +
+        '<div style="font-size:13px;font-weight:700;color:' + st.text + ';">' +
+        esc(u.title || "") +
+        "</div>" +
+        (u.subtitle
+          ? '<div style="font-size:11px;font-weight:600;color:' + st.sub +
+            ';margin-top:2px;">' +
+            esc(u.subtitle) +
+            "</div>"
+          : "") +
+        '<div style="font-size:11px;color:' + st.body +
+        ';margin-top:4px;line-height:1.4;">' +
+        esc(u.body || "") +
+        "</div></div>";
+    });
+    return html + "</div>";
+  };
+</script>

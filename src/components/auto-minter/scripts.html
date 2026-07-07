@@ -1,0 +1,518 @@
+<script>
+  /** Preloaded data: { theme, font, minters:[{key,label,emoji,options}] }. */
+  var PRELOAD = window.__MINTER_PRELOAD__ || {};
+  var THEME = PRELOAD.theme || {};
+
+  /** The context text as of the last successful route call. */
+  var routedContext = "";
+  /** Round-1 candidates: [{key, label, emoji, reason, hints}]. */
+  var candidates = [];
+  /** Key of the candidate currently selected. */
+  var activeKey = null;
+  /** Cache of round-2 results by key: {payload, generatedText, previewKind}. */
+  var resultByKey = {};
+  /** User-edited option values by key (survive candidate switches). */
+  var optionValuesByKey = {};
+  /** True while a server call is in flight (locks the buttons/chips). */
+  var busy = false;
+  /** Debounce timer for post-hoc option rebuilds. */
+  var rebuildTimer = null;
+
+  /**
+   * Shows a status message in the dialog.
+   * @param {string} message
+   * @param {string} type - 'success' | 'error' | 'info'
+   */
+  function showStatus(message, type = "info") {
+    const el = document.getElementById("statusMessage");
+    el.textContent = message;
+    el.className = `status-message status-${type}`;
+    el.style.display = "block";
+    if (type === "success" || type === "info") {
+      setTimeout(() => {
+        el.style.display = "none";
+      }, 5000);
+    }
+  }
+
+  /** @param {string} s @return {string} */
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  /** Enables/disables all interactive controls while a call is in flight. */
+  function setBusy(on) {
+    busy = on;
+    document.getElementById("routeButton").disabled = on;
+    document.querySelectorAll(".cand-chip").forEach(function (b) {
+      b.disabled = on;
+    });
+    document.getElementById("generatePreviewButton").disabled =
+      on || !activeKey;
+    document.getElementById("insertButton").disabled =
+      on || !(activeKey && resultByKey[activeKey]);
+  }
+
+  /** @param {string} key @return {Object|null} candidate by key */
+  function findCandidate(key) {
+    for (const c of candidates) if (c.key === key) return c;
+    return null;
+  }
+
+  /** @param {string} key @return {Object|null} preloaded minter meta by key */
+  function findMinterMeta(key) {
+    for (const m of PRELOAD.minters || []) if (m.key === key) return m;
+    return null;
+  }
+
+  /**
+   * Round 1: sends the pasted context to the router and renders the
+   * candidate chips (top candidate highlighted; nothing auto-runs).
+   */
+  function routeContext() {
+    const ctx = document.getElementById("contextInput").value.trim();
+    if (!ctx) {
+      showStatus("先在上方貼上一段內容。", "error");
+      return;
+    }
+    const btn = document.getElementById("routeButton");
+    btn.textContent = "🤖 分析中…";
+    setBusy(true);
+    showStatus("🤖 AI 正在挑選合適的版型…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.textContent = "⚡ 推薦版型";
+        if (!res || !res.success) {
+          setBusy(false);
+          showStatus("❌ " + ((res && res.error) || "分析失敗。"), "error");
+          return;
+        }
+        routedContext = ctx;
+        candidates = res.candidates || [];
+        activeKey = null;
+        resultByKey = {};
+        optionValuesByKey = {};
+        renderCandidates();
+        hideOptions();
+        clearPreview();
+        setBusy(false);
+        showStatus(
+          "✅ 找到 " + candidates.length + " 個候選版型，點一個查看選項。",
+          "success",
+        );
+        // Preselect the top candidate so its options are visible immediately
+        // (still nothing generates until the user clicks ✨ 生成預覽).
+        if (candidates.length) chooseCandidate(candidates[0].key);
+      })
+      .withFailureHandler(function (err) {
+        btn.textContent = "⚡ 推薦版型";
+        setBusy(false);
+        showStatus("❌ " + (err.message || "分析失敗。"), "error");
+      })
+      .autoMinterRoute(ctx);
+  }
+
+  /** Renders the candidate chips (inline, next to the route button). */
+  function renderCandidates() {
+    const wrap = document.getElementById("candidateChips");
+    wrap.innerHTML = "";
+    candidates.forEach(function (c, i) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className =
+        "cand-chip" +
+        (c.key === activeKey ? " active" : "") +
+        (i === 0 ? " recommended" : "");
+      let html =
+        escapeHtml(c.emoji || "") + " " + escapeHtml(c.label || c.key);
+      if (i === 0) html += ' <span class="cand-badge">推薦</span>';
+      if (c.reason)
+        html += ' <span class="cand-reason">' + escapeHtml(c.reason) + "</span>";
+      chip.innerHTML = html;
+      chip.onclick = function () {
+        chooseCandidate(c.key);
+      };
+      wrap.appendChild(chip);
+    });
+  }
+
+  /** Hides the options panel (used when candidates reset). */
+  function hideOptions() {
+    document.getElementById("optionsSection").hidden = true;
+    document.getElementById("optionsFields").innerHTML = "";
+  }
+
+  /** Resets the preview panel to its placeholder. */
+  function clearPreview() {
+    document.getElementById("previewSection").hidden = !candidates.length;
+    document.getElementById("previewLabel").textContent = "預覽 Preview";
+    document.getElementById("autoPreview").innerHTML =
+      '<span class="placeholder">按 ✨ 生成預覽 後，預覽會顯示在這裡…</span>';
+  }
+
+  /**
+   * Selects a candidate: shows its options (prefilled from router hints +
+   * saved edits) and, if this key was generated before, its cached preview.
+   * Does NOT call the LLM.
+   * @param {string} key
+   */
+  function chooseCandidate(key) {
+    if (busy) return;
+    const cand = findCandidate(key);
+    if (!cand) return;
+    activeKey = key;
+    renderCandidates();
+    renderOptions(key);
+    if (resultByKey[key]) {
+      renderPreview(key);
+    } else {
+      clearPreview();
+    }
+    setBusy(false);
+  }
+
+  /**
+   * Renders the selected minter's declarative options into the panel.
+   * Prefill priority: user's earlier edits > router hints > option default.
+   * @param {string} key
+   */
+  function renderOptions(key) {
+    const meta = findMinterMeta(key);
+    const cand = findCandidate(key);
+    const section = document.getElementById("optionsSection");
+    const wrap = document.getElementById("optionsFields");
+    wrap.innerHTML = "";
+    const options = (meta && meta.options) || [];
+    section.hidden = false;
+    document.getElementById("optionsLabel").textContent =
+      "選項 Options — " + ((cand && cand.emoji + " " + cand.label) || key);
+    if (!options.length) {
+      wrap.innerHTML =
+        '<span style="font-size:11px;color:#999;font-style:italic;">此版型沒有可調選項</span>';
+      return;
+    }
+
+    const saved = optionValuesByKey[key] || {};
+    const hints = (cand && cand.hints) || {};
+    options.forEach(function (opt) {
+      const prefill =
+        saved[opt.name] !== undefined
+          ? saved[opt.name]
+          : hints[opt.name] !== undefined
+            ? hints[opt.name]
+            : opt.default;
+
+      const field = document.createElement("label");
+      field.className =
+        "opt-field" + (opt.type === "checkbox" ? " opt-checkbox" : "");
+      let input;
+      if (opt.type === "select") {
+        input = document.createElement("select");
+        (opt.choices || []).forEach(function (ch, idx) {
+          const o = document.createElement("option");
+          o.value = String(idx); // index; mapped back to the typed value later
+          o.textContent = ch.label;
+          if (String(ch.value) === String(prefill)) o.selected = true;
+          input.appendChild(o);
+        });
+      } else if (opt.type === "checkbox") {
+        input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = prefill !== false && prefill != null ? !!prefill : false;
+        if (prefill === undefined) input.checked = !!opt.default;
+      } else {
+        input = document.createElement("input");
+        input.type = opt.type === "number" ? "number" : "text";
+        if (opt.min != null) input.min = opt.min;
+        if (opt.max != null) input.max = opt.max;
+        if (opt.placeholder) input.placeholder = opt.placeholder;
+        if (prefill != null && prefill !== "") input.value = prefill;
+      }
+      input.id = "opt_" + opt.name;
+      input.addEventListener("change", function () {
+        onOptionChanged(key, opt);
+      });
+
+      if (opt.type === "checkbox") {
+        field.appendChild(input);
+        field.appendChild(document.createTextNode(opt.label));
+      } else {
+        const span = document.createElement("span");
+        span.textContent = opt.label;
+        field.appendChild(span);
+        field.appendChild(input);
+      }
+      wrap.appendChild(field);
+    });
+  }
+
+  /**
+   * Reads the current option inputs into a typed hints object. Empty
+   * number/text inputs are omitted (= let the adapter auto-decide).
+   * @param {string} key
+   * @return {Object}
+   */
+  function collectOptionValues(key) {
+    const meta = findMinterMeta(key);
+    const out = {};
+    ((meta && meta.options) || []).forEach(function (opt) {
+      const el = document.getElementById("opt_" + opt.name);
+      if (!el) return;
+      if (opt.type === "select") {
+        const idx = parseInt(el.value, 10);
+        const ch = (opt.choices || [])[idx];
+        if (ch) out[opt.name] = ch.value;
+      } else if (opt.type === "checkbox") {
+        out[opt.name] = el.checked;
+      } else if (opt.type === "number") {
+        const v = parseFloat(el.value);
+        if (!isNaN(v)) out[opt.name] = v;
+      } else {
+        const v = el.value.trim();
+        if (v) out[opt.name] = v;
+      }
+    });
+    return out;
+  }
+
+  /**
+   * The merged hints for a key: router hints overlaid with the user's
+   * current option values.
+   * @param {string} key
+   * @return {Object}
+   */
+  function effectiveHints(key) {
+    const cand = findCandidate(key);
+    const merged = {};
+    const hints = (cand && cand.hints) || {};
+    for (const k in hints) merged[k] = hints[k];
+    const values = collectOptionValues(key);
+    for (const k in values) merged[k] = values[k];
+    return merged;
+  }
+
+  /**
+   * Handles a post-hoc option change. Before the first generation this just
+   * stores the value. After it: regenerate-tagged options prompt for a
+   * re-generate (they change the LLM output), all others re-build the payload
+   * server-side without an LLM call and refresh the preview (debounced).
+   * @param {string} key
+   * @param {Object} opt - the changed option's spec
+   */
+  function onOptionChanged(key, opt) {
+    optionValuesByKey[key] = collectOptionValues(key);
+    const entry = resultByKey[key];
+    if (!entry) return; // not generated yet — values apply on ✨ 生成預覽
+    if (opt.regenerate) {
+      showStatus("「" + opt.label + "」會影響 AI 生成內容，請按 ✨ 生成預覽 重新生成。", "info");
+      return;
+    }
+    if (rebuildTimer) clearTimeout(rebuildTimer);
+    rebuildTimer = setTimeout(function () {
+      rebuildTimer = null;
+      rebuildActive(key);
+    }, 350);
+  }
+
+  /**
+   * Re-builds the active payload from the cached generated text with the
+   * current options (no LLM call), then refreshes the preview.
+   * @param {string} key
+   * @param {Function} [andThen] - called after a successful rebuild (used by
+   *   insertActive to flush a pending option change before inserting)
+   */
+  function rebuildActive(key, andThen) {
+    const entry = resultByKey[key];
+    if (!entry || busy) return;
+    google.script.run
+      .withSuccessHandler(function (res) {
+        if (!res || !res.success) {
+          showStatus("❌ " + ((res && res.error) || "選項套用失敗。"), "error");
+          return;
+        }
+        entry.payload = res.payload;
+        entry.previewKind = res.previewKind;
+        if (activeKey === key) renderPreview(key);
+        if (andThen) andThen();
+      })
+      .withFailureHandler(function (err) {
+        showStatus("❌ " + (err.message || "選項套用失敗。"), "error");
+      })
+      .autoMinterRebuild(key, entry.generatedText || "", effectiveHints(key));
+  }
+
+  /**
+   * Round 2: generates the payload for the active candidate with the current
+   * options and renders the preview.
+   */
+  function generatePreview() {
+    if (busy || !activeKey) return;
+    const key = activeKey;
+    const cand = findCandidate(key);
+    if (!cand) return;
+
+    optionValuesByKey[key] = collectOptionValues(key);
+    setBusy(true);
+    document.getElementById("autoPreview").innerHTML =
+      '<span class="placeholder">🤖 生成中…</span>';
+    document.getElementById("previewSection").hidden = false;
+    showStatus("🤖 AI 正在把內容轉成「" + cand.label + "」…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        if (res && res.needKey) {
+          setBusy(false);
+          clearPreview();
+          showStatus(res.error, "error");
+          return;
+        }
+        if (!res || !res.success) {
+          setBusy(false);
+          clearPreview();
+          showStatus("❌ " + ((res && res.error) || "生成失敗。"), "error");
+          return;
+        }
+        resultByKey[key] = {
+          payload: res.payload,
+          generatedText: res.generatedText || "",
+          previewKind: res.previewKind,
+        };
+        renderPreview(key);
+        setBusy(false);
+        showStatus("✅ 預覽完成 — 可再調整選項，或按 插入。", "success");
+      })
+      .withFailureHandler(function (err) {
+        setBusy(false);
+        clearPreview();
+        showStatus("❌ " + (err.message || "生成失敗。"), "error");
+      })
+      .autoMinterGenerate(key, routedContext, effectiveHints(key));
+  }
+
+  /**
+   * Renders the preview for a generated candidate: the minter's own preview
+   * partial when registered (window.AUTO_PREVIEWS[key]), else the generic
+   * fallback list.
+   * @param {string} key
+   */
+  function renderPreview(key) {
+    const cand = findCandidate(key);
+    const entry = resultByKey[key];
+    if (!entry) return;
+    document.getElementById("previewSection").hidden = false;
+    document.getElementById("previewLabel").textContent =
+      "預覽 Preview — " + ((cand && cand.emoji + " " + cand.label) || key);
+
+    const renderer = (window.AUTO_PREVIEWS || {})[key];
+    let html = "";
+    if (typeof renderer === "function") {
+      try {
+        // meta carries the minter's full template objects so renderers can
+        // honor payload.templateId (colors/style) instead of one fixed look.
+        html = renderer(entry.payload, THEME, findMinterMeta(key)) || "";
+      } catch (e) {
+        html = "";
+      }
+    }
+    if (!html) html = genericPreview(entry.payload);
+    document.getElementById("autoPreview").innerHTML =
+      html || '<span class="placeholder">（無法預覽，仍可直接插入）</span>';
+    document.getElementById("insertButton").disabled = busy;
+  }
+
+  /**
+   * Generic fallback renderer: finds the first array of items in the payload
+   * and renders it as a list. Keeps unregistered/future minters usable.
+   * @param {Object} payload
+   * @return {string} html
+   */
+  function genericPreview(payload) {
+    const p = payload || {};
+    const arrayFields = [
+      "items", "units", "points", "data", "steps", "columns", "body",
+    ];
+    let arr = null;
+    for (const f of arrayFields) {
+      if (Array.isArray(p[f]) && p[f].length) {
+        arr = p[f];
+        break;
+      }
+    }
+    if (!arr) {
+      const flat = Object.keys(p)
+        .filter(function (k) {
+          return typeof p[k] === "string" && p[k];
+        })
+        .map(function (k) {
+          return "<li>" + escapeHtml(k) + ": " + escapeHtml(p[k]) + "</li>";
+        });
+      return flat.length ? '<ul class="am-generic-list">' + flat.join("") + "</ul>" : "";
+    }
+    const rows = arr.slice(0, 12).map(function (item) {
+      let text;
+      if (item == null) {
+        text = "";
+      } else if (typeof item === "object") {
+        text = Object.keys(item)
+          .map(function (k) {
+            return item[k];
+          })
+          .filter(function (v) {
+            return typeof v === "string" && v;
+          })
+          .join(" — ");
+      } else {
+        text = String(item);
+      }
+      return "<li>" + escapeHtml(text || "…") + "</li>";
+    });
+    return '<ul class="am-generic-list">' + rows.join("") + "</ul>";
+  }
+
+  /** Inserts the active candidate's payload via the server. */
+  function insertActive() {
+    const entry = activeKey && resultByKey[activeKey];
+    if (!entry) {
+      showStatus("先按 ✨ 生成預覽。", "error");
+      return;
+    }
+    // A just-changed option may still be waiting on the rebuild debounce —
+    // flush it first so the inserted payload matches what the user picked.
+    if (rebuildTimer) {
+      clearTimeout(rebuildTimer);
+      rebuildTimer = null;
+      rebuildActive(activeKey, insertActive);
+      return;
+    }
+    const btn = document.getElementById("insertButton");
+    const label = btn.textContent;
+    btn.textContent = "Working…";
+    setBusy(true);
+    showStatus("📥 插入中…", "info");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.textContent = label;
+        setBusy(false);
+        if (res && res.success) {
+          google.script.host.close();
+        } else {
+          showStatus("❌ " + ((res && res.error) || "插入失敗。"), "error");
+        }
+      })
+      .withFailureHandler(function (err) {
+        btn.textContent = label;
+        setBusy(false);
+        showStatus("❌ " + (err.message || "插入失敗。"), "error");
+      })
+      .autoMinterInsert(activeKey, entry.payload);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    showStatus("💡 貼上內容 → ⚡ 生成 → 挑版型、調選項 → ✨ 生成預覽 → 插入。", "info");
+  });
+</script>

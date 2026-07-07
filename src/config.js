@@ -96,6 +96,8 @@ function createCustomMenu() {
 			.addSubMenu(
 				ui
 					.createMenu("🏭 鑄造器")
+					.addItem("⚡ 自動鑄造器⭐", "showAutoMinterDialog")
+					.addSeparator()
 					.addItem("🔲 表格鑄造器⭐", "showTableMinterDialog")
 					.addItem("🔳 網格鑄造器⭐", "showGridMinterDialog")
 					.addItem("📌 Callout 鑄造器⭐", "showCalloutMinterDialog")
@@ -549,6 +551,14 @@ function showMinterDialog_(factory, title) {
 		console.error("Error showing " + title + ": " + e.message);
 		SlidesApp.getUi().alert("Error: Could not open " + title + ": " + e.message);
 	}
+}
+
+/**
+ * Shows the ⚡ Auto Minter dialog: paste content, let AI pick the best minter
+ * layouts (round 1), fill one in (round 2), preview, insert.
+ */
+function showAutoMinterDialog() {
+	showMinterDialog_(createAutoMinterDialog, "⚡ 自動鑄造器 Auto Minter");
 }
 
 /** Shows the KPI / Big Number Minter dialog. */

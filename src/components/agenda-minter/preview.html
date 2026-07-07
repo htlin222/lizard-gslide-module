@@ -1,0 +1,55 @@
+<script>
+  /* Auto Minter preview renderer for the Agenda minter. Template-aware:
+     honors payload.templateId via meta.templates — layout 'numbered' (01 02…),
+     'bulleted' (•), or 'twoColumn' (numbered split in two CSS columns), with
+     heading/headingColor/itemColor/markerColor from the template. */
+  window.AUTO_PREVIEWS = window.AUTO_PREVIEWS || {};
+  window.AUTO_PREVIEWS["agenda"] = function (payload, theme, meta) {
+    var items = (payload && payload.items) || [];
+    if (!items.length) return "";
+    var main = (theme && theme.main) || "#3D6869";
+    var esc = function (s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    };
+
+    // Resolve the selected template (fallback: first template, then theme).
+    var templates = (meta && meta.templates) || [];
+    var tpl = templates[0] || null;
+    for (var i = 0; i < templates.length; i++) {
+      if (templates[i].id === (payload && payload.templateId)) tpl = templates[i];
+    }
+    var layout = (tpl && tpl.layout) || "numbered";
+    var heading = (tpl && tpl.heading) || "Agenda";
+    var headingColor = (tpl && tpl.headingColor) || main;
+    var itemColor = (tpl && tpl.itemColor) || "#333333";
+    var markerColor = (tpl && tpl.markerColor) || main;
+    var twoColumn = layout === "twoColumn";
+    var bulleted = layout === "bulleted";
+
+    var html =
+      '<div style="max-width:' + (twoColumn ? "520px" : "420px") +
+      ';margin:0 auto;">' +
+      '<div style="font-size:15px;font-weight:700;color:' + headingColor +
+      ';border-bottom:2px solid ' + headingColor + ';padding-bottom:4px;' +
+      'margin-bottom:10px;">' + esc(heading) + "</div>" +
+      (twoColumn
+        ? '<div style="columns:2;column-gap:24px;">'
+        : "");
+    items.forEach(function (it, i) {
+      var marker = bulleted ? "•" : String(i + 1).padStart(2, "0");
+      html +=
+        '<div style="display:flex;gap:10px;align-items:center;padding:5px 0;' +
+        "font-size:13px;color:" + itemColor + ";" +
+        (twoColumn ? "break-inside:avoid;" : "") + '">' +
+        '<span style="color:' + markerColor + ';font-weight:700;">' +
+        marker +
+        "</span>" +
+        "<span>" + esc(typeof it === "string" ? it : it.title || "") + "</span>" +
+        "</div>";
+    });
+    return html + (twoColumn ? "</div>" : "") + "</div>";
+  };
+</script>

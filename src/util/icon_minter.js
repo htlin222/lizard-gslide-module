@@ -101,3 +101,111 @@ function insertIconIntoSlide(payload) {
 		return { success: false, error: e.message };
 	}
 }
+
+/**
+ * Groq system prompt for picking a single representative emoji. Built from an
+ * array .join("\n") (mirrors KPI_AI_SYSTEM_PROMPT).
+ */
+const ICON_AI_SYSTEM_PROMPT = [
+	"Reply with exactly ONE emoji character that best represents the content.",
+	"No words, no explanation.",
+].join("\n");
+
+/**
+ * Generates a single representative emoji from free-form context via Groq.
+ * Called from the Auto Minter flow through google.script.run.
+ *
+ * @param {string} context - Arbitrary text the user pasted.
+ * @return {{success: boolean, generatedText?: string, error?: string, needKey?: boolean}}
+ */
+function generateIconFromContext(context) {
+	const text = (context || "").trim();
+	if (!text) {
+		return { success: false, error: "No context provided." };
+	}
+
+	// Don't throw on a missing key — let the dialog show a friendly prompt to
+	// run the explicit "🔑 設定 AI 金鑰 (Groq)" menu item.
+	if (!hasUserApiKey()) {
+		return {
+			success: false,
+			needKey: true,
+			error:
+				"No AI key set. Run 🖖 跨頁功能 → 🔑 設定 AI 金鑰 (Groq) first, then try again.",
+		};
+	}
+
+	return callGroq_(ICON_AI_SYSTEM_PROMPT, text, {
+		maxTokens: 20,
+		temperature: 0.4,
+	});
+}
+
+/**
+ * Auto Minter adapter: extracts the FIRST emoji grapheme from the generated
+ * text (pragmatic match: pictographic base plus optional VS16/ZWJ sequence;
+ * GAS V8 supports unicode property escapes). Falls back to the first
+ * non-whitespace character when no emoji is found. `color` is intentionally
+ * omitted from the payload — insertIconIntoSlide already defaults it to
+ * main_color when absent.
+ *
+ * @param {string} generatedText - Text from the AI step (ideally one emoji).
+ * @param {Object} hints - Unused for icons; kept for the adapter contract.
+ * @return {{glyph: string, size: number}|null} insert payload, or null
+ */
+function autoBuildIconPayload_(generatedText, hints) {
+	var h = hints || {};
+	const text = String(generatedText == null ? "" : generatedText).trim();
+	if (!text) return null;
+
+	let glyph = "";
+	try {
+		const m = text.match(
+			/\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*/u,
+		);
+		if (m) glyph = m[0];
+	} catch (e) {
+		glyph = "";
+	}
+	if (!glyph) {
+		const fallback = text.match(/\S/);
+		glyph = fallback ? fallback[0] : "";
+	}
+	if (!glyph) return null;
+
+	const size =
+		typeof h.size === "number" && h.size >= 24 && h.size <= 200 ? h.size : 96;
+	return { glyph: glyph, size: size };
+}
+
+// ── Auto Minter registration ─────────────────────────────────────────────
+// Self-contained guarded push: GAS file load order is unspecified, so this
+// block must not call functions defined in other files at the top level.
+// The registry variable MUST be declared `var` + typeof guard (never
+// const/let — a const AUTO_MINTERS anywhere would break the whole project).
+var AUTO_MINTERS = typeof AUTO_MINTERS === "undefined" ? [] : AUTO_MINTERS;
+AUTO_MINTERS.push({
+	key: "icon",
+	label: "Icon 圖示",
+	emoji: "😀",
+	order: 120,
+	whenToUse:
+		"purely decorative single symbol; last resort when no structured layout fits",
+	hintsSpec: "",
+	generate: "generateIconFromContext",
+	buildPayload: "autoBuildIconPayload_",
+	insert: "insertIconIntoSlide",
+	previewPartial: "src/components/icon-minter/preview",
+	previewKind: "glyph",
+	precheck: "",
+	options: [
+		{
+			name: "size",
+			label: "大小 (pt)",
+			type: "number",
+			min: 24,
+			max: 200,
+			default: 96,
+		},
+	],
+});

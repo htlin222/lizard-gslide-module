@@ -104,8 +104,11 @@ function buildCompareTemplates_() {
 			// Both columns share the main color header.
 			columns: [
 				{
-					headerFill: main, headerText: "#FFFFFF",
-					bodyFill: "#FFFFFF", bodyBorder: main, bodyText: "#000000",
+					headerFill: main,
+					headerText: "#FFFFFF",
+					bodyFill: "#FFFFFF",
+					bodyBorder: main,
+					bodyText: "#000000",
 				},
 			],
 		},
@@ -115,12 +118,18 @@ function buildCompareTemplates_() {
 			// First column green (pros), second column red (cons), then repeat.
 			columns: [
 				{
-					headerFill: green, headerText: "#FFFFFF",
-					bodyFill: "#FFFFFF", bodyBorder: green, bodyText: "#000000",
+					headerFill: green,
+					headerText: "#FFFFFF",
+					bodyFill: "#FFFFFF",
+					bodyBorder: green,
+					bodyText: "#000000",
 				},
 				{
-					headerFill: red, headerText: "#FFFFFF",
-					bodyFill: "#FFFFFF", bodyBorder: red, bodyText: "#000000",
+					headerFill: red,
+					headerText: "#FFFFFF",
+					bodyFill: "#FFFFFF",
+					bodyBorder: red,
+					bodyText: "#000000",
 				},
 			],
 		},
@@ -130,12 +139,18 @@ function buildCompareTemplates_() {
 			// First column main, second column accent, then repeat.
 			columns: [
 				{
-					headerFill: main, headerText: "#FFFFFF",
-					bodyFill: "#FFFFFF", bodyBorder: main, bodyText: "#000000",
+					headerFill: main,
+					headerText: "#FFFFFF",
+					bodyFill: "#FFFFFF",
+					bodyBorder: main,
+					bodyText: "#000000",
 				},
 				{
-					headerFill: accent, headerText: "#FFFFFF",
-					bodyFill: "#FFFFFF", bodyBorder: accent, bodyText: "#000000",
+					headerFill: accent,
+					headerText: "#FFFFFF",
+					bodyFill: "#FFFFFF",
+					bodyBorder: accent,
+					bodyText: "#000000",
 				},
 			],
 		},
@@ -163,8 +178,11 @@ function compareColumnStyle_(tpl, i) {
 	const cols = (tpl && tpl.columns) || [];
 	if (!cols.length) {
 		return {
-			headerFill: "#3D6869", headerText: "#FFFFFF",
-			bodyFill: "#FFFFFF", bodyBorder: "#3D6869", bodyText: "#000000",
+			headerFill: "#3D6869",
+			headerText: "#FFFFFF",
+			bodyFill: "#FFFFFF",
+			bodyBorder: "#3D6869",
+			bodyText: "#000000",
 		};
 	}
 	return cols[i % cols.length];
@@ -260,7 +278,9 @@ function buildCompareColumnRequests_(requests, pageId, pos, column, style) {
 				},
 				outline: {
 					outlineFill: {
-						solidFill: { color: { rgbColor: hexToRgbColor_(style.headerFill) } },
+						solidFill: {
+							color: { rgbColor: hexToRgbColor_(style.headerFill) },
+						},
 					},
 					weight: { magnitude: 1, unit: "PT" },
 					dashStyle: "SOLID",
@@ -332,7 +352,9 @@ function buildCompareColumnRequests_(requests, pageId, pos, column, style) {
 				},
 				outline: {
 					outlineFill: {
-						solidFill: { color: { rgbColor: hexToRgbColor_(style.bodyBorder) } },
+						solidFill: {
+							color: { rgbColor: hexToRgbColor_(style.bodyBorder) },
+						},
 					},
 					weight: { magnitude: 1, unit: "PT" },
 					dashStyle: "SOLID",
@@ -368,7 +390,11 @@ function buildCompareColumnRequests_(requests, pageId, pos, column, style) {
 			updateParagraphStyle: {
 				objectId: bodyId,
 				textRange: { type: "ALL" },
-				style: { alignment: "START", lineSpacing: 130, spaceBelow: { magnitude: 4, unit: "PT" } },
+				style: {
+					alignment: "START",
+					lineSpacing: 130,
+					spaceBelow: { magnitude: 4, unit: "PT" },
+				},
 				fields: "alignment,lineSpacing,spaceBelow",
 			},
 		});
@@ -449,3 +475,56 @@ function insertCompareIntoSlide(payload) {
 		return { success: false, error: e.message };
 	}
 }
+
+/**
+ * Auto Minter adapter: turns AI-generated comparison markdown ("---"-separated
+ * column blocks) into the payload insertCompareIntoSlide() accepts.
+ *
+ * @param {string} generatedText - raw LLM output from generateCompareFromContext()
+ * @param {{templateId?: string}} [hints] - optional router hints
+ * @return {{columns: Array<{title:string, points:string[]}>, templateId: string}|null}
+ *   null when parsing yields zero usable columns
+ */
+function autoBuildComparePayload_(generatedText, hints) {
+	const h = hints || {};
+	const columns = parseCompareColumns_(generatedText);
+	if (!columns.length) return null;
+
+	const templates = buildCompareTemplates_();
+	let templateId = templates[0].id;
+	for (let i = 0; i < templates.length; i++) {
+		if (templates[i].id === h.templateId) templateId = templates[i].id;
+	}
+
+	return { columns: columns, templateId: templateId };
+}
+
+// ── Auto Minter registration ─────────────────────────────────────────────
+// Self-contained guarded push: GAS file load order is unspecified, so this
+// block must not call functions defined in other files at the top level.
+// The registry variable MUST be declared `var` + typeof guard (never
+// const/let — a const AUTO_MINTERS anywhere would break the whole project).
+var AUTO_MINTERS = typeof AUTO_MINTERS === "undefined" ? [] : AUTO_MINTERS;
+AUTO_MINTERS.push({
+	key: "compare",
+	label: "對照欄",
+	emoji: "⚖",
+	order: 60,
+	whenToUse:
+		"comparing exactly 2-3 alternatives/options/arms side by side, each with bullet points",
+	hintsSpec: "",
+	generate: "generateCompareFromContext",
+	buildPayload: "autoBuildComparePayload_",
+	insert: "insertCompareIntoSlide",
+	previewPartial: "src/components/compare-minter/preview",
+	previewKind: "columns",
+	precheck: "",
+	options: [
+		{
+			name: "templateId",
+			label: "範本",
+			type: "select",
+			choicesFrom: "getCompareTemplates",
+		},
+	],
+});

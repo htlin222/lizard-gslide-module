@@ -1,0 +1,50 @@
+<script>
+  /* Auto Minter preview renderer for the Gallery minter: real image thumbnails
+     in a grid with captions. Template-aware: honors payload.templateId via
+     meta.templates (border/borderColor/borderWidth treatments — plain/framed/
+     accent/thin — plus captionColor). */
+  window.AUTO_PREVIEWS = window.AUTO_PREVIEWS || {};
+  window.AUTO_PREVIEWS["gallery"] = function (payload, theme, meta) {
+    var items = (payload && payload.items) || [];
+    if (!items.length) return "";
+    var cols = (payload && payload.cols) || Math.min(items.length, 3);
+    var esc = function (s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    };
+
+    // Resolve the selected template (fallback: first template, then default).
+    var templates = (meta && meta.templates) || [];
+    var tpl = templates[0] || null;
+    for (var i = 0; i < templates.length; i++) {
+      if (templates[i].id === (payload && payload.templateId)) tpl = templates[i];
+    }
+    var border = tpl
+      ? tpl.border
+        ? (tpl.borderWidth || 2) + "px solid " + (tpl.borderColor || "#999999")
+        : "none"
+      : "1px solid #ddd";
+    var captionColor = (tpl && tpl.captionColor) || "#555555";
+
+    var html =
+      '<div style="display:grid;grid-template-columns:repeat(' + cols +
+      ',1fr);gap:8px;">';
+    items.forEach(function (it) {
+      html +=
+        '<figure style="margin:0;">' +
+        '<img src="' + esc(it.url) + '" alt="" style="width:100%;height:90px;' +
+        "object-fit:cover;border-radius:4px;border:" + border +
+        ';background:#f1f3f4;box-sizing:border-box;" />' +
+        (it.caption
+          ? '<figcaption style="font-size:11px;color:' + captionColor +
+            ';margin-top:2px;text-align:center;">' + esc(it.caption) +
+            "</figcaption>"
+          : "") +
+        "</figure>";
+    });
+    return html + "</div>";
+  };
+</script>

@@ -1,0 +1,84 @@
+<script>
+  /* Auto Minter preview renderer for the Timeline minter: dots on a line with
+     date above and label below (horizontal), or a vertical rail.
+     Template-aware: honors payload.templateId via meta.templates
+     (lineColor/nodeFill/nodeBorder/nodeStyle/dateColor/labelColor) —
+     'filled' templates draw solid dots, 'outlined' draw white dots with a
+     colored border. */
+  window.AUTO_PREVIEWS = window.AUTO_PREVIEWS || {};
+  window.AUTO_PREVIEWS["timeline"] = function (payload, theme, meta) {
+    var items = (payload && payload.items) || [];
+    if (!items.length) return "";
+    var main = (theme && theme.main) || "#3D6869";
+    var esc = function (s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    };
+
+    // Resolve the selected template (fallback: first template, then theme).
+    var templates = (meta && meta.templates) || [];
+    var tpl = templates[0] || null;
+    for (var i = 0; i < templates.length; i++) {
+      if (templates[i].id === (payload && payload.templateId)) tpl = templates[i];
+    }
+    var lineColor = (tpl && tpl.lineColor) || main;
+    var nodeBorder = (tpl && tpl.nodeBorder) || main;
+    var outlined = tpl && tpl.nodeStyle === "outlined";
+    var nodeFill = outlined ? "#FFFFFF" : (tpl && tpl.nodeFill) || main;
+    var dateColor = (tpl && tpl.dateColor) || main;
+    var labelColor = (tpl && tpl.labelColor) || "#333333";
+    // Filled dots: solid fill. Outlined dots: white fill + colored border.
+    var dot = function (extra) {
+      return (
+        '<div style="width:10px;height:10px;border-radius:50%;background:' +
+        nodeFill + ";border:2px solid " + (outlined ? nodeBorder : "#fff") +
+        ";box-shadow:0 0 0 1px " + nodeBorder + ";" + (extra || "") +
+        '"></div>'
+      );
+    };
+
+    if ((payload && payload.orientation) === "vertical") {
+      var html =
+        '<div style="display:flex;flex-direction:column;gap:0;padding-left:8px;">';
+      items.forEach(function (it, i) {
+        html +=
+          '<div style="display:flex;gap:10px;">' +
+          '<div style="display:flex;flex-direction:column;align-items:center;">' +
+          dot("flex-shrink:0;") +
+          (i < items.length - 1
+            ? '<div style="width:2px;flex:1;background:' + lineColor + ';"></div>'
+            : "") +
+          "</div>" +
+          '<div style="padding-bottom:14px;font-size:12px;">' +
+          '<span style="font-weight:700;color:' + dateColor + ';">' +
+          esc(it.date || "") +
+          "</span>" +
+          '<span style="color:' + labelColor + ';margin-left:8px;">' +
+          esc(it.label || "") +
+          "</span></div></div>";
+      });
+      return html + "</div>";
+    }
+
+    var html2 =
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;' +
+      'position:relative;padding:18px 6px 0;">' +
+      '<div style="position:absolute;left:0;right:0;top:41px;height:2px;background:' +
+      lineColor + ';"></div>';
+    items.forEach(function (it) {
+      html2 +=
+        '<div style="position:relative;flex:1;display:flex;flex-direction:column;' +
+        'align-items:center;text-align:center;font-size:11px;gap:4px;">' +
+        '<div style="font-weight:700;color:' + dateColor + ';white-space:nowrap;">' +
+        esc(it.date || "") +
+        "</div>" +
+        dot() +
+        '<div style="color:' + labelColor + ';line-height:1.3;max-width:110px;">' +
+        esc(it.label || "") +
+        "</div></div>";
+    });
+    return html2 + "</div>";
+  };
+</script>

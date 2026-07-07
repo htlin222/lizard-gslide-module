@@ -345,7 +345,19 @@ function estimateKpiTextWidth_(s, fontSize) {
  * @param {number} labelSize
  * @param {number} lineSpacing - line height as a percentage (150 = 1.5x)
  */
-function renderKpiCard_(slide, x, y, w, h, item, tpl, font, valueSize, labelSize, lineSpacing) {
+function renderKpiCard_(
+	slide,
+	x,
+	y,
+	w,
+	h,
+	item,
+	tpl,
+	font,
+	valueSize,
+	labelSize,
+	lineSpacing,
+) {
 	const value = item.value || "";
 	const label = item.label || "";
 	const arrow = trendArrow_(item.trend);
@@ -367,9 +379,9 @@ function renderKpiCard_(slide, x, y, w, h, item, tpl, font, valueSize, labelSize
 	textRange.setText(combined);
 
 	// Base styling for the whole box: centered, 1.5x line height.
-	textRange.getParagraphStyle().setParagraphAlignment(
-		SlidesApp.ParagraphAlignment.CENTER,
-	);
+	textRange
+		.getParagraphStyle()
+		.setParagraphAlignment(SlidesApp.ParagraphAlignment.CENTER);
 	textRange.getParagraphStyle().setLineSpacing(lineSpacing);
 
 	// Value line: bold, big, theme valueColor.
@@ -411,3 +423,56 @@ function renderKpiCard_(slide, x, y, w, h, item, tpl, font, valueSize, labelSize
 		}
 	}
 }
+
+/**
+ * Auto Minter adapter: turns AI-generated KPI lines (`value | label | trend`)
+ * into the payload insertKpiIntoSlide() accepts.
+ *
+ * @param {string} generatedText - raw LLM output from generateKpiFromContext()
+ * @param {{templateId?: string}} [hints] - optional router hints
+ * @return {{items: Array<{value:string,label:string,trend:string}>, templateId: string}|null}
+ *   null when parsing yields zero usable KPI lines
+ */
+function autoBuildKpiPayload_(generatedText, hints) {
+	const h = hints || {};
+	const items = parseKpiLines_(generatedText);
+	if (!items.length) return null;
+
+	const templates = buildKpiTemplates_();
+	let templateId = templates[0].id;
+	for (let i = 0; i < templates.length; i++) {
+		if (templates[i].id === h.templateId) templateId = templates[i].id;
+	}
+
+	return { items: items, templateId: templateId };
+}
+
+// ── Auto Minter registration ─────────────────────────────────────────────
+// Self-contained guarded push: GAS file load order is unspecified, so this
+// block must not call functions defined in other files at the top level.
+// The registry variable MUST be declared `var` + typeof guard (never
+// const/let — a const AUTO_MINTERS anywhere would break the whole project).
+var AUTO_MINTERS = typeof AUTO_MINTERS === "undefined" ? [] : AUTO_MINTERS;
+AUTO_MINTERS.push({
+	key: "kpi",
+	label: "KPI 大數字",
+	emoji: "📊",
+	order: 40,
+	whenToUse:
+		"2-6 standout numbers, percentages, ratios or n= counts with short labels; not for long lists or prose",
+	hintsSpec: "",
+	generate: "generateKpiFromContext",
+	buildPayload: "autoBuildKpiPayload_",
+	insert: "insertKpiIntoSlide",
+	previewPartial: "src/components/kpi-minter/preview",
+	previewKind: "cards",
+	precheck: "",
+	options: [
+		{
+			name: "templateId",
+			label: "範本",
+			type: "select",
+			choicesFrom: "getKpiTemplates",
+		},
+	],
+});

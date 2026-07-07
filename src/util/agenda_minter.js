@@ -442,3 +442,99 @@ function buildAgendaListBox_(slide, x, y, w, h, items, tpl, font, startNumber) {
 
 	return box;
 }
+
+/**
+ * Groq system prompt for turning free-form context into agenda items. Built
+ * from an array .join("\n") (mirrors KPI_AI_SYSTEM_PROMPT). The model must
+ * output ONLY the items, one per line, exactly as parseAgendaItems_() reads.
+ */
+const AGENDA_AI_SYSTEM_PROMPT = [
+	"You extract 3-8 agenda / section items from the user's content.",
+	"Output ONLY the items, one item per line.",
+	"Strict rules:",
+	"- No numbering, no bullets, no preamble, no explanation, no code fences.",
+	"- Output between 3 and 8 lines.",
+	"- Keep each item under ~40 characters.",
+].join("\n");
+
+/**
+ * Generates agenda items from free-form context via Groq. Called from the
+ * Auto Minter flow (and usable from dialogs) through google.script.run.
+ *
+ * @param {string} context - Arbitrary text the user pasted.
+ * @return {{success: boolean, generatedText?: string, error?: string, needKey?: boolean}}
+ */
+function generateAgendaFromContext(context) {
+	const text = (context || "").trim();
+	if (!text) {
+		return { success: false, error: "No context provided." };
+	}
+
+	// Don't throw on a missing key — let the dialog show a friendly prompt to
+	// run the explicit "🔑 設定 AI 金鑰 (Groq)" menu item.
+	if (!hasUserApiKey()) {
+		return {
+			success: false,
+			needKey: true,
+			error:
+				"No AI key set. Run 🖖 跨頁功能 → 🔑 設定 AI 金鑰 (Groq) first, then try again.",
+		};
+	}
+
+	return callGroq_(AGENDA_AI_SYSTEM_PROMPT, text, {
+		maxTokens: 300,
+		temperature: 0.3,
+	});
+}
+
+/**
+ * Auto Minter adapter: turns generated one-item-per-line text into an
+ * insertAgendaIntoSlide payload via parseAgendaItems_().
+ *
+ * @param {string} generatedText - Agenda item lines from the AI step.
+ * @param {{templateId?: string}} hints
+ * @return {Object|null} insert payload, or null when nothing parseable
+ */
+function autoBuildAgendaPayload_(generatedText, hints) {
+	var h = hints || {};
+	const items = parseAgendaItems_(generatedText);
+	if (!items.length) return null;
+
+	const templates = buildAgendaTemplates_();
+	let templateId = templates[0].id;
+	for (let i = 0; i < templates.length; i++) {
+		if (templates[i].id === h.templateId) templateId = h.templateId;
+	}
+
+	return { items: items, templateId: templateId };
+}
+
+// ── Auto Minter registration ─────────────────────────────────────────────
+// Self-contained guarded push: GAS file load order is unspecified, so this
+// block must not call functions defined in other files at the top level.
+// The registry variable MUST be declared `var` + typeof guard (never
+// const/let — a const AUTO_MINTERS anywhere would break the whole project).
+var AUTO_MINTERS = typeof AUTO_MINTERS === "undefined" ? [] : AUTO_MINTERS;
+AUTO_MINTERS.push({
+	key: "agenda",
+	label: "議程/目錄",
+	emoji: "📋",
+	order: 90,
+	whenToUse:
+		"an agenda, outline or table of contents: a flat list of 3-8 section titles",
+	hintsSpec: "",
+	generate: "generateAgendaFromContext",
+	buildPayload: "autoBuildAgendaPayload_",
+	insert: "insertAgendaIntoSlide",
+	previewPartial: "src/components/agenda-minter/preview",
+	previewKind: "list",
+	precheck: "",
+	options: [
+		{
+			name: "templateId",
+			label: "範本",
+			type: "select",
+			choicesFrom: "getAgendaTemplates",
+		},
+	],
+});
