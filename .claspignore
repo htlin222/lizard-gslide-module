@@ -240,3 +240,6 @@ Cargo.lock
 # Any file that starts with a dot (hidden files)
 .*
 !.claspignore
+# Local testing sandbox — never push test files into the Apps Script project
+local/
+local/**

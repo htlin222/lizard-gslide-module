@@ -52,3 +52,6 @@ coverage/
 .env.test.local
 .env.production.local
 .clasp.json.bak
+
+# Local testing sandbox (own git repo, ignored by the main repo)
+local/
