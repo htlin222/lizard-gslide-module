@@ -91,6 +91,7 @@ function createCustomMenu() {
 			.addItem("🦶 更新 Footer", "runUpdateTitleFootnotes")
 			.addItem("📅 更新日期 yyyy-mm-dd", "updateDateInFirstSlide")
 			.addItem("💧 浮水印開/關", "runToggleWaterMark")
+			.addItem("🗺️ 診斷:版面名稱對照", "lzDumpLayoutNames")
 			.addToUi();
 
 		// ── Menu 2: add new elements to the current slide ──

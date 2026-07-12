@@ -6,18 +6,6 @@
  * - Element deletion patterns
  */
 
-// Layout display names treated as a "section header" slide. getLayoutName() is
-// localized by the editor's UI language and also depends on the deck's import
-// source, so match a list rather than one hardcoded string. Extend for your locale.
-var LZ_SECTION_LAYOUT_NAMES = [
-	"SECTION_HEADER", // Google canonical / Google-exported PPTX
-	"Section Header", // python-pptx default template
-	"區段標題", // zh-Hant
-	"区段标题", // zh-Hans
-	"セクションの見出し", // ja
-	"섹션 헤더", // ko
-];
-
 /**
  * Ultra-efficient section header detection
  */
@@ -29,12 +17,10 @@ function getSectionHeadersUltra(slides) {
 
 		// A slide is a section boundary when EITHER its layout is a known
 		// section-header layout OR it carries an LZ-Protocol SECTION marker. The
-		// marker is the reliable, language-independent path — layout NAMES vary by
-		// UI locale (zh: 「區段標題」) and by import source (python-pptx: "Section
-		// Header"), so the list below is a best-effort fallback for decks without a
-		// marker. Add your locale's name here if needed. See LZ-PROTOCOL.md.
-		const byLayout =
-			LZ_SECTION_LAYOUT_NAMES.indexOf(slide.getLayout().getLayoutName()) >= 0;
+		// marker is the reliable, language-independent path. lzLayoutType() is the
+		// fallback for marker-less decks — it resolves the layout across UI locale
+		// and import source (see lz_layouts.js / LZ-PROTOCOL.md).
+		const byLayout = lzIsLayout(slide, "SECTION_HEADER");
 		let markerTitle = "";
 		for (const shape of shapes) {
 			if (lzIsSectionMarker(shape)) {

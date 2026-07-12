@@ -61,17 +61,10 @@ function computeAgendaItems_() {
 		const slides = presentation.getSlides();
 		const items = [];
 
-		// Pass 1: SECTION_HEADER layout slides.
+		// Pass 1: SECTION_HEADER layout slides (locale / import-source robust).
 		for (let i = 0; i < slides.length; i++) {
 			const slide = slides[i];
-			let layoutName = "";
-			try {
-				const layout = slide.getLayout();
-				layoutName = layout ? layout.getLayoutName() : "";
-			} catch (e) {
-				layoutName = "";
-			}
-			if (layoutName === "SECTION_HEADER") {
+			if (lzIsLayout(slide, "SECTION_HEADER")) {
 				const title = agendaSlideTitle_(slide);
 				if (title) items.push(title);
 			}
