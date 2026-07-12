@@ -69,6 +69,9 @@ function createCustomMenu() {
 		ui.createMenu("⚙ 設定與批次")
 			// One-click: run every batch processor at once
 			.addItem("🛠 同時執行所有功能", "confirmRunAll")
+			// One-click: catch PPTX-imported (LZ-tagged) elements, apply canonical
+			// font + style online, then rebuild all chrome
+			.addItem("🦎 套用 PPTX 匯入樣式 (LZ)", "runLzApplyAll")
 			.addSeparator()
 			// Setup & configuration
 			.addItem("🎨 套用蜥蜴主題", "applyThemeToCurrentPresentation")
@@ -228,6 +231,18 @@ function runUpdateTitleFootnotes() {
 
 function runProcessSectionBoxes() {
 	runOptimizedRequestProcessors(processSectionBoxesOptimized);
+}
+
+// LZ-Protocol: one command for a freshly PPTX-imported deck — catch every
+// LZ-tagged element, re-apply the canonical font + style, rebuild all chrome.
+function runLzApplyAll() {
+	var ui = SlidesApp.getUi();
+	try {
+		var n = lzApplyAll();
+		ui.alert("🦎 LZ 套用完成", "已重新套用樣式的元素：" + n + " 個。", ui.ButtonSet.OK);
+	} catch (e) {
+		ui.alert("LZ 套用失敗", String(e), ui.ButtonSet.OK);
+	}
 }
 
 // Legacy versions (for fallback if needed)
