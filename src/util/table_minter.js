@@ -121,14 +121,9 @@ function insertTableIntoSlide(payload) {
 		const numCols = header.length;
 		const totalHeight = numRows * rowHeightPt;
 
-		// Resolve the target slide (fall back to the first slide).
+		// Resolve the target slide (payload.pageObjectId → selection → first).
 		const presentation = SlidesApp.getActivePresentation();
-		let slide = null;
-		try {
-			slide = presentation.getSelection().getCurrentPage().asSlide();
-		} catch (e) {
-			slide = presentation.getSlides()[0];
-		}
+		let slide = resolveMinterTargetSlide_(presentation, p.pageObjectId);
 		if (!slide) return { success: false, error: "No slide available." };
 
 		// Optional title text box above the table; the table is pushed down by

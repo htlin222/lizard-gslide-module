@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"><title>gslide-html v1 demo deck — 11 layouts</title></head>
+<body>
+
+<!-- 1/11 TITLE：開場封面 -->
+<section data-layout="TITLE" data-notes="開場：自我介紹 30 秒">
+  <h1 data-ph="TITLE">gslide-html 示範簡報</h1>
+  <p data-ph="SUBTITLE">用純 HTML 產生 Google Slides — 2026-07-12</p>
+</section>
+
+<!-- 2/11 SECTION_HEADER：章節分隔 -->
+<section data-layout="SECTION_HEADER">
+  <h1 data-ph="TITLE">第一章：為什麼</h1>
+</section>
+
+<!-- 3/11 SECTION_TITLE_AND_DESCRIPTION：章節＋說明 -->
+<section data-layout="SECTION_TITLE_AND_DESCRIPTION">
+  <h1 data-ph="TITLE">第二章：怎麼做</h1>
+  <p data-ph="SUBTITLE">從契約到匯入的完整流程</p>
+  <p data-ph="BODY">本章示範 <strong>data-layout</strong> 與 <em>data-ph</em> 的顯式標記，以及行內格式如何保留。</p>
+</section>
+
+<!-- 4/11 TITLE_AND_BODY：一般內容頁（巢狀清單＋行內格式） -->
+<section data-layout="TITLE_AND_BODY" data-notes="逐條講，子項目帶過即可">
+  <h2 data-ph="TITLE">核心功能</h2>
+  <div data-ph="BODY">
+    <ul>
+      <li><strong>貼上</strong>、上傳 .html、或給 URL</li>
+      <li>行內格式：<em>斜體</em>、<s>刪除線</s>、<a href="https://developers.google.com/slides">官方文件連結</a></li>
+      <li>巢狀清單
+        <ul>
+          <li>第二層項目
+            <ul><li>第三層項目</li></ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<!-- 5/11 TITLE_AND_TWO_COLUMNS：左右對比 -->
+<section data-layout="TITLE_AND_TWO_COLUMNS">
+  <h2 data-ph="TITLE">Markdown vs HTML 匯入</h2>
+  <div data-ph="BODY">
+    <ul>
+      <li>Markdown：快、適合大綱</li>
+      <li>只有 2 種 layout</li>
+    </ul>
+  </div>
+  <div data-ph="BODY_2">
+    <ul>
+      <li>HTML：完整 11 種 layout</li>
+      <li>適合 agent 產生</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 6/11 MAIN_POINT：金句 -->
+<section data-layout="MAIN_POINT">
+  <h2 data-ph="TITLE">Slides 是視覺化的程式碼</h2>
+</section>
+
+<!-- 7/11 BIG_NUMBER：關鍵數字 -->
+<section data-layout="BIG_NUMBER">
+  <h2 data-ph="TITLE">11</h2>
+  <p data-ph="BODY">全部官方預設 layout 一次支援</p>
+</section>
+
+<!-- 8/11 ONE_COLUMN_TEXT：單欄長文 -->
+<section data-layout="ONE_COLUMN_TEXT">
+  <h2 data-ph="TITLE">設計理念</h2>
+  <p data-ph="BODY">解析在瀏覽器端用原生 DOMParser 完成，後端只收結構化 JSON；layout 解析重用 lzLayoutType，因此在中文介面或 PPTX 匯入的簡報上一樣可靠。</p>
+</section>
+
+<!-- 9/11 TITLE_ONLY：只有標題（預留貼圖） -->
+<section data-layout="TITLE_ONLY">
+  <h2 data-ph="TITLE">架構圖（此頁手動貼圖）</h2>
+</section>
+
+<!-- 10/11 CAPTION_ONLY：底部說明 -->
+<section data-layout="CAPTION_ONLY">
+  <p data-ph="BODY">圖：資料流 — dialog 解析 → JSON → slideBuilder 建頁</p>
+</section>
+
+<!-- 11/11 BLANK：空白頁 -->
+<section data-layout="BLANK"></section>
+
+<!-- 加碼：無標記 section，測推斷層（h2＋內容 → TITLE_AND_BODY） -->
+<section>
+  <h2>推斷層測試頁</h2>
+  <ul>
+    <li>這一頁沒有任何 data-* 標記</li>
+    <li>應被推斷為 TITLE_AND_BODY</li>
+  </ul>
+  <aside data-ph="NOTES">這行是講者備註，不會出現在投影片上。</aside>
+</section>
+
+</body>
+</html>

@@ -191,13 +191,8 @@ function insertBarChartIntoSlide(payload) {
 		const axisColor = "#999999";
 
 		const presentation = SlidesApp.getActivePresentation();
-		const selection = presentation.getSelection();
-		let slide = null;
-		try {
-			slide = selection.getCurrentPage().asSlide();
-		} catch (e) {
-			slide = presentation.getSlides()[0];
-		}
+		// Resolve the target slide (payload.pageObjectId → selection → first).
+		let slide = resolveMinterTargetSlide_(presentation, p.pageObjectId);
 		if (!slide) return { success: false, error: "No slide available." };
 
 		// Fixed chart area, vertically centered on the slide.

@@ -470,13 +470,8 @@ function insertGridIntoSlide(payload) {
 		const pageW = presentation.getPageWidth();
 		const pageH = presentation.getPageHeight();
 
-		// Resolve the target slide (fall back to the first slide).
-		let firstSlide = null;
-		try {
-			firstSlide = presentation.getSelection().getCurrentPage().asSlide();
-		} catch (e) {
-			firstSlide = presentation.getSlides()[0];
-		}
+		// Resolve the target slide (payload.pageObjectId → selection → first).
+		let firstSlide = resolveMinterTargetSlide_(presentation, p.pageObjectId);
 		if (!firstSlide) return { success: false, error: "No slide available." };
 
 		const positionOpts = {};

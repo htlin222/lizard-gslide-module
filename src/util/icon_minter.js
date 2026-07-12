@@ -56,6 +56,7 @@ function insertIconIntoSlide(payload) {
 		let mode = "center";
 
 		if (
+			!p.pageObjectId &&
 			selection.getSelectionType() === SlidesApp.SelectionType.PAGE_ELEMENT
 		) {
 			const els = selection.getPageElementRange().getPageElements();
@@ -70,11 +71,7 @@ function insertIconIntoSlide(payload) {
 		}
 
 		if (!slide) {
-			try {
-				slide = selection.getCurrentPage().asSlide();
-			} catch (e) {
-				slide = presentation.getSlides()[0];
-			}
+			slide = resolveMinterTargetSlide_(presentation, p.pageObjectId);
 		}
 		if (!slide) return { success: false, error: "No slide available." };
 

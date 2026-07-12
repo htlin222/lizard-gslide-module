@@ -1,0 +1,691 @@
+<script>
+/**
+ * gslide-html v1 client-side parser.
+ *
+ * Runs in the dialog's browser context (real DOMParser — Apps Script server
+ * side has no HTML parser). Contract spec: .claude/skills/gslide-html/reference.md
+ *
+ * parseGslideHtml(htmlText[, parseDoc]) →
+ *   { version: 1,
+ *     slides: [{ layout, slots: { TITLE: [paragraph...], ... }, notes, warnings: [] }],
+ *     warnings: [] }
+ * paragraph = { runs: [{text, bold, italic, strikethrough, link}],
+ *               listLevel: null|0|1|2, listType: null|"bullet"|"number" }
+ *
+ * Pure function of its inputs (parseDoc injectable) so it can be unit-tested
+ * in Node with linkedom.
+ */
+
+var GSLIDE_LAYOUT_SLOTS = {
+	TITLE: ["TITLE", "SUBTITLE"],
+	SECTION_HEADER: ["TITLE", "SUBTITLE"],
+	TITLE_AND_BODY: ["TITLE", "BODY"],
+	TITLE_AND_TWO_COLUMNS: ["TITLE", "BODY", "BODY_2"],
+	TITLE_ONLY: ["TITLE"],
+	ONE_COLUMN_TEXT: ["TITLE", "BODY"],
+	MAIN_POINT: ["TITLE"],
+	SECTION_TITLE_AND_DESCRIPTION: ["TITLE", "SUBTITLE", "BODY"],
+	CAPTION_ONLY: ["BODY"],
+	BIG_NUMBER: ["TITLE", "BODY"],
+	BLANK: [],
+};
+
+var GSLIDE_MAX_LIST_DEPTH = 3; // levels 0..2
+
+// Minter keys accepted by <section data-minter="...">. Must stay in sync with
+// the AUTO_MINTERS registry keys (src/util/*_minter.js self-registrations);
+// the server-side bridge (src/util/html2slides/minterBridge.js) validates too.
+var GSLIDE_MINTER_KEYS = {
+	timeline: 1, steps: 1, takeaways: 1, compare: 1, callout: 1, gallery: 1,
+	barchart: 1, kpi: 1, agenda: 1, table: 1, grid: 1, icon: 1,
+};
+
+function gslideNormalizeLayoutToken(token) {
+	if (!token) return "";
+	var norm = String(token)
+		.toUpperCase()
+		.replace(/^LAYOUT[-_\s]+/, "")
+		.replace(/[\s\-]+/g, "_");
+	return GSLIDE_LAYOUT_SLOTS.hasOwnProperty(norm) ? norm : "";
+}
+
+function parseGslideHtml(htmlText, parseDoc) {
+	var doc = parseDoc
+		? parseDoc(htmlText)
+		: new DOMParser().parseFromString(htmlText, "text/html");
+	var deckWarnings = [];
+	// Browsers always populate doc.body; some DOM shims (linkedom) leave it
+	// empty for fragments and hang elements off the document node instead.
+	var body = doc.body;
+	if (!body || !body.firstElementChild) {
+		body =
+			doc.documentElement && doc.documentElement.tagName === "HTML"
+				? doc.documentElement
+				: doc;
+	}
+
+	var sections = gslideCollectSections(doc, body, deckWarnings);
+	var slides = [];
+	for (var i = 0; i < sections.length; i++) {
+		var slide = gslideParseSection(sections[i], i + 1);
+		// skip sections that resolved to nothing at all
+		if (slide) slides.push(slide);
+	}
+	if (slides.length === 0) {
+		deckWarnings.push("No slides found: document has no <section> and no h1/h2 headings.");
+	}
+	return { version: 1, slides: slides, warnings: deckWarnings };
+}
+
+/** Top-level <section>s; if none, split body children into virtual sections at h1/h2. */
+function gslideCollectSections(doc, body, deckWarnings) {
+	var all = body.querySelectorAll ? body.querySelectorAll("section") : [];
+	var top = [];
+	for (var i = 0; i < all.length; i++) {
+		var el = all[i];
+		var p = el.parentNode;
+		var nested = false;
+		while (p && p !== body) {
+			if (p.tagName === "SECTION") {
+				nested = true;
+				break;
+			}
+			p = p.parentNode;
+		}
+		if (!nested) top.push(el);
+	}
+	if (top.length > 0) return top;
+
+	// virtual sections: split at each h1/h2
+	deckWarnings.push("No <section> elements; splitting by h1/h2 headings.");
+	var children = [];
+	for (var c = body.firstElementChild; c; c = c.nextElementSibling) children.push(c);
+	var groups = [];
+	var current = null;
+	for (var j = 0; j < children.length; j++) {
+		var tag = children[j].tagName;
+		if (tag === "H1" || tag === "H2" || current === null) {
+			current = doc.createElement("section");
+			groups.push(current);
+		}
+		current.appendChild(children[j]);
+	}
+	return groups;
+}
+
+function gslideParseSection(section, index) {
+	var warnings = [];
+	var slots = {};
+	var notes = [];
+
+	if (section.getAttribute && section.getAttribute("data-notes")) {
+		notes.push(section.getAttribute("data-notes"));
+	}
+
+	// minter sections take a different extraction path entirely
+	var minterAttr = section.getAttribute && section.getAttribute("data-minter");
+	if (minterAttr) {
+		var minterSlide = gslideParseMinterSection(
+			section,
+			index,
+			String(minterAttr).toLowerCase().trim(),
+			notes,
+			warnings,
+		);
+		if (minterSlide) return minterSlide;
+		// unknown key: warning already recorded, fall through to normal parsing
+	}
+
+	var layout = gslideResolveLayout(section, warnings);
+
+	// explicit data-ph elements (outermost only)
+	var phEls = [];
+	var marked = section.querySelectorAll("[data-ph]");
+	for (var i = 0; i < marked.length; i++) {
+		var el = marked[i];
+		var anc = el.parentNode;
+		var nested = false;
+		while (anc && anc !== section) {
+			if (anc.getAttribute && anc.getAttribute("data-ph")) {
+				nested = true;
+				break;
+			}
+			anc = anc.parentNode;
+		}
+		if (!nested) phEls.push(el);
+	}
+
+	var legal = GSLIDE_LAYOUT_SLOTS[layout] || [];
+	var hasExplicit = false;
+	for (var k = 0; k < phEls.length; k++) {
+		var ph = phEls[k];
+		var slotName = String(ph.getAttribute("data-ph")).toUpperCase().replace(/[\s\-]+/g, "_");
+		var paras = gslideExtractParagraphs(ph, warnings);
+		if (slotName === "NOTES") {
+			for (var n = 0; n < paras.length; n++) notes.push(gslideParagraphText(paras[n]));
+			continue;
+		}
+		hasExplicit = true;
+		if (legal.indexOf(slotName) === -1) {
+			warnings.push(
+				'Slide ' + index + ': slot "' + slotName + '" is not defined for layout ' +
+				layout + " (content kept; may land in a plain text box).",
+			);
+		}
+		if (!slots[slotName]) slots[slotName] = [];
+		slots[slotName] = slots[slotName].concat(paras);
+	}
+
+	// inference for unmarked sections
+	if (!hasExplicit) {
+		gslideInferSlots(section, layout, slots, warnings);
+	}
+
+	// drop empty slots
+	for (var s in slots) {
+		if (slots.hasOwnProperty(s) && slots[s].length === 0) delete slots[s];
+	}
+
+	var isEmpty = Object.keys(slots).length === 0 && notes.length === 0;
+	if (isEmpty && layout !== "BLANK") {
+		warnings.push("Slide " + index + ": no content found; created as-is.");
+	}
+
+	return {
+		layout: layout,
+		slots: slots,
+		notes: notes.join("\n"),
+		warnings: warnings,
+	};
+}
+
+function gslideResolveLayout(section, warnings) {
+	var attr = section.getAttribute && section.getAttribute("data-layout");
+	if (attr) {
+		var norm = gslideNormalizeLayoutToken(attr);
+		if (norm) return norm;
+		warnings.push('Unknown data-layout "' + attr + '"; falling back to inference.');
+	}
+	// class / id hints (className string split — classList index access
+	// isn't portable across DOM implementations)
+	var hints = String(section.className || "").split(/\s+/);
+	if (section.id) hints.push(section.id);
+	for (var h = 0; h < hints.length; h++) {
+		var viaHint = gslideNormalizeLayoutToken(hints[h]);
+		if (viaHint) return viaHint;
+	}
+	// semantic inference
+	var h1 = section.querySelector ? section.querySelector("h1") : null;
+	var h23 = section.querySelector ? section.querySelector("h2, h3") : null;
+	var hasOther = gslideHasNonHeadingContent(section);
+	if (h1 && !hasOther) return "SECTION_HEADER";
+	if (h1 && hasOther) return "SECTION_TITLE_AND_DESCRIPTION";
+	if (h23 && hasOther) return "TITLE_AND_BODY";
+	if (h23) return "TITLE_ONLY";
+	if (hasOther) return "TITLE_AND_BODY";
+	return "BLANK";
+}
+
+function gslideHasNonHeadingContent(section) {
+	for (var c = section.firstElementChild; c; c = c.nextElementSibling) {
+		var t = c.tagName;
+		if (/^H[1-6]$/.test(t) || t === "ASIDE") continue;
+		if (gslideText(c.textContent)) return true;
+	}
+	// bare text directly inside section
+	for (var n = section.firstChild; n; n = n.nextSibling) {
+		if (n.nodeType === 3 && gslideText(n.nodeValue)) return true;
+	}
+	return false;
+}
+
+function gslideInferSlots(section, layout, slots, warnings) {
+	var legal = GSLIDE_LAYOUT_SLOTS[layout] || [];
+	var heading = section.querySelector
+		? section.querySelector("h1, h2, h3, h4, h5, h6")
+		: null;
+	if (heading && legal.indexOf("TITLE") !== -1) {
+		slots.TITLE = gslideExtractParagraphs(heading, warnings);
+	}
+	var contentSlot =
+		legal.indexOf("BODY") !== -1 ? "BODY" : legal.indexOf("SUBTITLE") !== -1 ? "SUBTITLE" : "";
+	if (!contentSlot) return;
+	var paras = [];
+	for (var c = section.firstElementChild; c; c = c.nextElementSibling) {
+		if (c === heading || /^H[1-6]$/.test(c.tagName) || c.tagName === "ASIDE") continue;
+		paras = paras.concat(gslideExtractParagraphs(c, warnings));
+	}
+	if (paras.length > 0) slots[contentSlot] = paras;
+}
+
+/* ---------- block/inline extraction ---------- */
+
+var GSLIDE_SKIP_TAGS = { SCRIPT: 1, STYLE: 1, TEMPLATE: 1, NOSCRIPT: 1 };
+var GSLIDE_DROP_TAGS = { IMG: 1, IFRAME: 1, VIDEO: 1, AUDIO: 1, SVG: 1, CANVAS: 1 };
+
+/** Extract an element's content into flat paragraph objects. */
+function gslideExtractParagraphs(root, warnings) {
+	var paras = [];
+	if (root.tagName === "UL" || root.tagName === "OL") {
+		gslideExtractList(root, 0, paras, warnings);
+		return paras;
+	}
+	var pending = []; // inline runs accumulating into an implicit paragraph
+	function flush() {
+		var split = gslideSplitRunsAtBr(pending);
+		for (var i = 0; i < split.length; i++) {
+			var para = gslideMakeParagraph(split[i], null, null);
+			if (para) paras.push(para);
+		}
+		pending = [];
+	}
+	function walk(node) {
+		for (var n = node.firstChild; n; n = n.nextSibling) {
+			if (n.nodeType === 3) {
+				pending.push({ text: n.nodeValue });
+				continue;
+			}
+			if (n.nodeType !== 1) continue;
+			var tag = n.tagName;
+			if (GSLIDE_SKIP_TAGS[tag]) continue;
+			if (GSLIDE_DROP_TAGS[tag]) {
+				warnings.push("Ignored unsupported <" + tag.toLowerCase() + ">.");
+				continue;
+			}
+			if (tag === "UL" || tag === "OL") {
+				flush();
+				gslideExtractList(n, 0, paras, warnings);
+			} else if (tag === "TABLE" || tag === "PRE") {
+				flush();
+				warnings.push(
+					"<" + tag.toLowerCase() + "> is not supported; text extracted as plain paragraphs.",
+				);
+				var lines = gslideText(n.textContent).split(/\n+/);
+				for (var L = 0; L < lines.length; L++) {
+					var lp = gslideMakeParagraph([{ text: lines[L] }], null, null);
+					if (lp) paras.push(lp);
+				}
+			} else if (/^(P|DIV|BLOCKQUOTE|H[1-6]|HEADER|FOOTER|ARTICLE|FIGCAPTION|LI)$/.test(tag)) {
+				flush();
+				walk(n);
+				flush();
+			} else {
+				// inline element — collect styled runs
+				gslideCollectInline(n, {}, pending, warnings);
+			}
+		}
+	}
+	walk(root);
+	flush();
+	return paras;
+}
+
+function gslideExtractList(listEl, depth, paras, warnings) {
+	var effDepth = depth;
+	if (depth >= GSLIDE_MAX_LIST_DEPTH) {
+		warnings.push("List nesting deeper than " + GSLIDE_MAX_LIST_DEPTH + " levels; clamped.");
+		effDepth = GSLIDE_MAX_LIST_DEPTH - 1;
+	}
+	var listType = listEl.tagName === "OL" ? "number" : "bullet";
+	for (var li = listEl.firstElementChild; li; li = li.nextElementSibling) {
+		if (li.tagName !== "LI") continue;
+		var runs = [];
+		var sublists = [];
+		for (var n = li.firstChild; n; n = n.nextSibling) {
+			if (n.nodeType === 3) {
+				runs.push({ text: n.nodeValue });
+			} else if (n.nodeType === 1) {
+				if (n.tagName === "UL" || n.tagName === "OL") sublists.push(n);
+				else if (GSLIDE_SKIP_TAGS[n.tagName]) continue;
+				else if (GSLIDE_DROP_TAGS[n.tagName])
+					warnings.push("Ignored unsupported <" + n.tagName.toLowerCase() + ">.");
+				else gslideCollectInline(n, {}, runs, warnings);
+			}
+		}
+		var split = gslideSplitRunsAtBr(runs);
+		for (var s = 0; s < split.length; s++) {
+			var para = gslideMakeParagraph(split[s], effDepth, listType);
+			if (para) paras.push(para);
+		}
+		for (var q = 0; q < sublists.length; q++) {
+			gslideExtractList(sublists[q], depth + 1, paras, warnings);
+		}
+	}
+}
+
+function gslideCollectInline(el, style, out, warnings) {
+	var next = {
+		bold: style.bold || false,
+		italic: style.italic || false,
+		strikethrough: style.strikethrough || false,
+		link: style.link || null,
+	};
+	var tag = el.tagName;
+	if (tag === "STRONG" || tag === "B") next.bold = true;
+	else if (tag === "EM" || tag === "I") next.italic = true;
+	else if (tag === "S" || tag === "DEL" || tag === "STRIKE") next.strikethrough = true;
+	else if (tag === "A" && el.getAttribute("href")) next.link = el.getAttribute("href");
+	else if (tag === "BR") {
+		out.push({ br: true });
+		return;
+	}
+	for (var n = el.firstChild; n; n = n.nextSibling) {
+		if (n.nodeType === 3) {
+			out.push({
+				text: n.nodeValue,
+				bold: next.bold,
+				italic: next.italic,
+				strikethrough: next.strikethrough,
+				link: next.link,
+			});
+		} else if (n.nodeType === 1) {
+			if (GSLIDE_SKIP_TAGS[n.tagName]) continue;
+			if (GSLIDE_DROP_TAGS[n.tagName]) {
+				warnings.push("Ignored unsupported <" + n.tagName.toLowerCase() + ">.");
+				continue;
+			}
+			gslideCollectInline(n, next, out, warnings);
+		}
+	}
+}
+
+function gslideSplitRunsAtBr(runs) {
+	var groups = [[]];
+	for (var i = 0; i < runs.length; i++) {
+		if (runs[i].br) groups.push([]);
+		else groups[groups.length - 1].push(runs[i]);
+	}
+	return groups;
+}
+
+/** Normalize whitespace, merge same-style neighbors, drop empties. */
+function gslideMakeParagraph(runs, listLevel, listType) {
+	var cleaned = [];
+	for (var i = 0; i < runs.length; i++) {
+		var r = runs[i];
+		var text = String(r.text || "").replace(/\s+/g, " ");
+		if (!text) continue;
+		var prev = cleaned[cleaned.length - 1];
+		if (
+			prev &&
+			!!prev.bold === !!r.bold &&
+			!!prev.italic === !!r.italic &&
+			!!prev.strikethrough === !!r.strikethrough &&
+			(prev.link || null) === (r.link || null)
+		) {
+			prev.text += text;
+		} else {
+			cleaned.push({
+				text: text,
+				bold: !!r.bold,
+				italic: !!r.italic,
+				strikethrough: !!r.strikethrough,
+				link: r.link || null,
+			});
+		}
+	}
+	// trim paragraph edges
+	if (cleaned.length > 0) {
+		cleaned[0].text = cleaned[0].text.replace(/^\s+/, "");
+		cleaned[cleaned.length - 1].text = cleaned[cleaned.length - 1].text.replace(/\s+$/, "");
+	}
+	var total = "";
+	for (var j = 0; j < cleaned.length; j++) total += cleaned[j].text;
+	if (!gslideText(total)) return null;
+	return { runs: cleaned, listLevel: listLevel, listType: listType };
+}
+
+function gslideParagraphText(para) {
+	var s = "";
+	for (var i = 0; i < para.runs.length; i++) s += para.runs[i].text;
+	return s;
+}
+
+function gslideText(s) {
+	return String(s || "").replace(/\s+/g, " ").trim();
+}
+
+/* ---------- minter sections (data-minter="timeline|steps|...") ---------- */
+
+/**
+ * Parses a <section data-minter="..."> into a slide spec carrying a generic
+ * content bag; the server-side bridge maps it onto the minter's payload.
+ * Returns null for unknown keys (caller falls back to normal parsing).
+ */
+function gslideParseMinterSection(section, index, key, notes, warnings) {
+	if (!GSLIDE_MINTER_KEYS[key]) {
+		warnings.push(
+			'Unknown data-minter "' + key + '"; treated as a normal section.',
+		);
+		return null;
+	}
+
+	var slots = {};
+
+	// title: explicit data-ph=TITLE, else first heading
+	var titleEl = null;
+	var marked = section.querySelectorAll("[data-ph]");
+	for (var m = 0; m < marked.length; m++) {
+		var phName = String(marked[m].getAttribute("data-ph")).toUpperCase();
+		if (phName === "TITLE" && !titleEl) titleEl = marked[m];
+		if (phName === "NOTES") {
+			var noteParas = gslideExtractParagraphs(marked[m], warnings);
+			for (var np = 0; np < noteParas.length; np++) {
+				notes.push(gslideParagraphText(noteParas[np]));
+			}
+		}
+	}
+	if (!titleEl && section.querySelector) {
+		titleEl = section.querySelector("h1, h2, h3");
+	}
+	if (titleEl) slots.TITLE = gslideExtractParagraphs(titleEl, warnings);
+
+	// options: data-minter-options JSON + shorthand attributes
+	var options = {};
+	var optAttr = section.getAttribute("data-minter-options");
+	if (optAttr) {
+		try {
+			options = JSON.parse(optAttr) || {};
+		} catch (e) {
+			warnings.push("Slide " + index + ": invalid data-minter-options JSON; ignored.");
+		}
+	}
+	if (section.getAttribute("data-template")) {
+		options.templateId = section.getAttribute("data-template");
+	}
+	if (section.getAttribute("data-orientation")) {
+		options.orientation = section.getAttribute("data-orientation");
+	}
+
+	var minter = {
+		key: key,
+		options: options,
+		items: gslideMinterItems(section, titleEl),
+		columns: gslideMinterColumns(section),
+		table: gslideMinterTable(section),
+		images: gslideMinterImages(section),
+		paragraphs: gslideMinterParagraphs(section, titleEl),
+	};
+
+	// explicit data-layout wins; otherwise a quiet base for the minter to draw on
+	var base = "";
+	var layoutAttr = section.getAttribute("data-layout");
+	if (layoutAttr) base = gslideNormalizeLayoutToken(layoutAttr);
+	if (!base) base = slots.TITLE ? "TITLE_ONLY" : "BLANK";
+
+	return {
+		layout: base,
+		slots: slots,
+		notes: notes.join("\n"),
+		warnings: warnings,
+		minter: minter,
+	};
+}
+
+/** True when el sits inside an <aside> or the title element. */
+function gslideMinterExcluded(el, section, titleEl) {
+	var p = el;
+	while (p && p !== section) {
+		if (p === titleEl || p.tagName === "ASIDE") return true;
+		p = p.parentNode;
+	}
+	return false;
+}
+
+/**
+ * Items from the section's lists: each top-level <li> becomes
+ * { label, desc?, <data-* fields...> }. <p> children join into desc.
+ */
+function gslideMinterItems(section, titleEl) {
+	var items = [];
+	var lists = section.querySelectorAll("ul, ol");
+	for (var L = 0; L < lists.length; L++) {
+		var list = lists[L];
+		if (gslideMinterExcluded(list, section, titleEl)) continue;
+		// only top-level lists (nested ones are handled per item below)
+		var anc = list.parentNode;
+		var nested = false;
+		while (anc && anc !== section) {
+			if (anc.tagName === "UL" || anc.tagName === "OL") {
+				nested = true;
+				break;
+			}
+			anc = anc.parentNode;
+		}
+		if (nested) continue;
+		for (var li = list.firstElementChild; li; li = li.nextElementSibling) {
+			if (li.tagName !== "LI") continue;
+			items.push(gslideMinterItemFromLi(li));
+		}
+	}
+	return items;
+}
+
+function gslideMinterItemFromLi(li) {
+	var item = {};
+	// data-* attributes become fields (data-date → date, data-value → value…)
+	var attrs = li.attributes || [];
+	for (var a = 0; a < attrs.length; a++) {
+		var attr = attrs[a];
+		if (attr && attr.name && attr.name.indexOf("data-") === 0) {
+			item[attr.name.slice(5).replace(/-/g, "_")] = attr.value;
+		}
+	}
+	// inline text (excluding <p> and nested lists) → label; <p> texts → desc
+	var labelParts = [];
+	var descParts = [];
+	for (var n = li.firstChild; n; n = n.nextSibling) {
+		if (n.nodeType === 3) {
+			labelParts.push(n.nodeValue);
+		} else if (n.nodeType === 1) {
+			var t = n.tagName;
+			if (t === "P") descParts.push(gslideText(n.textContent));
+			else if (t === "UL" || t === "OL" || t === "ASIDE") continue;
+			else labelParts.push(n.textContent);
+		}
+	}
+	// join with "" — nodes carry their own whitespace, and a DOM impl may
+	// legally split one logical text run into several nodes (e.g. at &amp;)
+	if (item.label == null) item.label = gslideText(labelParts.join(""));
+	if (item.desc == null && descParts.length) item.desc = descParts.join("\n");
+	return item;
+}
+
+/** Compare-style columns: children with data-col="Column title". */
+function gslideMinterColumns(section) {
+	var cols = [];
+	var els = section.querySelectorAll("[data-col]");
+	for (var i = 0; i < els.length; i++) {
+		var el = els[i];
+		var points = [];
+		var lis = el.querySelectorAll("li");
+		for (var j = 0; j < lis.length; j++) {
+			var txt = gslideText(lis[j].textContent);
+			if (txt) points.push(txt);
+		}
+		if (points.length === 0) {
+			var ps = el.querySelectorAll("p");
+			for (var k = 0; k < ps.length; k++) {
+				var pt = gslideText(ps[k].textContent);
+				if (pt) points.push(pt);
+			}
+		}
+		cols.push({ title: gslideText(el.getAttribute("data-col")), points: points });
+	}
+	return cols;
+}
+
+/** First <table>: {header: string[], body: string[][]}. */
+function gslideMinterTable(section) {
+	var table = section.querySelector ? section.querySelector("table") : null;
+	if (!table) return null;
+	var rows = table.querySelectorAll("tr");
+	if (!rows.length) return null;
+	var header = [];
+	var body = [];
+	for (var r = 0; r < rows.length; r++) {
+		var cells = [];
+		var isHeader = false;
+		for (var c = rows[r].firstElementChild; c; c = c.nextElementSibling) {
+			if (c.tagName === "TH") isHeader = true;
+			if (c.tagName === "TH" || c.tagName === "TD") {
+				cells.push(gslideText(c.textContent));
+			}
+		}
+		if (cells.length === 0) continue;
+		if ((isHeader || r === 0) && header.length === 0) header = cells;
+		else body.push(cells);
+	}
+	return { header: header, body: body };
+}
+
+/** Gallery images: <img> (optionally inside <figure> with <figcaption>). */
+function gslideMinterImages(section) {
+	var out = [];
+	var imgs = section.querySelectorAll("img");
+	for (var i = 0; i < imgs.length; i++) {
+		var img = imgs[i];
+		var url = img.getAttribute("src") || img.getAttribute("data-url") || "";
+		if (!url) continue;
+		var caption = "";
+		var fig = img.parentNode;
+		while (fig && fig !== section && fig.tagName !== "FIGURE") fig = fig.parentNode;
+		if (fig && fig.tagName === "FIGURE") {
+			var cap = fig.querySelector("figcaption");
+			if (cap) caption = gslideText(cap.textContent);
+		}
+		if (!caption) caption = gslideText(img.getAttribute("alt"));
+		out.push({ url: url, caption: caption });
+	}
+	return out;
+}
+
+/** Loose paragraphs (callout body etc.): top-level <p>/<blockquote> texts. */
+function gslideMinterParagraphs(section, titleEl) {
+	var out = [];
+	var ps = section.querySelectorAll("p, blockquote");
+	for (var i = 0; i < ps.length; i++) {
+		var el = ps[i];
+		if (gslideMinterExcluded(el, section, titleEl)) continue;
+		// skip <p> that live inside list items or tables or [data-col] (item desc / cells)
+		var anc = el.parentNode;
+		var skip = false;
+		while (anc && anc !== section) {
+			if (
+				anc.tagName === "LI" ||
+				anc.tagName === "TABLE" ||
+				anc.tagName === "FIGURE" ||
+				(anc.getAttribute && anc.getAttribute("data-col"))
+			) {
+				skip = true;
+				break;
+			}
+			anc = anc.parentNode;
+		}
+		if (skip) continue;
+		var txt = gslideText(el.textContent);
+		if (txt) out.push(txt);
+	}
+	return out;
+}
+</script>

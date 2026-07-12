@@ -428,13 +428,8 @@ function insertCompareIntoSlide(payload) {
 		const pageW = presentation.getPageWidth();
 		const pageH = presentation.getPageHeight();
 
-		// Resolve the target slide (fall back to the first slide).
-		let slide = null;
-		try {
-			slide = presentation.getSelection().getCurrentPage().asSlide();
-		} catch (e) {
-			slide = presentation.getSlides()[0];
-		}
+		// Resolve the target slide (payload.pageObjectId → selection → first).
+		let slide = resolveMinterTargetSlide_(presentation, p.pageObjectId);
 		if (!slide) return { success: false, error: "No slide available." };
 		const pageId = slide.getObjectId();
 

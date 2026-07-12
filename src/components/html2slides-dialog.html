@@ -1,0 +1,426 @@
+<!doctype html>
+<html>
+  <head>
+    <base target="_top" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #333;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .header {
+        background-color: #f5f5f5;
+        padding: 10px 20px;
+        border-radius: 4px;
+        margin: 12px 20px 0 20px;
+        flex-shrink: 0;
+      }
+      .header h3 {
+        margin: 0 0 6px 0;
+        color: #3d6869;
+      }
+      .hint {
+        font-size: 12px;
+        color: #555;
+      }
+      .hint code {
+        background: #eee;
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+        padding: 12px 20px 0 20px;
+        flex-shrink: 0;
+      }
+      .tab {
+        padding: 8px 16px;
+        border: 1px solid #ccc;
+        border-bottom: none;
+        border-radius: 6px 6px 0 0;
+        background: #f1f1f1;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .tab.active {
+        background: #fff;
+        border-color: #3d6869;
+        color: #3d6869;
+        font-weight: bold;
+      }
+      .content-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 0 20px;
+        min-height: 0;
+      }
+      .pane {
+        display: none;
+        flex: 1;
+        min-height: 0;
+        flex-direction: column;
+        border: 1px solid #3d6869;
+        border-radius: 0 6px 6px 6px;
+        padding: 10px;
+      }
+      .pane.active {
+        display: flex;
+      }
+      textarea {
+        width: 100%;
+        flex: 1;
+        min-height: 160px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 13px;
+        resize: none;
+        box-sizing: border-box;
+      }
+      input[type="url"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+      .file-drop {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed #bbb;
+        border-radius: 6px;
+        color: #666;
+        font-size: 14px;
+        cursor: pointer;
+        text-align: center;
+        padding: 20px;
+      }
+      .file-drop.dragover {
+        border-color: #3d6869;
+        background: #f0f7f7;
+      }
+      .buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 12px 20px 5px 20px;
+        flex-shrink: 0;
+        border-top: 1px solid #eee;
+      }
+      button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 15px;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      #convert-button {
+        background-color: #3d6869;
+        color: white;
+      }
+      #convert-button:hover {
+        background-color: #2a4b4c;
+      }
+      #cancel-button {
+        background-color: #f1f1f1;
+        color: #333;
+      }
+      .loading {
+        pointer-events: none;
+        opacity: 0.6;
+      }
+      .status-row {
+        padding: 5px 20px 12px 20px;
+        flex-shrink: 0;
+        max-height: 140px;
+        overflow-y: auto;
+      }
+      .status-message {
+        padding: 8px 12px;
+        border-radius: 4px;
+        display: none;
+        font-size: 13px;
+        white-space: pre-wrap;
+      }
+      .status-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .status-message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .status-message.info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h3>HTML to Slides Converter</h3>
+        <div class="hint">
+          每個 <code>&lt;section data-layout="TITLE_AND_BODY"&gt;</code> 是一張投影片，
+          元素用 <code>data-ph="TITLE|SUBTITLE|BODY|BODY_2"</code> 指定位置；
+          支援全部 11 種官方 layout。無標記的一般 HTML 也會盡力推斷。
+          講者備註：<code>data-notes="..."</code> 或
+          <code>&lt;aside data-ph="NOTES"&gt;</code>。
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-pane="paste">貼上 HTML</div>
+        <div class="tab" data-pane="file">上傳 .html</div>
+        <div class="tab" data-pane="url">URL</div>
+      </div>
+
+      <div class="content-area">
+        <div class="pane active" id="pane-paste">
+          <textarea
+            id="html-input"
+            placeholder='貼上 gslide-html，例如：
+<section data-layout="SECTION_HEADER">
+  <h1 data-ph="TITLE">第一章</h1>
+</section>
+<section data-layout="TITLE_AND_BODY">
+  <h2 data-ph="TITLE">議程</h2>
+  <div data-ph="BODY"><ul><li>第一項</li><li>第二項</li></ul></div>
+</section>'
+          ></textarea>
+        </div>
+        <div class="pane" id="pane-file">
+          <div class="file-drop" id="file-drop">
+            點擊選擇或拖放 .html 檔案<br /><span id="file-name" style="font-size:12px;color:#3d6869"></span>
+          </div>
+          <input type="file" id="file-input" accept=".html,.htm,text/html" style="display:none" />
+        </div>
+        <div class="pane" id="pane-url">
+          <input type="url" id="url-input" placeholder="https://example.com/deck.html" />
+          <div class="hint" style="margin-top:8px">
+            由後端 UrlFetchApp 抓取，需為可公開存取的網址。
+          </div>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button id="cancel-button">Cancel</button>
+        <button id="convert-button">Convert to Slides</button>
+      </div>
+      <div class="status-row">
+        <div id="status-message" class="status-message"></div>
+      </div>
+    </div>
+
+    <?!= include("src/components/html2slides/parser-client"); ?>
+
+    <script>
+      var activePane = "paste";
+      var fileHtml = null;
+      var convertBtn = document.getElementById("convert-button");
+
+      // Re-convert guard: after a successful run the button stays disabled
+      // (clicking again would insert a duplicate batch); editing the input
+      // or switching tabs re-arms it.
+      function lockConvert(label) {
+        convertBtn.disabled = true;
+        convertBtn.textContent = label || "Convert to Slides";
+      }
+      function armConvert() {
+        convertBtn.disabled = false;
+        convertBtn.textContent = "Convert to Slides";
+      }
+      document.getElementById("html-input").addEventListener("input", armConvert);
+      document.getElementById("url-input").addEventListener("input", armConvert);
+
+      document.querySelectorAll(".tab").forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          document.querySelectorAll(".tab").forEach(function (t) {
+            t.classList.remove("active");
+          });
+          document.querySelectorAll(".pane").forEach(function (p) {
+            p.classList.remove("active");
+          });
+          tab.classList.add("active");
+          activePane = tab.getAttribute("data-pane");
+          document.getElementById("pane-" + activePane).classList.add("active");
+          armConvert();
+        });
+      });
+
+      // file picking / drag-drop
+      var drop = document.getElementById("file-drop");
+      var fileInput = document.getElementById("file-input");
+      drop.addEventListener("click", function () {
+        fileInput.click();
+      });
+      fileInput.addEventListener("change", function () {
+        if (fileInput.files.length) readFile(fileInput.files[0]);
+      });
+      drop.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        drop.classList.add("dragover");
+      });
+      drop.addEventListener("dragleave", function () {
+        drop.classList.remove("dragover");
+      });
+      drop.addEventListener("drop", function (e) {
+        e.preventDefault();
+        drop.classList.remove("dragover");
+        if (e.dataTransfer.files.length) readFile(e.dataTransfer.files[0]);
+      });
+      function readFile(file) {
+        var reader = new FileReader();
+        reader.onload = function () {
+          fileHtml = reader.result;
+          document.getElementById("file-name").textContent =
+            file.name + "（" + fileHtml.length + " 字元）";
+          armConvert();
+        };
+        reader.readAsText(file);
+      }
+
+      document
+        .getElementById("cancel-button")
+        .addEventListener("click", function () {
+          google.script.host.close();
+        });
+
+      document
+        .getElementById("convert-button")
+        .addEventListener("click", function () {
+          var btn = this;
+          if (activePane === "paste") {
+            var text = document.getElementById("html-input").value.trim();
+            if (!text) return showStatus("請先貼上 HTML 內容。", "error");
+            runConversion(btn, text);
+          } else if (activePane === "file") {
+            if (!fileHtml) return showStatus("請先選擇 .html 檔案。", "error");
+            runConversion(btn, fileHtml);
+          } else {
+            var url = document.getElementById("url-input").value.trim();
+            if (!url) return showStatus("請輸入網址。", "error");
+            btn.classList.add("loading");
+            lockConvert("轉換中…");
+            showStatus("抓取網頁中…", "info");
+            google.script.run
+              .withSuccessHandler(function (html) {
+                runConversion(btn, html);
+              })
+              .withFailureHandler(function (err) {
+                btn.classList.remove("loading");
+                armConvert();
+                showStatus("抓取失敗：" + err.message, "error");
+              })
+              .fetchHtmlFromUrl(url);
+          }
+        });
+
+      function runConversion(btn, htmlText) {
+        var parsed;
+        try {
+          parsed = parseGslideHtml(htmlText);
+        } catch (e) {
+          btn.classList.remove("loading");
+          armConvert();
+          return showStatus("解析失敗：" + e.message, "error");
+        }
+        if (!parsed.slides.length) {
+          btn.classList.remove("loading");
+          armConvert();
+          return showStatus(
+            "找不到任何投影片內容。\n" + parsed.warnings.join("\n"),
+            "error",
+          );
+        }
+        btn.classList.add("loading");
+        lockConvert("轉換中…");
+        showStatus("解析出 " + parsed.slides.length + " 張投影片，建立中…", "info");
+        google.script.run
+          .withSuccessHandler(function (result) {
+            var baseMsg =
+              "完成：建立 " + result.created + "/" + result.total + " 張投影片。";
+            var warnings = result.warnings || [];
+            // minter drawing runs as a SECOND server call: the first
+            // execution must end so Apps Script flushes the new pages to
+            // the saved document (REST minters can't see unsaved pages).
+            if (result.minterJobs && result.minterJobs.length) {
+              showStatus(
+                baseMsg +
+                  "\n繪製 " + result.minterJobs.length + " 個 minter 元件中…",
+                "info",
+              );
+              google.script.run
+                .withSuccessHandler(function (second) {
+                  finishConversion(btn, baseMsg, warnings.concat(second.warnings || []));
+                })
+                .withFailureHandler(function (err) {
+                  finishConversion(
+                    btn,
+                    baseMsg,
+                    warnings.concat(["minter 第二階段失敗：" + err.message]),
+                  );
+                })
+                .runGslideMinterJobs(JSON.stringify(result.minterJobs));
+            } else {
+              finishConversion(btn, baseMsg, warnings);
+            }
+          })
+          .withFailureHandler(function (err) {
+            btn.classList.remove("loading");
+            armConvert();
+            showStatus("建立投影片失敗：" + err.message, "error");
+          })
+          .convertGslideJsonToSlides(JSON.stringify(parsed));
+      }
+
+      function finishConversion(btn, baseMsg, warnings) {
+        btn.classList.remove("loading");
+        lockConvert("已完成 ✓");
+        if (warnings.length) {
+          showStatus(
+            baseMsg +
+              "\n（修改內容或切換分頁可再次轉換）" +
+              "\n注意事項：\n- " +
+              warnings.join("\n- "),
+            "info",
+          );
+        } else {
+          showStatus(baseMsg, "success");
+          setTimeout(function () {
+            google.script.host.close();
+          }, 1800);
+        }
+      }
+
+      function showStatus(message, type) {
+        var el = document.getElementById("status-message");
+        el.textContent = message;
+        el.className = "status-message " + (type || "info");
+        el.style.display = "block";
+      }
+    </script>
+  </body>
+</html>

@@ -170,13 +170,8 @@ function insertStepsIntoSlide(payload) {
 			"Source Sans Pro";
 
 		const presentation = SlidesApp.getActivePresentation();
-		const selection = presentation.getSelection();
-		let slide = null;
-		try {
-			slide = selection.getCurrentPage().asSlide();
-		} catch (e) {
-			slide = presentation.getSlides()[0];
-		}
+		// Resolve the target slide (payload.pageObjectId → selection → first).
+		let slide = resolveMinterTargetSlide_(presentation, p.pageObjectId);
 		if (!slide) return { success: false, error: "No slide available." };
 
 		const pageW = presentation.getPageWidth();

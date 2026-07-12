@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head><meta charset="utf-8"><title>gslide-html v1.1 minter demo — 12 minters</title></head>
+<body>
+
+<section data-layout="TITLE">
+  <h1 data-ph="TITLE">Minter 整合示範</h1>
+  <p data-ph="SUBTITLE">gslide-html v1.1 — data-minter sections</p>
+</section>
+
+<!-- 1/12 timeline -->
+<section data-minter="timeline" data-orientation="horizontal" data-notes="按季度講，每段 30 秒">
+  <h2 data-ph="TITLE">2026 里程碑</h2>
+  <ul>
+    <li data-date="Q1">需求訪談</li>
+    <li data-date="Q2">原型驗證</li>
+    <li data-date="Q3">Beta 上線</li>
+    <li data-date="Q4">正式發布</li>
+  </ul>
+</section>
+
+<!-- 2/12 steps -->
+<section data-minter="steps">
+  <h2 data-ph="TITLE">匯入流程</h2>
+  <ul>
+    <li>準備 HTML<p>用 gslide-html skill 產生</p></li>
+    <li>開啟匯入對話框<p>跨頁與匯出選單</p></li>
+    <li>轉換<p>逐頁建立並回報 warnings</p></li>
+  </ul>
+</section>
+
+<!-- 3/12 kpi -->
+<section data-minter="kpi">
+  <h2 data-ph="TITLE">系統指標</h2>
+  <ul>
+    <li data-value="99.9%" data-trend="up">可用率</li>
+    <li data-value="120ms" data-trend="down">平均延遲</li>
+    <li data-value="4.8" data-trend="up">滿意度</li>
+  </ul>
+</section>
+
+<!-- 4/12 compare -->
+<section data-minter="compare">
+  <h2 data-ph="TITLE">Markdown vs HTML 匯入</h2>
+  <div data-col="Markdown">
+    <ul><li>輸入快</li><li>只有 2 種 layout</li></ul>
+  </div>
+  <div data-col="HTML">
+    <ul><li>11 種 layout</li><li>12 種 minter</li></ul>
+  </div>
+</section>
+
+<!-- 5/12 barchart -->
+<section data-minter="barchart" data-minter-options='{"showValues":true}'>
+  <h2 data-ph="TITLE">季度營收（百萬）</h2>
+  <ul>
+    <li data-value="42">Q1</li>
+    <li data-value="58">Q2</li>
+    <li data-value="75">Q3</li>
+  </ul>
+</section>
+
+<!-- 6/12 table -->
+<section data-minter="table">
+  <h2 data-ph="TITLE">功能對照</h2>
+  <table>
+    <thead><tr><th>功能</th><th>md2slides</th><th>html2slides</th></tr></thead>
+    <tbody>
+      <tr><td>Layout 數</td><td>2</td><td>11</td></tr>
+      <tr><td>Minter</td><td>—</td><td>12</td></tr>
+      <tr><td>講者備註</td><td>有</td><td>有</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 7/12 takeaways -->
+<section data-minter="takeaways">
+  <h2 data-ph="TITLE">三個重點</h2>
+  <ul>
+    <li>契約優先<p>data-* 顯式標記，推斷只是容錯</p></li>
+    <li>解析在前端<p>瀏覽器 DOMParser，後端只收 JSON</p></li>
+    <li>重用 minter<p>styled 元件不重造輪子</p></li>
+  </ul>
+</section>
+
+<!-- 8/12 agenda -->
+<section data-minter="agenda">
+  <h2 data-ph="TITLE">今日議程</h2>
+  <ul>
+    <li>背景與動機</li>
+    <li>架構走讀</li>
+    <li>Demo</li>
+    <li>Q&amp;A</li>
+  </ul>
+</section>
+
+<!-- 9/12 grid -->
+<section data-minter="grid" data-minter-options='{"cols":2}'>
+  <h2 data-ph="TITLE">模組地圖</h2>
+  <ul>
+    <li data-subtitle="parser">前端解析<p>DOMParser 轉結構化 JSON</p></li>
+    <li data-subtitle="builder">後端建頁<p>layout 解析與 placeholder 對應</p></li>
+    <li data-subtitle="bridge">Minter 橋接<p>12 種 styled 元件</p></li>
+    <li data-subtitle="skill">Agent skill<p>教 AI 產相容 HTML</p></li>
+  </ul>
+</section>
+
+<!-- 10/12 callout（用 BLANK 避免標題重複） -->
+<section data-minter="callout" data-layout="BLANK" data-minter-options='{"header":"注意"}'>
+  <p>改動 oauthScopes 會讓所有使用者重新授權一次——這是 Google 的規則，不是 bug。</p>
+</section>
+
+<!-- 11/12 gallery（需要可公開存取的圖片網址） -->
+<section data-minter="gallery" data-minter-options='{"cols":2}'>
+  <h2 data-ph="TITLE">示意圖</h2>
+  <figure>
+    <img src="https://www.gstatic.com/images/branding/product/2x/slides_2020q4_48dp.png">
+    <figcaption>Google Slides</figcaption>
+  </figure>
+  <figure>
+    <img src="https://www.gstatic.com/images/branding/product/2x/docs_2020q4_48dp.png">
+    <figcaption>Google Docs</figcaption>
+  </figure>
+</section>
+
+<!-- 12/12 icon -->
+<section data-minter="icon" data-layout="BLANK" data-minter-options='{"glyph":"★","size":120,"color":"#3D6869"}'>
+</section>
+
+</body>
+</html>

@@ -55,7 +55,7 @@ clasp open
   (two `appsscript.json`, etc.). Plain `clasp push` may also just print
   `Skipping push.`
 - **`.claspignore`'s `.*` does NOT recurse.** The catch-all `.*` only ignores
-  dotfiles/dirs at the root; it does not exclude a dotdir's *contents*. To keep
+  dotfiles/dirs at the root; it does not exclude a dotdir's _contents_. To keep
   clasp out of session files/worktrees, `.claspignore` has an explicit
   `.claude/**` entry — keep it.
 - **Verify before pushing:** `clasp status` should show source files at repo-root
@@ -101,13 +101,24 @@ clasp open
   Mixing them in one function (e.g. `presentation.appendSlide(...)` then
   `Slides.Presentations.batchUpdate(...)` referencing the new page's objectId)
   fails with `The page (SLIDES_API…) could not be found`, because batchUpdate
-  reads the *saved* document and the appended slide hasn't been flushed yet.
-  **`SlidesApp.flush()` does NOT exist** (that's SpreadsheetApp) — don't try to
-  flush. Instead create the new page *inside the same batch* with a
-  `createSlide` request using a client-chosen `objectId`, then reference that
-  id from later requests in the same batchUpdate (see `insertGridIntoSlide`,
-  src/util/grid_minter.js). The bug can lie dormant: it only fires on the code
-  path that actually appends pages (grid overflow).
+  reads the _saved_ document and the appended slide hasn't been flushed yet.
+  **`SlidesApp.flush()` does NOT exist** (that's SpreadsheetApp), and
+  **`presentation.saveAndClose()` does NOT flush mid-execution either** —
+  verified empirically: after saveAndClose(), a fresh `SlidesApp.openById()`
+  handle in the SAME execution still cannot see the new pages (getSlideById
+  returns null); buffered writes only hit the saved document when the
+  execution ENDS. Two working fixes: (a) create the new page _inside the same
+  batch_ with a `createSlide` request using a client-chosen `objectId`, then
+  reference that id from later requests in the same batchUpdate (see
+  `insertGridIntoSlide`, src/util/grid_minter.js); or (b) when the pages must
+  be SlidesApp-created (e.g. to get layout placeholders), split the work into
+  TWO `google.script.run` calls from the dialog — the first execution creates
+  pages and returns job descriptors, Google flushes at execution end, the
+  second execution draws onto the now-saved pages (see
+  `convertGslideJsonToSlides` + `runGslideMinterJobs`,
+  src/util/html2slides/slideBuilder.js). The bug can lie dormant: it only
+  fires on the code path that actually appends pages (grid overflow, or
+  html2slides minter sections).
 
 ### Self-update for cloned decks
 

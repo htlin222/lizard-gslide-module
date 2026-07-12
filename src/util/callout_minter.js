@@ -195,11 +195,15 @@ function insertCalloutIntoSlide(payload) {
 		const presentation = SlidesApp.getActivePresentation();
 		const selection = presentation.getSelection();
 
-		// Convert mode: a shape or text box is selected.
+		// Convert mode: a shape or text box is selected. Skipped entirely when a
+		// batch caller targets an explicit slide via payload.pageObjectId.
 		let mainElement = null;
 		let slide = null;
 		let mode = "insert";
-		if (selection.getSelectionType() === SlidesApp.SelectionType.PAGE_ELEMENT) {
+		if (
+			!p.pageObjectId &&
+			selection.getSelectionType() === SlidesApp.SelectionType.PAGE_ELEMENT
+		) {
 			const els = selection.getPageElementRange().getPageElements();
 			const el = els && els[0];
 			if (el) {
@@ -218,11 +222,7 @@ function insertCalloutIntoSlide(payload) {
 
 		// Insert mode: no usable selection → create a new body text box.
 		if (!mainElement) {
-			try {
-				slide = selection.getCurrentPage().asSlide();
-			} catch (e) {
-				slide = presentation.getSlides()[0];
-			}
+			slide = resolveMinterTargetSlide_(presentation, p.pageObjectId);
 			if (!slide) return { success: false, error: "No slide available." };
 			const W = 320;
 			const H = 120;

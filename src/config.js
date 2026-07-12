@@ -170,6 +170,9 @@ function createCustomMenu() {
 			.addItem("📋 Markdown 側邊欄⭐", "showMarkdownSidebar")
 			.addItem("**B** Markdown 粗體格式", "runApplyMarkdownBoldFormatting")
 			.addSeparator()
+			// HTML import (gslide-html, 11 predefined layouts)
+			.addItem("🌐 HTML 轉換成投影片", "showHtmlToSlidesDialog")
+			.addSeparator()
 			// Markdown export
 			.addItem("📤 匯出成 Markdown⭐", "showExportMarkdownDialog")
 			.addItem("📤 匯出 Markdown (含圖片)", "showExportMarkdownWithImagesDialog")
